@@ -146,16 +146,30 @@ jobs:
 
             echo "🚀 Starting deployment..."
 
+            # Check if project directory exists, if not clone it
+            if [ ! -d "/var/www/bayan-smart-village" ]; then
+              echo "📁 Project directory doesn't exist. Creating and cloning repository..."
+              cd /var/www
+              git clone ${{ secrets.REPO_URL }} bayan-smart-village || {
+                echo "❌ Failed to clone repository. Make sure REPO_URL secret is set."
+                exit 1
+              }
+            fi
+
             # Navigate to project directory
             cd /var/www/bayan-smart-village || {
               echo "❌ Failed to navigate to project directory"
               exit 1
             }
 
-            # Check if git repository exists
+            # Check if git repository exists, if not initialize it
             if [ ! -d ".git" ]; then
-              echo "❌ Not a git repository. Please clone the repository first."
-              exit 1
+              echo "🔧 Initializing git repository..."
+              git init
+              git remote add origin ${{ secrets.REPO_URL }} || {
+                echo "❌ Failed to add remote origin"
+                exit 1
+              }
             fi
 
             # Create backup
