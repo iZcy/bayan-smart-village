@@ -149,12 +149,18 @@ jobs:
             # Check if project directory exists, if not clone it
             if [ ! -d "/var/www/bayan-smart-village" ]; then
               echo "📁 Project directory doesn't exist. Creating and cloning repository..."
+              sudo mkdir -p /var/www/bayan-smart-village
+              sudo chown -R $USER:$USER /var/www/bayan-smart-village
               cd /var/www
               git clone ${{ secrets.REPO_URL }} bayan-smart-village || {
                 echo "❌ Failed to clone repository. Make sure REPO_URL secret is set."
                 exit 1
               }
             fi
+
+            # Ensure proper permissions for git operations
+            echo "🔐 Setting temporary permissions for git operations..."
+            sudo chown -R $USER:$USER /var/www/bayan-smart-village
 
             # Navigate to project directory
             cd /var/www/bayan-smart-village || {
