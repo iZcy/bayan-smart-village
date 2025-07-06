@@ -188,9 +188,13 @@ jobs:
             cp -r storage backup/ 2>/dev/null || true
             cp .env backup/ 2>/dev/null || true
 
-            # Stash any local changes
+            # Stash any local changes (only if there are commits)
             echo "💾 Stashing local changes..."
-            git stash push -m "Auto-stash before deployment $(date)"
+            if git rev-parse --verify HEAD >/dev/null 2>&1; then
+              git stash push -m "Auto-stash before deployment $(date)" || true
+            else
+              echo "ℹ️ No commits yet, skipping stash"
+            fi
 
             # Fetch and pull latest code
             echo "⬇️ Pulling latest code..."
@@ -199,21 +203,31 @@ jobs:
               exit 1
             }
 
-            # Check if we're on main branch, if not switch to it
-            CURRENT_BRANCH=$(git branch --show-current)
-            if [ "$CURRENT_BRANCH" != "main" ]; then
-              echo "🔄 Switching to main branch..."
-              git checkout main || {
-                echo "❌ Failed to checkout main branch"
+            # Check if we have any commits
+            if git rev-parse --verify HEAD >/dev/null 2>&1; then
+              # We have commits, normal git operations
+              CURRENT_BRANCH=$(git branch --show-current)
+              if [ "$CURRENT_BRANCH" != "main" ]; then
+                echo "🔄 Switching to main branch..."
+                git checkout main || {
+                  echo "❌ Failed to checkout main branch"
+                  exit 1
+                }
+              fi
+
+              # Pull latest changes
+              git pull origin main || {
+                echo "❌ Failed to pull latest changes"
+                exit 1
+              }
+            else
+              # First time setup - checkout main branch from remote
+              echo "🔄 Setting up main branch for first time..."
+              git checkout -b main origin/main || {
+                echo "❌ Failed to checkout main branch from origin"
                 exit 1
               }
             fi
-
-            # Pull latest changes
-            git pull origin main || {
-              echo "❌ Failed to pull latest changes"
-              exit 1
-            }
 
             # Check if composer is available
             if ! command -v composer &> /dev/null; then
