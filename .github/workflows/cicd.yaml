@@ -152,8 +152,8 @@ jobs:
               sudo mkdir -p /var/www/bayan-smart-village
               sudo chown -R $USER:$USER /var/www/bayan-smart-village
               cd /var/www
-              git clone ${{ secrets.REPO_URL }} bayan-smart-village || {
-                echo "❌ Failed to clone repository. Make sure REPO_URL secret is set."
+              git clone https://github.com/${{ github.repository }}.git bayan-smart-village || {
+                echo "❌ Failed to clone repository"
                 exit 1
               }
             fi
@@ -172,7 +172,8 @@ jobs:
             if [ ! -d ".git" ]; then
               echo "🔧 Initializing git repository..."
               git init
-              git remote add origin ${{ secrets.REPO_URL }} || {
+              git config init.defaultBranch main
+              git remote add origin https://github.com/${{ github.repository }}.git || {
                 echo "❌ Failed to add remote origin"
                 exit 1
               }
@@ -254,8 +255,8 @@ jobs:
               exit 1
             }
 
-            # Set correct ownership
-            echo "🔐 Setting permissions..."
+            # Set correct ownership and permissions
+            echo "🔐 Setting final permissions..."
             sudo chown -R bayan-smart-village:bayan-smart-village /var/www/bayan-smart-village || {
               echo "⚠️ Warning: Failed to set ownership"
             }
