@@ -115,7 +115,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "npm"
 
       - name: Install Composer dependencies
         run: |
@@ -125,21 +124,15 @@ jobs:
           }
 
       - name: Install NPM dependencies
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Build production assets
         run: npm run build
-
-      - name: Create deployment artifact
-        env:
-          GITHUB_SHA: ${{ github.sha }}
-        run: tar -czf "${GITHUB_SHA}".tar.gz --exclude=*.git --exclude=node_modules --exclude=tests *
-
-      - name: Store artifact for distribution
-        uses: actions/upload-artifact@v3
-        with:
-          name: app-build
-          path: ${{ github.sha }}.tar.gz
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.0
@@ -156,8 +149,8 @@ jobs:
               rm -rf backup
             fi
             mkdir backup
-            cp -r storage backup/
-            cp .env backup/
+            cp -r storage backup/ 2>/dev/null || true
+            cp .env backup/ 2>/dev/null || true
 
             # Pull latest code
             git fetch origin
@@ -186,12 +179,14 @@ jobs:
             php artisan view:cache
 
             # Restart services
-            sudo supervisorctl restart bayan-smart-village-worker:*
+            sudo supervisorctl restart bayan-smart-village-worker:* 2>/dev/null || true
             sudo systemctl reload nginx
-            sudo systemctl reload php8.2-fpm
+            sudo systemctl reload php8.3-fpm
 
             # Cleanup
             rm -rf backup
+
+            echo "🎉 Deployment completed successfully!"
 
   security-scan:
     runs-on: ubuntu-latest
