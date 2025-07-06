@@ -223,7 +223,7 @@ jobs:
                   exit 1
                 }
               fi
-
+              
               # Pull latest changes
               git pull origin main || {
                 echo "❌ Failed to pull latest changes"
@@ -241,12 +241,17 @@ jobs:
             # Install required tools if not available
             echo "🔧 Checking and installing required tools..."
 
-            # Update package list
+            # Update package list and install basic dependencies
             sudo apt-get update -qq
+            sudo apt-get install -y software-properties-common curl wget unzip git
 
             # Install PHP if not available
             if ! command -v php &> /dev/null; then
               echo "🐘 Installing PHP and extensions..."
+              # Add PHP repository
+              sudo add-apt-repository ppa:ondrej/php -y
+              sudo apt-get update -qq
+              # Install PHP 8.3 and extensions
               sudo apt-get install -y php8.3 php8.3-cli php8.3-fpm php8.3-mysql php8.3-xml php8.3-curl php8.3-zip php8.3-mbstring php8.3-gd php8.3-bcmath php8.3-intl php8.3-sqlite3
             fi
 
