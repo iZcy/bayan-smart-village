@@ -168,7 +168,7 @@ jobs:
               exit 1
             }
 
-            # Check if git repository exists, if not initialize it
+            # Check if git repository exists and has proper remote
             if [ ! -d ".git" ]; then
               echo "🔧 Initializing git repository..."
               git init
@@ -177,6 +177,15 @@ jobs:
                 echo "❌ Failed to add remote origin"
                 exit 1
               }
+            else
+              # Check if origin remote exists
+              if ! git remote get-url origin >/dev/null 2>&1; then
+                echo "🔧 Adding missing origin remote..."
+                git remote add origin https://github.com/${{ github.repository }}.git || {
+                  echo "❌ Failed to add remote origin"
+                  exit 1
+                }
+              fi
             fi
 
             # Create backup
