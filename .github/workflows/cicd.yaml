@@ -258,14 +258,34 @@ jobs:
             # Install required tools if not available
             echo "🔧 Checking and installing required tools..."
 
-            # Wait for any automatic updates to finish
+            # Wait for any automatic updates to finish (with timeout)
             echo "⏳ Waiting for package manager to be available..."
+            WAIT_COUNT=0
+            MAX_WAIT=12  # Wait max 2 minutes (12 * 10 seconds)
+
             while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-              echo "Package manager is busy, waiting 10 seconds..."
+              if [ $WAIT_COUNT -ge $MAX_WAIT ]; then
+                echo "⚠️ Timeout waiting for package manager. Force killing processes..."
+                sudo killall unattended-upgrade || true
+                sudo killall dpkg || true
+                sudo killall apt-get || true
+                sudo killall apt || true
+                sleep 5
+                break
+              fi
+              echo "Package manager is busy, waiting 10 seconds... ($((WAIT_COUNT + 1))/$MAX_WAIT)"
               sleep 10
+              WAIT_COUNT=$((WAIT_COUNT + 1))
             done
 
-            # Kill any stuck unattended-upgrade processes (if safe to do so)
+            # Force cleanup if needed
+            echo "🧹 Cleaning up package manager locks..."
+            sudo rm -f /var/lib/dpkg/lock-frontend
+            sudo rm -f /var/lib/dpkg/lock
+            sudo rm -f /var/cache/apt/archives/lock
+            sudo rm -f /var/lib/apt/lists/lock
+
+            # Kill any stuck processes
             sudo pkill -f unattended-upgrade || true
             sudo dpkg --configure -a || true
 
