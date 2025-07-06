@@ -300,8 +300,26 @@ jobs:
               exit 1
             }
 
+            # Check if .env file exists, create from example if not
+            if [ ! -f ".env" ]; then
+              echo "📝 Creating .env file from .env.example..."
+              if [ -f ".env.example" ]; then
+                cp .env.example .env
+                echo "✅ .env file created successfully"
+              else
+                echo "❌ .env.example file not found. Please create .env manually."
+                exit 1
+              fi
+            fi
+
+            # Set directory permissions before changing ownership
+            echo "🔐 Setting directory permissions..."
+            chmod -R 755 storage bootstrap/cache || {
+              echo "⚠️ Warning: Failed to set some directory permissions"
+            }
+
             # Set correct ownership and permissions
-            echo "🔐 Setting final permissions..."
+            echo "🔐 Setting final ownership..."
             # Check if bayan-smart-village user exists, if not create it or use current user
             if id "bayan-smart-village" &>/dev/null; then
               sudo chown -R bayan-smart-village:bayan-smart-village /var/www/bayan-smart-village || {
@@ -322,21 +340,10 @@ jobs:
               fi
             fi
 
-            # Set directory permissions
-            chmod -R 755 storage bootstrap/cache || {
-              echo "⚠️ Warning: Failed to set directory permissions"
-            }
-
             # Restore storage files if backup exists
             if [ -d "backup/storage" ]; then
               echo "📁 Restoring storage files..."
               cp -r backup/storage/app/public/* storage/app/public/ 2>/dev/null || true
-            fi
-
-            # Check if .env file exists
-            if [ ! -f ".env" ]; then
-              echo "❌ .env file not found. Please create it."
-              exit 1
             fi
 
             # Run database migrations
