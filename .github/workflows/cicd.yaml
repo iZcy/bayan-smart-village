@@ -258,6 +258,17 @@ jobs:
             # Install required tools if not available
             echo "🔧 Checking and installing required tools..."
 
+            # Wait for any automatic updates to finish
+            echo "⏳ Waiting for package manager to be available..."
+            while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+              echo "Package manager is busy, waiting 10 seconds..."
+              sleep 10
+            done
+
+            # Kill any stuck unattended-upgrade processes (if safe to do so)
+            sudo pkill -f unattended-upgrade || true
+            sudo dpkg --configure -a || true
+
             # Update package list and install basic dependencies
             sudo apt-get update -qq
             sudo apt-get install -y software-properties-common curl wget unzip git
