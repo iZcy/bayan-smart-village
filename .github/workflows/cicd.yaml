@@ -142,9 +142,24 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
           script: |
-            cd /var/www/bayan-smart-village
+            set -e  # Exit on any error
+
+            echo "🚀 Starting deployment..."
+
+            # Navigate to project directory
+            cd /var/www/bayan-smart-village || {
+              echo "❌ Failed to navigate to project directory"
+              exit 1
+            }
+
+            # Check if git repository exists
+            if [ ! -d ".git" ]; then
+              echo "❌ Not a git repository. Please clone the repository first."
+              exit 1
+            fi
 
             # Create backup
+            echo "📦 Creating backup..."
             if [ -d "backup" ]; then
               rm -rf backup
             fi
@@ -152,41 +167,141 @@ jobs:
             cp -r storage backup/ 2>/dev/null || true
             cp .env backup/ 2>/dev/null || true
 
-            # Pull latest code
-            git fetch origin
-            git reset --hard origin/main
+            # Stash any local changes
+            echo "💾 Stashing local changes..."
+            git stash push -m "Auto-stash before deployment $(date)"
 
-            # Install dependencies
-            /usr/local/bin/composer install --no-dev --optimize-autoloader --no-interaction
-            npm ci
-            npm run build
+            # Fetch and pull latest code
+            echo "⬇️ Pulling latest code..."
+            git fetch origin main || {
+              echo "❌ Failed to fetch from origin"
+              exit 1
+            }
 
-            # Set permissions
-            sudo chown -R bayan-smart-village:bayan-smart-village /var/www/bayan-smart-village
-            chmod -R 755 storage bootstrap/cache
+            # Check if we're on main branch, if not switch to it
+            CURRENT_BRANCH=$(git branch --show-current)
+            if [ "$CURRENT_BRANCH" != "main" ]; then
+              echo "🔄 Switching to main branch..."
+              git checkout main || {
+                echo "❌ Failed to checkout main branch"
+                exit 1
+              }
+            fi
 
-            # Restore storage if needed
+            # Pull latest changes
+            git pull origin main || {
+              echo "❌ Failed to pull latest changes"
+              exit 1
+            }
+
+            # Check if composer is available
+            if ! command -v composer &> /dev/null; then
+              echo "❌ Composer not found. Please install composer."
+              exit 1
+            fi
+
+            # Install PHP dependencies
+            echo "📦 Installing PHP dependencies..."
+            composer install --no-dev --optimize-autoloader --no-interaction || {
+              echo "❌ Failed to install PHP dependencies"
+              exit 1
+            }
+
+            # Check if npm is available
+            if ! command -v npm &> /dev/null; then
+              echo "❌ NPM not found. Please install Node.js and npm."
+              exit 1
+            fi
+
+            # Install NPM dependencies
+            echo "📦 Installing NPM dependencies..."
+            if [ -f package-lock.json ]; then
+              npm ci || {
+                echo "❌ Failed to install NPM dependencies"
+                exit 1
+              }
+            else
+              npm install || {
+                echo "❌ Failed to install NPM dependencies"
+                exit 1
+              }
+            fi
+
+            # Build assets
+            echo "🔨 Building assets..."
+            npm run build || {
+              echo "❌ Failed to build assets"
+              exit 1
+            }
+
+            # Set correct ownership
+            echo "🔐 Setting permissions..."
+            sudo chown -R bayan-smart-village:bayan-smart-village /var/www/bayan-smart-village || {
+              echo "⚠️ Warning: Failed to set ownership"
+            }
+
+            # Set directory permissions
+            chmod -R 755 storage bootstrap/cache || {
+              echo "⚠️ Warning: Failed to set directory permissions"
+            }
+
+            # Restore storage files if backup exists
             if [ -d "backup/storage" ]; then
+              echo "📁 Restoring storage files..."
               cp -r backup/storage/app/public/* storage/app/public/ 2>/dev/null || true
             fi
 
-            # Run migrations
-            php artisan migrate --force
+            # Check if .env file exists
+            if [ ! -f ".env" ]; then
+              echo "❌ .env file not found. Please create it."
+              exit 1
+            fi
 
-            # Clear and cache
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
+            # Run database migrations
+            echo "🗄️ Running database migrations..."
+            php artisan migrate --force || {
+              echo "❌ Failed to run migrations"
+              exit 1
+            }
+
+            # Clear and optimize Laravel caches
+            echo "🧹 Clearing and optimizing caches..."
+            php artisan config:clear || true
+            php artisan route:clear || true
+            php artisan view:clear || true
+            php artisan cache:clear || true
+
+            php artisan config:cache || {
+              echo "⚠️ Warning: Failed to cache config"
+            }
+            php artisan route:cache || {
+              echo "⚠️ Warning: Failed to cache routes"
+            }
+            php artisan view:cache || {
+              echo "⚠️ Warning: Failed to cache views"
+            }
 
             # Restart services
-            sudo supervisorctl restart bayan-smart-village-worker:* 2>/dev/null || true
-            sudo systemctl reload nginx
-            sudo systemctl reload php8.3-fpm
+            echo "🔄 Restarting services..."
+            sudo supervisorctl restart bayan-smart-village-worker:* 2>/dev/null || {
+              echo "⚠️ Warning: Failed to restart supervisor workers"
+            }
 
-            # Cleanup
+            sudo systemctl reload nginx || {
+              echo "⚠️ Warning: Failed to reload nginx"
+            }
+
+            sudo systemctl reload php8.3-fpm || {
+              echo "⚠️ Warning: Failed to reload PHP-FPM"
+            }
+
+            # Cleanup backup
+            echo "🧹 Cleaning up..."
             rm -rf backup
 
             echo "🎉 Deployment completed successfully!"
+            echo "📅 Deployed at: $(date)"
+            echo "🔗 Git commit: $(git rev-parse --short HEAD)"
 
   security-scan:
     runs-on: ubuntu-latest
