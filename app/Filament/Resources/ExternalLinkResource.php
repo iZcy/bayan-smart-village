@@ -18,11 +18,11 @@ class ExternalLinkResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-link';
 
-    protected static ?string $navigationLabel = 'Links';
+    protected static ?string $navigationLabel = 'Short Links';
 
-    protected static ?string $modelLabel = 'Link';
+    protected static ?string $modelLabel = 'Short Link';
 
-    protected static ?string $pluralModelLabel = 'Links';
+    protected static ?string $pluralModelLabel = 'Short Links';
 
     protected static ?int $navigationSort = 5;
 
@@ -32,26 +32,23 @@ class ExternalLinkResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Link Information')
                     ->schema([
-                        Forms\Components\Select::make('place_id')
-                            ->relationship('place', 'name')
-                            ->required()
-                            ->searchable()
-                            ->preload()
-                            ->placeholder('Select a place')
-                            ->columnSpan(2),
-
                         Forms\Components\TextInput::make('label')
                             ->required()
                             ->maxLength(255)
                             ->placeholder('e.g., Instagram, WhatsApp, Website')
                             ->helperText('Display name for this link')
-                            ->columnSpan(1),
+                            ->columnSpan(2),
 
                         Forms\Components\TextInput::make('url')
                             ->required()
                             ->url()
                             ->placeholder('https://...')
                             ->helperText('Full URL including https://')
+                            ->columnSpanFull(),
+
+                        Forms\Components\Textarea::make('description')
+                            ->placeholder('Optional description for this link')
+                            ->rows(2)
                             ->columnSpanFull(),
 
                         Forms\Components\Select::make('icon')
@@ -84,16 +81,28 @@ class ExternalLinkResource extends Resource
                             ->placeholder('0')
                             ->helperText('Order in which links appear (0 = first)')
                             ->columnSpan(1),
+
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Active')
+                            ->default(true)
+                            ->helperText('Inactive links will return 404')
+                            ->columnSpan(1),
+
+                        Forms\Components\DateTimePicker::make('expires_at')
+                            ->label('Expires At')
+                            ->placeholder('Optional expiration date')
+                            ->helperText('Link will become inactive after this date')
+                            ->columnSpan(1),
                     ])
                     ->columns(3),
 
-                Forms\Components\Section::make('Subdomain Link Configuration')
-                    ->description('All links must have a subdomain and slug for the /l/ format')
+                Forms\Components\Section::make('Short Link Configuration')
+                    ->description('Configure your short link subdomain and slug')
                     ->schema([
                         Forms\Components\TextInput::make('subdomain')
                             ->required()
-                            ->placeholder('e.g., warung-bu-sari')
-                            ->helperText('Subdomain for the link (required)')
+                            ->placeholder('e.g., short, link, my-link')
+                            ->helperText('Subdomain for the short link')
                             ->unique(
                                 table: 'external_links',
                                 column: 'subdomain',
@@ -108,21 +117,35 @@ class ExternalLinkResource extends Resource
                                 'unique' => 'This subdomain and slug combination already exists.',
                             ])
                             ->live(onBlur: true)
+                            ->suffixAction(
+                                Forms\Components\Actions\Action::make('generate_subdomain')
+                                    ->icon('heroicon-o-arrow-path')
+                                    ->action(function (Forms\Set $set) {
+                                        $set('subdomain', ExternalLink::generateRandomSubdomain());
+                                    })
+                            )
                             ->columnSpan(1),
 
                         Forms\Components\TextInput::make('slug')
                             ->required()
-                            ->placeholder('e.g., contact_person, instagram')
-                            ->helperText('Slug for the /l/ path (required)')
+                            ->placeholder('e.g., instagram, contact, home')
+                            ->helperText('Slug for the /l/ path')
                             ->rules(['regex:/^[a-z0-9_-]+$/'])
                             ->validationMessages([
                                 'regex' => 'Slug can only contain lowercase letters, numbers, hyphens, and underscores.',
                             ])
                             ->live(onBlur: true)
+                            ->suffixAction(
+                                Forms\Components\Actions\Action::make('generate_slug')
+                                    ->icon('heroicon-o-arrow-path')
+                                    ->action(function (Forms\Set $set) {
+                                        $set('slug', ExternalLink::generateRandomSlug());
+                                    })
+                            )
                             ->columnSpan(1),
 
                         Forms\Components\Placeholder::make('preview_url')
-                            ->label('Generated URL')
+                            ->label('Generated Short URL')
                             ->content(function (Forms\Get $get) {
                                 $subdomain = $get('subdomain');
                                 $slug = $get('slug');
@@ -145,20 +168,13 @@ class ExternalLinkResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('place.name')
-                    ->searchable()
-                    ->sortable()
-                    ->weight('medium')
-                    ->badge()
-                    ->color('primary'),
-
                 Tables\Columns\TextColumn::make('label')
                     ->searchable()
                     ->sortable()
                     ->weight('medium'),
 
                 Tables\Columns\TextColumn::make('subdomain_url')
-                    ->label('/l/ Link')
+                    ->label('Short URL')
                     ->limit(50)
                     ->url(fn($record) => $record->subdomain_url, shouldOpenInNewTab: true)
                     ->icon('heroicon-o-arrow-top-right-on-square')
@@ -166,7 +182,7 @@ class ExternalLinkResource extends Resource
                     ->placeholder('Not configured')
                     ->color('success')
                     ->copyable()
-                    ->copyMessage('Link copied!')
+                    ->copyMessage('Short URL copied!')
                     ->weight('medium'),
 
                 Tables\Columns\TextColumn::make('url')
@@ -178,16 +194,28 @@ class ExternalLinkResource extends Resource
                     ->iconPosition('after')
                     ->toggleable(),
 
+                Tables\Columns\TextColumn::make('click_count')
+                    ->label('Clicks')
+                    ->sortable()
+                    ->alignCenter()
+                    ->badge()
+                    ->color('info'),
+
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Active')
+                    ->boolean()
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('icon')
                     ->badge()
                     ->color('gray'),
 
-                Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Order')
+                Tables\Columns\TextColumn::make('expires_at')
+                    ->label('Expires')
+                    ->dateTime()
                     ->sortable()
-                    ->alignCenter()
-                    ->badge()
-                    ->color('warning'),
+                    ->placeholder('Never')
+                    ->color(fn($record) => $record->expires_at && strtotime($record->expires_at) < time() ? 'danger' : 'gray'),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -195,11 +223,6 @@ class ExternalLinkResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('place')
-                    ->relationship('place', 'name')
-                    ->searchable()
-                    ->preload(),
-
                 Tables\Filters\SelectFilter::make('icon')
                     ->options([
                         'instagram' => 'Instagram',
@@ -210,10 +233,15 @@ class ExternalLinkResource extends Resource
                         'shopee' => 'Shopee',
                     ]),
 
-                Tables\Filters\Filter::make('configured_links')
-                    ->label('Configured Links')
-                    ->query(fn($query) => $query->whereNotNull('subdomain')->whereNotNull('slug'))
-                    ->default(),
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Status')
+                    ->placeholder('All links')
+                    ->trueLabel('Active only')
+                    ->falseLabel('Inactive only'),
+
+                Tables\Filters\Filter::make('expired')
+                    ->label('Expired Links')
+                    ->query(fn($query) => $query->whereNotNull('expires_at')->where('expires_at', '<', now())),
             ])
             ->actions([
                 Tables\Actions\Action::make('visit_link')
@@ -222,22 +250,17 @@ class ExternalLinkResource extends Resource
                     ->color('success')
                     ->url(fn($record) => $record->subdomain_url)
                     ->openUrlInNewTab()
-                    ->visible(fn($record) => $record->hasSubdomainRouting()),
+                    ->visible(fn($record) => $record->hasSubdomainRouting() && $record->is_active),
 
-                // FIXED: Remove the problematic copy action
-                // Tables\Actions\Action::make('copy_link')
-                //     ->label('Copy')
-                //     ->icon('heroicon-o-clipboard')
-                //     ->color('gray')
-                //     ->action(function ($record) {
-                //         return $record->subdomain_url;
-                //     })
-                //     ->visible(fn($record) => $record->hasSubdomainRouting())
-                //     ->extraAttributes([
-                //         'x-on:click' => 'navigator.clipboard.writeText("' . '" + $el.dataset.url + ""); $dispatch("copied");',
-                //         'x-data' => '{}',
-                //         'data-url' => fn($record) => $record->subdomain_url, // This closure causes the error
-                //     ]),
+                Tables\Actions\Action::make('copy_link')
+                    ->label('Copy')
+                    ->icon('heroicon-o-clipboard-document')
+                    ->color('gray')
+                    ->action(function ($record) {
+                        // This would need JavaScript to actually copy
+                        return redirect()->back();
+                    })
+                    ->visible(fn($record) => $record->hasSubdomainRouting()),
 
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make()
@@ -248,23 +271,34 @@ class ExternalLinkResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
 
+                    Tables\Actions\BulkAction::make('toggle_active')
+                        ->label('Toggle Active')
+                        ->icon('heroicon-o-eye-slash')
+                        ->color('warning')
+                        ->action(function ($records) {
+                            foreach ($records as $record) {
+                                $record->update(['is_active' => !$record->is_active]);
+                            }
+                        }),
+
                     Tables\Actions\BulkAction::make('export_links')
                         ->label('Export Links')
                         ->icon('heroicon-o-document-arrow-down')
                         ->color('gray')
                         ->action(function ($records) {
-                            $csv = "Place,Label,Subdomain URL,Target URL\n";
+                            $csv = "Label,Short URL,Target URL,Clicks,Status\n";
                             foreach ($records as $record) {
-                                $csv .= "\"{$record->place->name}\",\"{$record->label}\",\"{$record->subdomain_url}\",\"{$record->url}\"\n";
+                                $status = $record->is_active ? 'Active' : 'Inactive';
+                                $csv .= "\"{$record->label}\",\"{$record->subdomain_url}\",\"{$record->url}\",\"{$record->click_count}\",\"{$status}\"\n";
                             }
 
                             return response()->streamDownload(function () use ($csv) {
                                 echo $csv;
-                            }, 'external-links-' . now()->format('Y-m-d') . '.csv');
+                            }, 'short-links-' . now()->format('Y-m-d') . '.csv');
                         }),
                 ]),
             ])
-            ->defaultSort('sort_order', 'asc');
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getPages(): array

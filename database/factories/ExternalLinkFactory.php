@@ -4,7 +4,6 @@
 namespace Database\Factories;
 
 use App\Models\ExternalLink;
-use App\Models\SmeTourismPlace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ExternalLinkFactory extends Factory
@@ -15,100 +14,79 @@ class ExternalLinkFactory extends Factory
     {
         $linkTypes = [
             [
-                'label' => 'Instagram',
+                'label' => 'Instagram Profile',
                 'icon' => 'instagram',
                 'url' => 'https://instagram.com/' . $this->faker->userName,
-                'slug' => 'instagram',
             ],
             [
-                'label' => 'WhatsApp',
+                'label' => 'WhatsApp Contact',
                 'icon' => 'whatsapp',
                 'url' => 'https://wa.me/62' . $this->faker->randomNumber(8, true),
-                'slug' => 'contact_person',
             ],
             [
                 'label' => 'Website',
                 'icon' => 'website',
                 'url' => 'https://www.' . $this->faker->domainName,
-                'slug' => 'website',
             ],
             [
-                'label' => 'Tokopedia',
+                'label' => 'Tokopedia Store',
                 'icon' => 'tokopedia',
                 'url' => 'https://tokopedia.com/' . $this->faker->userName,
-                'slug' => 'tokopedia',
             ],
             [
-                'label' => 'Shopee',
+                'label' => 'Shopee Store',
                 'icon' => 'shopee',
                 'url' => 'https://shopee.co.id/' . $this->faker->userName,
-                'slug' => 'shopee',
             ],
             [
-                'label' => 'Menu Online',
+                'label' => 'Online Menu',
                 'icon' => 'link',
                 'url' => 'https://example.com/menu/' . $this->faker->slug,
-                'slug' => 'menu',
             ],
             [
-                'label' => 'Facebook',
+                'label' => 'Facebook Page',
                 'icon' => 'facebook',
                 'url' => 'https://facebook.com/' . $this->faker->userName,
-                'slug' => 'facebook',
             ],
             [
-                'label' => 'Google Maps',
+                'label' => 'Google Maps Location',
                 'icon' => 'maps',
                 'url' => 'https://maps.google.com/search/' . urlencode($this->faker->address),
-                'slug' => 'lokasi',
             ],
         ];
 
         $linkData = $this->faker->randomElement($linkTypes);
 
-        // Default: create a place and use its slug
-        $place = SmeTourismPlace::inRandomOrder()->first() ?? SmeTourismPlace::factory()->create();
-
         return [
-            'place_id' => $place->id,
             'label' => $linkData['label'],
             'url' => $linkData['url'],
             'icon' => $linkData['icon'],
-            'subdomain' => $place->slug, // This should NOT be null
-            'slug' => $linkData['slug'],
+            'subdomain' => $this->faker->unique()->slug(2),
+            'slug' => $this->faker->unique()->slug(1),
             'sort_order' => $this->faker->numberBetween(0, 10),
+            'description' => $this->faker->optional()->sentence(),
+            'click_count' => $this->faker->numberBetween(0, 100),
+            'is_active' => $this->faker->boolean(90), // 90% chance of being active
+            'expires_at' => $this->faker->optional(0.2)->dateTimeBetween('now', '+1 year'), // 20% chance of having expiration
         ];
-    }
-
-    // Method to create links for a specific place
-    public function forPlace(SmeTourismPlace $place): static
-    {
-        return $this->state(function (array $attributes) use ($place) {
-            return [
-                'place_id' => $place->id,
-                'subdomain' => $place->slug, // Explicitly set subdomain
-            ];
-        });
     }
 
     // Method to create a specific type of link
     public function instagram(): static
     {
         return $this->state(fn(array $attributes) => [
-            'label' => 'Instagram',
+            'label' => 'Instagram Profile',
             'icon' => 'instagram',
             'url' => 'https://instagram.com/' . $this->faker->userName,
-            'slug' => 'instagram',
         ]);
     }
 
     public function whatsapp(): static
     {
         return $this->state(fn(array $attributes) => [
-            'label' => 'WhatsApp',
+            'label' => 'WhatsApp Contact',
             'icon' => 'whatsapp',
             'url' => 'https://wa.me/62' . $this->faker->randomNumber(8, true),
-            'slug' => 'contact_person',
         ]);
     }
 
@@ -118,47 +96,63 @@ class ExternalLinkFactory extends Factory
             'label' => 'Website',
             'icon' => 'website',
             'url' => 'https://www.' . $this->faker->domainName,
-            'slug' => 'website',
         ]);
     }
 
     public function tokopedia(): static
     {
         return $this->state(fn(array $attributes) => [
-            'label' => 'Tokopedia',
+            'label' => 'Tokopedia Store',
             'icon' => 'tokopedia',
             'url' => 'https://tokopedia.com/' . $this->faker->userName,
-            'slug' => 'tokopedia',
         ]);
     }
 
     public function shopee(): static
     {
         return $this->state(fn(array $attributes) => [
-            'label' => 'Shopee',
+            'label' => 'Shopee Store',
             'icon' => 'shopee',
             'url' => 'https://shopee.co.id/' . $this->faker->userName,
-            'slug' => 'shopee',
         ]);
     }
 
     public function menu(): static
     {
         return $this->state(fn(array $attributes) => [
-            'label' => 'Menu Online',
+            'label' => 'Online Menu',
             'icon' => 'link',
             'url' => 'https://example.com/menu/' . $this->faker->slug,
-            'slug' => 'menu',
         ]);
     }
 
     public function maps(): static
     {
         return $this->state(fn(array $attributes) => [
-            'label' => 'Google Maps',
+            'label' => 'Google Maps Location',
             'icon' => 'maps',
             'url' => 'https://maps.google.com/search/' . urlencode($this->faker->address),
-            'slug' => 'lokasi',
+        ]);
+    }
+
+    public function active(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'is_active' => true,
+        ]);
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'is_active' => false,
+        ]);
+    }
+
+    public function withExpiration(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'expires_at' => $this->faker->dateTimeBetween('now', '+1 year'),
         ]);
     }
 }

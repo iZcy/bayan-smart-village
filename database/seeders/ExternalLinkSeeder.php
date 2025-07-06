@@ -4,7 +4,6 @@
 namespace Database\Seeders;
 
 use App\Models\ExternalLink;
-use App\Models\SmeTourismPlace;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -12,118 +11,55 @@ class ExternalLinkSeeder extends Seeder
 {
     public function run(): void
     {
-        // Get all places
-        $places = SmeTourismPlace::all();
+        $this->command->info('Creating sample shortened links...');
 
-        if ($places->isEmpty()) {
-            $this->command->warn('No places found. Skipping external links seeding.');
-            return;
-        }
-
-        foreach ($places as $place) {
-            // Generate subdomain from slug or create random one
-            $subdomain = $this->getOrCreateSubdomain($place);
-
-            $this->command->info("Creating links for: {$place->name} (subdomain: {$subdomain})");
-
-            // Create standard links for each place
-            $this->createStandardLinks($place, $subdomain);
-        }
-    }
-
-    private function getOrCreateSubdomain(SmeTourismPlace $place): string
-    {
-        // If place has a slug, use it
-        if (!empty($place->slug)) {
-            return $place->slug;
-        }
-
-        // If place has no slug, generate one from name
-        if (!empty($place->name)) {
-            $slug = Str::slug($place->name);
-
-            // Make sure it's unique by adding random suffix if needed
-            $originalSlug = $slug;
-            $counter = 1;
-
-            while (ExternalLink::where('subdomain', $slug)->exists()) {
-                $slug = $originalSlug . '-' . $counter;
-                $counter++;
-            }
-
-            $this->command->info("  Generated subdomain from name: {$slug}");
-            return $slug;
-        }
-
-        // Last resort: completely random slug
-        $randomSlug = 'place-' . fake()->unique()->slug(2);
-
-        // Ensure uniqueness
-        while (ExternalLink::where('subdomain', $randomSlug)->exists()) {
-            $randomSlug = 'place-' . fake()->unique()->slug(2);
-        }
-
-        $this->command->warn("  Using random subdomain: {$randomSlug}");
-        return $randomSlug;
-    }
-
-    private function createStandardLinks(SmeTourismPlace $place, string $subdomain): void
-    {
-        $links = [
+        $sampleLinks = [
             [
-                'label' => 'WhatsApp',
-                'icon' => 'whatsapp',
-                'url' => 'https://wa.me/62' . fake()->randomNumber(8, true),
-                'slug' => 'contact_person',
-                'sort_order' => 0,
-            ],
-            [
-                'label' => 'Instagram',
+                'label' => 'Company Instagram',
+                'url' => 'https://instagram.com/kecamatanbayan',
                 'icon' => 'instagram',
-                'url' => 'https://instagram.com/' . fake()->userName,
+                'subdomain' => 'official',
                 'slug' => 'instagram',
-                'sort_order' => 1,
+                'description' => 'Official Instagram account',
             ],
             [
-                'label' => 'Website',
+                'label' => 'Contact WhatsApp',
+                'url' => 'https://wa.me/6281234567890',
+                'icon' => 'whatsapp',
+                'subdomain' => 'contact',
+                'slug' => 'whatsapp',
+                'description' => 'Contact us via WhatsApp',
+            ],
+            [
+                'label' => 'Main Website',
+                'url' => 'https://kecamatanbayan.id',
                 'icon' => 'website',
-                'url' => 'https://www.' . fake()->domainName,
-                'slug' => 'website',
-                'sort_order' => 2,
+                'subdomain' => 'www',
+                'slug' => 'home',
+                'description' => 'Main website homepage',
+            ],
+            [
+                'label' => 'YouTube Channel',
+                'url' => 'https://youtube.com/@kecamatanbayan',
+                'icon' => 'youtube',
+                'subdomain' => 'media',
+                'slug' => 'youtube',
+                'description' => 'Official YouTube channel',
+            ],
+            [
+                'label' => 'Facebook Page',
+                'url' => 'https://facebook.com/kecamatanbayan',
+                'icon' => 'facebook',
+                'subdomain' => 'social',
+                'slug' => 'facebook',
+                'description' => 'Official Facebook page',
             ],
         ];
 
-        // Add category-specific links
-        if ($place->category && $place->category->type === 'sme') {
-            $links[] = [
-                'label' => 'Tokopedia',
-                'icon' => 'tokopedia',
-                'url' => 'https://tokopedia.com/' . fake()->userName,
-                'slug' => 'tokopedia',
-                'sort_order' => 3,
-            ];
-            $links[] = [
-                'label' => 'Menu Online',
-                'icon' => 'link',
-                'url' => 'https://example.com/menu/' . fake()->slug,
-                'slug' => 'menu',
-                'sort_order' => 4,
-            ];
-        } else {
-            $links[] = [
-                'label' => 'Google Maps',
-                'icon' => 'maps',
-                'url' => 'https://maps.google.com/search/' . urlencode($place->address ?? 'Lombok'),
-                'slug' => 'lokasi',
-                'sort_order' => 3,
-            ];
-        }
-
-        // Create the links directly
-        foreach ($links as $linkData) {
+        foreach ($sampleLinks as $index => $linkData) {
             try {
-                // Check for duplicate subdomain+slug combination
-                $existing = ExternalLink::where('subdomain', $subdomain)
+                // Check for existing combination
+                $existing = ExternalLink::where('subdomain', $linkData['subdomain'])
                     ->where('slug', $linkData['slug'])
                     ->first();
 
@@ -132,20 +68,43 @@ class ExternalLinkSeeder extends Seeder
                     continue;
                 }
 
-                ExternalLink::create([
-                    'place_id' => $place->id,
+                $link = ExternalLink::create([
                     'label' => $linkData['label'],
                     'url' => $linkData['url'],
                     'icon' => $linkData['icon'],
-                    'subdomain' => $subdomain,
+                    'subdomain' => $linkData['subdomain'],
                     'slug' => $linkData['slug'],
-                    'sort_order' => $linkData['sort_order'],
+                    'description' => $linkData['description'],
+                    'sort_order' => $index,
+                    'is_active' => true,
                 ]);
 
-                $this->command->info("  ✓ Created {$linkData['label']} link: {$subdomain}.kecamatanbayan.id/l/{$linkData['slug']}");
+                $shortUrl = $link->subdomain_url;
+                $this->command->info("  ✓ Created {$linkData['label']}: {$shortUrl}");
             } catch (\Exception $e) {
-                $this->command->error("  ✗ Failed to create {$linkData['label']} link: " . $e->getMessage());
+                $this->command->error("  ✗ Failed to create {$linkData['label']}: " . $e->getMessage());
             }
         }
+
+        // Create some random links
+        $this->command->info('Creating random links...');
+
+        for ($i = 0; $i < 10; $i++) {
+            try {
+                $subdomain = ExternalLink::generateRandomSubdomain();
+                $slug = ExternalLink::generateRandomSlug();
+
+                $link = ExternalLink::factory()->create([
+                    'subdomain' => $subdomain,
+                    'slug' => $slug,
+                ]);
+
+                $this->command->info("  ✓ Created random link: {$link->subdomain_url}");
+            } catch (\Exception $e) {
+                $this->command->warn("  ⚠ Failed to create random link: " . $e->getMessage());
+            }
+        }
+
+        $this->command->info('External link seeding completed!');
     }
 }

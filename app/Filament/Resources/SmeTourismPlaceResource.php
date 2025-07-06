@@ -163,12 +163,6 @@ class SmeTourismPlaceResource extends Resource
                     ->badge()
                     ->color('gray'),
 
-                Tables\Columns\TextColumn::make('external_links_count')
-                    ->counts('externalLinks')
-                    ->label('Links')
-                    ->badge()
-                    ->color('primary'),
-
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

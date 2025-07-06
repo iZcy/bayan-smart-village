@@ -1,22 +1,16 @@
 <?php
-// routes/web.php
+// routes/web.php (add these routes)
 
 use App\Http\Controllers\ExternalLinkController;
 use Illuminate\Support\Facades\Route;
 
-// Subdomain routes for external links with /l/ prefix
-Route::domain('{subdomain}.' . config('app.domain'))->group(function () {
-    // Only /l/{slug} format is supported now
-    Route::get('/l/{slug}', [ExternalLinkController::class, 'redirect'])
-        ->name('external_link.subdomain.l');
+// Short link redirect route (should be in your subdomain route group)
+Route::get('/l/{slug}', [ExternalLinkController::class, 'redirect'])
+    ->name('short-link.redirect');
 
-    // Optional: Redirect root to main place page or 404
-    Route::get('/', function (string $subdomain) {
-        // You could redirect to place page or show 404
-        abort(404, 'Please use the full link format: ' . $subdomain . '.' . config('app.domain') . '/l/{slug}');
-    })->name('external_link.subdomain.root');
+// Optional: API routes for programmatic access
+Route::prefix('api/links')->name('api.links.')->group(function () {
+    Route::get('/', [ExternalLinkController::class, 'index'])->name('index');
+    Route::post('/', [ExternalLinkController::class, 'store'])->name('store');
+    Route::get('/{subdomain}/{slug}/stats', [ExternalLinkController::class, 'stats'])->name('stats');
 });
-
-// Fallback routes (for development/testing)
-Route::get('/fallback/{subdomain}/l/{slug}', [ExternalLinkController::class, 'redirect'])
-    ->name('external_link.fallback');

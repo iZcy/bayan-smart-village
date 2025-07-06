@@ -1,11 +1,9 @@
 <?php
 // app/Models/ExternalLink.php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ExternalLink extends Model
@@ -13,25 +11,20 @@ class ExternalLink extends Model
     use HasUuids, HasFactory;
 
     protected $fillable = [
-        'place_id',
         'label',
         'url',
         'icon',
         'subdomain',
         'slug',
         'sort_order',
+        'description', // Optional description for the link
     ];
 
     protected $casts = [
         'sort_order' => 'integer',
     ];
 
-    public function place(): BelongsTo
-    {
-        return $this->belongsTo(SmeTourismPlace::class, 'place_id');
-    }
-
-    // Updated: Get the full subdomain URL with /l/ prefix
+    // Get the full subdomain URL with /l/ prefix
     public function getSubdomainUrlAttribute(): ?string
     {
         if (!$this->subdomain || !$this->slug) {
@@ -46,11 +39,9 @@ class ExternalLink extends Model
     public function getFormattedUrlAttribute(): string
     {
         $url = $this->url;
-
         if (!str_starts_with($url, 'http://') && !str_starts_with($url, 'https://')) {
             $url = 'https://' . $url;
         }
-
         return $url;
     }
 
@@ -70,5 +61,25 @@ class ExternalLink extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order')->orderBy('created_at');
+    }
+
+    // Generate a random subdomain if not provided
+    public static function generateRandomSubdomain(): string
+    {
+        do {
+            $subdomain = 'link-' . \Illuminate\Support\Str::random(6);
+        } while (self::where('subdomain', $subdomain)->exists());
+
+        return strtolower($subdomain);
+    }
+
+    // Generate a random slug if not provided
+    public static function generateRandomSlug(): string
+    {
+        do {
+            $slug = \Illuminate\Support\Str::random(8);
+        } while (self::where('slug', $slug)->exists());
+
+        return strtolower($slug);
     }
 }
