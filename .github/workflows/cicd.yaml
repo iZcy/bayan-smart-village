@@ -223,7 +223,7 @@ jobs:
                   exit 1
                 }
               fi
-
+              
               # Pull latest changes
               git pull origin main || {
                 echo "❌ Failed to pull latest changes"
@@ -238,10 +238,24 @@ jobs:
               }
             fi
 
-            # Check if composer is available
+            # Install required tools if not available
+            echo "🔧 Checking and installing required tools..."
+
+            # Install composer if not available
             if ! command -v composer &> /dev/null; then
-              echo "❌ Composer not found. Please install composer."
-              exit 1
+              echo "📦 Installing Composer..."
+              cd /tmp
+              curl -sS https://getcomposer.org/installer | php
+              sudo mv composer.phar /usr/local/bin/composer
+              sudo chmod +x /usr/local/bin/composer
+              cd /var/www/bayan-smart-village
+            fi
+
+            # Install Node.js and npm if not available
+            if ! command -v npm &> /dev/null; then
+              echo "📦 Installing Node.js and NPM..."
+              curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+              sudo apt-get install -y nodejs
             fi
 
             # Install PHP dependencies
@@ -250,12 +264,6 @@ jobs:
               echo "❌ Failed to install PHP dependencies"
               exit 1
             }
-
-            # Check if npm is available
-            if ! command -v npm &> /dev/null; then
-              echo "❌ NPM not found. Please install Node.js and npm."
-              exit 1
-            fi
 
             # Install NPM dependencies
             echo "📦 Installing NPM dependencies..."
