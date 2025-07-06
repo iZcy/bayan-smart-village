@@ -258,66 +258,87 @@ jobs:
             # Install required tools if not available
             echo "🔧 Checking and installing required tools..."
 
-            # Wait for any automatic updates to finish (with timeout)
-            echo "⏳ Waiting for package manager to be available..."
-            WAIT_COUNT=0
-            MAX_WAIT=12  # Wait max 2 minutes (12 * 10 seconds)
-
-            while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-              if [ $WAIT_COUNT -ge $MAX_WAIT ]; then
-                echo "⚠️ Timeout waiting for package manager. Force killing processes..."
-                sudo killall unattended-upgrade || true
-                sudo killall dpkg || true
-                sudo killall apt-get || true
-                sudo killall apt || true
-                sleep 5
-                break
-              fi
-              echo "Package manager is busy, waiting 10 seconds... ($((WAIT_COUNT + 1))/$MAX_WAIT)"
-              sleep 10
-              WAIT_COUNT=$((WAIT_COUNT + 1))
-            done
-
-            # Force cleanup if needed
+            # Quick cleanup of package manager locks
             echo "🧹 Cleaning up package manager locks..."
-            sudo rm -f /var/lib/dpkg/lock-frontend
-            sudo rm -f /var/lib/dpkg/lock
-            sudo rm -f /var/cache/apt/archives/lock
-            sudo rm -f /var/lib/apt/lists/lock
-
-            # Kill any stuck processes
+            sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/cache/apt/archives/lock /var/lib/apt/lists/lock || true
             sudo pkill -f unattended-upgrade || true
             sudo dpkg --configure -a || true
 
-            # Update package list and install basic dependencies
-            sudo apt-get update -qq
-            sudo apt-get install -y software-properties-common curl wget unzip git
+            # Check if tools already exist to skip installation
+            NEED_INSTALL=false
 
-            # Install PHP if not available
             if ! command -v php &> /dev/null; then
-              echo "🐘 Installing PHP and extensions..."
-              # Add PHP repository
-              sudo add-apt-repository ppa:ondrej/php -y
-              sudo apt-get update -qq
-              # Install PHP 8.3 and extensions
-              sudo apt-get install -y php8.3 php8.3-cli php8.3-fpm php8.3-mysql php8.3-xml php8.3-curl php8.3-zip php8.3-mbstring php8.3-gd php8.3-bcmath php8.3-intl php8.3-sqlite3
+              echo "🐘 PHP not found, will install..."
+              NEED_INSTALL=true
+            else
+              echo "✅ PHP already installed: $(php --version | head -n1)"
             fi
 
-            # Install composer if not available
             if ! command -v composer &> /dev/null; then
-              echo "📦 Installing Composer..."
-              cd /tmp
-              curl -sS https://getcomposer.org/installer | php
-              sudo mv composer.phar /usr/local/bin/composer
-              sudo chmod +x /usr/local/bin/composer
-              cd /var/www/bayan-smart-village
+              echo "📦 Composer not found, will install..."
+              NEED_INSTALL=true
+            else
+              echo "✅ Composer already installed: $(composer --version | head -n1)"
             fi
 
-            # Install Node.js and npm if not available
             if ! command -v npm &> /dev/null; then
-              echo "📦 Installing Node.js and NPM..."
-              curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-              sudo apt-get install -y nodejs
+              echo "📦 Node.js/NPM not found, will install..."
+              NEED_INSTALL=true
+            else
+              echo "✅ Node.js/NPM already installed: $(node --version) / $(npm --version)"
+            fi
+
+            # Only install if something is missing
+            if [ "$NEED_INSTALL" = true ]; then
+              echo "🔧 Installing missing tools..."
+
+              # Update package list and install basic dependencies
+              sudo apt-get update -qq || {
+                echo "⚠️ Failed to update package list, continuing anyway..."
+              }
+              sudo apt-get install -y software-properties-common curl wget unzip git || {
+                echo "⚠️ Failed to install basic tools, continuing anyway..."
+              }
+
+              # Install PHP if not available
+              if ! command -v php &> /dev/null; then
+                echo "🐘 Installing PHP and extensions..."
+                # Add PHP repository
+                sudo add-apt-repository ppa:ondrej/php -y || true
+                sudo apt-get update -qq || true
+                # Install PHP 8.3 and extensions
+                sudo apt-get install -y php8.3 php8.3-cli php8.3-fpm php8.3-mysql php8.3-xml php8.3-curl php8.3-zip php8.3-mbstring php8.3-gd php8.3-bcmath php8.3-intl php8.3-sqlite3 || {
+                  echo "⚠️ Failed to install PHP, continuing anyway..."
+                }
+              fi
+
+              # Install composer if not available
+              if ! command -v composer &> /dev/null; then
+                echo "📦 Installing Composer..."
+                cd /tmp
+                curl -sS https://getcomposer.org/installer | php || {
+                  echo "⚠️ Failed to download composer, continuing anyway..."
+                  cd /var/www/bayan-smart-village
+                }
+                if [ -f "/tmp/composer.phar" ]; then
+                  sudo mv /tmp/composer.phar /usr/local/bin/composer
+                  sudo chmod +x /usr/local/bin/composer
+                fi
+                cd /var/www/bayan-smart-village
+              fi
+
+              # Install Node.js and npm if not available
+              if ! command -v npm &> /dev/null; then
+                echo "📦 Installing Node.js and NPM..."
+                curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - || {
+                  echo "⚠️ Failed to add NodeJS repository, continuing anyway..."
+                }
+                sudo apt-get install -y nodejs || {
+                  echo "⚠️ Failed to install NodeJS, continuing anyway..."
+                }
+              fi
+            else
+              echo "✅ All required tools are already installed, skipping installation"
             fi
 
             # Install PHP dependencies
