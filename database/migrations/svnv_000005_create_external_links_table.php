@@ -10,16 +10,18 @@ return new class extends Migration
     {
         Schema::create('external_links', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            // Add village_id to link external links to villages
+
+            // Village relationship - now the primary way to determine domain
             $table->uuid('village_id')->nullable();
 
-            // Add place_id to link external links to specific places
+            // Place relationship (optional, links to specific places within a village)
             $table->uuid('place_id')->nullable();
 
             $table->string('label');
             $table->text('url');
             $table->string('icon')->nullable();
-            $table->string('subdomain');
+
+            // Only slug is needed now - subdomain comes from village
             $table->string('slug');
             $table->integer('sort_order')->default(0);
             $table->text('description')->nullable();
@@ -28,16 +30,15 @@ return new class extends Migration
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
 
-            // Ensure unique subdomain.domain/l/slug combinations
-            $table->unique(['subdomain', 'slug']);
-            $table->index(['subdomain', 'slug']);
-            $table->index('is_active');
+            // Ensure unique slug combinations
+            // For village links: village_id + slug must be unique
+            // For apex links: slug must be unique where village_id is null
+            $table->unique(['village_id', 'slug']);
 
-            // Add indexes for better performance
-            $table->index('village_id');
-            $table->index('place_id');
             $table->index(['village_id', 'is_active']);
             $table->index(['place_id', 'is_active']);
+            $table->index('slug');
+            $table->index('is_active');
 
             // Foreign key constraints
             $table->foreign('village_id')->references('id')->on('villages')->onDelete('cascade');

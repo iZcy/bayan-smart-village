@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Domain
+    |--------------------------------------------------------------------------
+    |
+    | This value is the domain of your application, which will be used to
+    | generate URLs and links within the application. It should be set to
+    | the root domain of your application, such as "example.com".
+    |
+    */
+    'domain' => env('APP_DOMAIN', 'kecamatanbayan.id'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

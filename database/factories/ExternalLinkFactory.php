@@ -1,9 +1,9 @@
 <?php
-// database/factories/ExternalLinkFactory.php
 
 namespace Database\Factories;
 
 use App\Models\ExternalLink;
+use App\Models\Village;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ExternalLinkFactory extends Factory
@@ -61,7 +61,6 @@ class ExternalLinkFactory extends Factory
             'label' => $linkData['label'],
             'url' => $linkData['url'],
             'icon' => $linkData['icon'],
-            'subdomain' => $this->faker->unique()->slug(2),
             'slug' => $this->faker->unique()->slug(1),
             'sort_order' => $this->faker->numberBetween(0, 10),
             'description' => $this->faker->optional()->sentence(),
@@ -69,6 +68,22 @@ class ExternalLinkFactory extends Factory
             'is_active' => $this->faker->boolean(90), // 90% chance of being active
             'expires_at' => $this->faker->optional(0.2)->dateTimeBetween('now', '+1 year'), // 20% chance of having expiration
         ];
+    }
+
+    // Method to create a link for a specific village
+    public function forVillage(Village $village): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'village_id' => $village->id,
+        ]);
+    }
+
+    // Method to create an apex domain link (no village)
+    public function apexDomain(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'village_id' => null,
+        ]);
     }
 
     // Method to create a specific type of link

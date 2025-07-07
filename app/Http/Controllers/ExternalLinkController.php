@@ -22,6 +22,7 @@ class ExternalLinkController extends Controller
                 // Look for link in this village
                 $link = ExternalLink::where('village_id', $village->id)
                     ->where('slug', $slug)
+                    ->active()
                     ->first();
 
                 if ($link) {
@@ -30,20 +31,10 @@ class ExternalLinkController extends Controller
             }
         }
 
-        // Fallback: Look for subdomain-based links (legacy)
-        if ($subdomain) {
-            $link = ExternalLink::where('subdomain', $subdomain)
-                ->where('slug', $slug)
-                ->first();
-
-            if ($link) {
-                return $this->processLinkRedirect($link, $request);
-            }
-        }
-
         // Fallback: Look for apex domain links (no village)
         $link = ExternalLink::whereNull('village_id')
             ->where('slug', $slug)
+            ->active()
             ->first();
 
         if ($link) {
@@ -68,16 +59,6 @@ class ExternalLinkController extends Controller
 
     private function processLinkRedirect(ExternalLink $link, Request $request)
     {
-        // Check if link is active
-        if (!$link->is_active) {
-            abort(410, "This short link has been deactivated");
-        }
-
-        // Check if link has expired
-        if ($link->expires_at && $link->expires_at->isPast()) {
-            abort(410, "This short link has expired");
-        }
-
         // Log the access and increment click count
         $this->logAccess($link, $request);
 
@@ -96,7 +77,6 @@ class ExternalLinkController extends Controller
             'label' => $link->label,
             'village_id' => $link->village_id,
             'village_name' => $link->village?->name,
-            'subdomain' => $link->subdomain,
             'slug' => $link->slug,
             'target_url' => $link->url,
             'user_agent' => $request->userAgent(),
@@ -116,29 +96,19 @@ class ExternalLinkController extends Controller
             'label' => 'required|string|max:255',
             'village_id' => 'sometimes|uuid|exists:villages,id',
             'place_id' => 'sometimes|uuid|exists:sme_tourism_places,id',
-            'subdomain' => 'sometimes|string|regex:/^[a-z0-9-]+$/',
             'slug' => 'sometimes|string|regex:/^[a-z0-9_-]+$/',
             'description' => 'sometimes|string',
             'icon' => 'sometimes|string',
             'expires_at' => 'sometimes|date|after:now',
         ]);
 
-        // Generate subdomain and slug if not provided
-        $subdomain = $validated['subdomain'] ?? ExternalLink::generateRandomSubdomain();
+        // Generate slug if not provided
         $slug = $validated['slug'] ?? ExternalLink::generateRandomSlug();
 
-        // Check for unique combination based on village or subdomain
-        if (isset($validated['village_id'])) {
-            // For village links, check uniqueness within village
-            $exists = ExternalLink::where('village_id', $validated['village_id'])
-                ->where('slug', $slug)
-                ->exists();
-        } else {
-            // For apex/subdomain links, check subdomain+slug combination
-            $exists = ExternalLink::where('subdomain', $subdomain)
-                ->where('slug', $slug)
-                ->exists();
-        }
+        // Check for unique slug within the domain
+        $exists = ExternalLink::where('village_id', $validated['village_id'] ?? null)
+            ->where('slug', $slug)
+            ->exists();
 
         if ($exists) {
             return response()->json([
@@ -152,7 +122,6 @@ class ExternalLinkController extends Controller
             'place_id' => $validated['place_id'] ?? null,
             'label' => $validated['label'],
             'url' => $validated['url'],
-            'subdomain' => $subdomain,
             'slug' => $slug,
             'description' => $validated['description'] ?? null,
             'icon' => $validated['icon'] ?? 'link',
@@ -170,7 +139,6 @@ class ExternalLinkController extends Controller
                 'target_url' => $link->formatted_url,
                 'village_id' => $link->village_id,
                 'village_name' => $link->village?->name,
-                'subdomain' => $link->subdomain,
                 'slug' => $link->slug,
                 'is_active' => $link->is_active,
                 'expires_at' => $link->expires_at,
@@ -192,8 +160,8 @@ class ExternalLinkController extends Controller
                 ->where('slug', $slug)
                 ->first();
         } else {
-            // Fallback to subdomain lookup
-            $link = ExternalLink::where('subdomain', $subdomain)
+            // Fallback to apex domain lookup
+            $link = ExternalLink::whereNull('village_id')
                 ->where('slug', $slug)
                 ->first();
         }
@@ -253,7 +221,6 @@ class ExternalLinkController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('label', 'like', "%{$search}%")
                     ->orWhere('url', 'like', "%{$search}%")
-                    ->orWhere('subdomain', 'like', "%{$search}%")
                     ->orWhere('slug', 'like', "%{$search}%");
             });
         }

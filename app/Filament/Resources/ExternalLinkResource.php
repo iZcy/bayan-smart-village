@@ -97,70 +97,58 @@ class ExternalLinkResource extends Resource
                     ])
                     ->columns(3),
 
-                Forms\Components\Section::make('Association')
-                    ->description('Link this to a village and/or specific place')
+                Forms\Components\Section::make('Domain & Association')
+                    ->description('Choose the domain and optionally link to specific places')
                     ->schema([
                         Forms\Components\Select::make('village_id')
-                            ->relationship('village', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->placeholder('Select village (optional)')
-                            ->helperText('Leave empty for apex domain links')
+                            ->label('Domain')
+                            ->options(function () {
+                                $options = ['apex' => 'Apex Domain (' . config('app.domain', 'kecamatanbayan.id') . ')'];
+
+                                $villages = Village::active()->orderBy('name')->get();
+                                foreach ($villages as $village) {
+                                    $options[$village->id] = "{$village->name} ({$village->full_domain})";
+                                }
+
+                                return $options;
+                            })
+                            ->placeholder('Select domain type')
+                            ->helperText('Choose apex domain for main site links, or village domain for village-specific links')
                             ->live()
                             ->afterStateUpdated(function (Forms\Set $set, $state) {
                                 // Clear place when village changes
                                 $set('place_id', null);
-                            }),
+
+                                // Handle apex domain selection
+                                if ($state === 'apex') {
+                                    $set('village_id', null);
+                                }
+                            })
+                            ->dehydrateStateUsing(fn($state) => $state === 'apex' ? null : $state),
 
                         Forms\Components\Select::make('place_id')
                             ->relationship(
                                 'place',
                                 'name',
-                                fn(Forms\Get $get) => $get('village_id')
+                                fn(Forms\Get $get) => $get('village_id') && $get('village_id') !== 'apex'
                                     ? SmeTourismPlace::where('village_id', $get('village_id'))
                                     : SmeTourismPlace::query()
                             )
                             ->searchable()
                             ->preload()
                             ->placeholder('Select place (optional)')
-                            ->helperText('Optionally link to a specific place'),
+                            ->helperText('Optionally link to a specific place')
+                            ->visible(fn(Forms\Get $get) => $get('village_id') && $get('village_id') !== 'apex'),
                     ])
                     ->columns(2),
 
                 Forms\Components\Section::make('Short Link Configuration')
-                    ->description('Configure your short link subdomain and slug')
+                    ->description('Configure your short link slug')
                     ->schema([
-                        Forms\Components\TextInput::make('subdomain')
-                            ->required()
-                            ->placeholder('e.g., short, link, my-link')
-                            ->helperText('Subdomain for the short link')
-                            ->unique(
-                                table: 'external_links',
-                                column: 'subdomain',
-                                ignoreRecord: true,
-                                modifyRuleUsing: function ($rule, callable $get) {
-                                    return $rule->where('slug', $get('slug'));
-                                }
-                            )
-                            ->rules(['regex:/^[a-z0-9-]+$/'])
-                            ->validationMessages([
-                                'regex' => 'Subdomain can only contain lowercase letters, numbers, and hyphens.',
-                                'unique' => 'This subdomain and slug combination already exists.',
-                            ])
-                            ->live(onBlur: true)
-                            ->suffixAction(
-                                Forms\Components\Actions\Action::make('generate_subdomain')
-                                    ->icon('heroicon-o-arrow-path')
-                                    ->action(function (Forms\Set $set) {
-                                        $set('subdomain', ExternalLink::generateRandomSubdomain());
-                                    })
-                            )
-                            ->columnSpan(1),
-
                         Forms\Components\TextInput::make('slug')
                             ->required()
                             ->placeholder('e.g., instagram, contact, home')
-                            ->helperText('Slug for the /l/ path')
+                            ->helperText('Slug for the /l/ path (must be unique per domain)')
                             ->rules(['regex:/^[a-z0-9_-]+$/'])
                             ->validationMessages([
                                 'regex' => 'Slug can only contain lowercase letters, numbers, hyphens, and underscores.',
@@ -173,33 +161,47 @@ class ExternalLinkResource extends Resource
                                         $set('slug', ExternalLink::generateRandomSlug());
                                     })
                             )
-                            ->columnSpan(1),
+                            ->unique(
+                                table: 'external_links',
+                                column: 'slug',
+                                ignoreRecord: true,
+                                modifyRuleUsing: function ($rule, callable $get) {
+                                    $villageId = $get('village_id');
+                                    if ($villageId === 'apex') {
+                                        $villageId = null;
+                                    }
+                                    return $rule->where('village_id', $villageId);
+                                }
+                            )
+                            ->validationMessages([
+                                'unique' => 'This slug already exists for the selected domain.',
+                            ]),
 
                         Forms\Components\Placeholder::make('preview_url')
                             ->label('Generated Short URL')
                             ->content(function (Forms\Get $get) {
-                                $subdomain = $get('subdomain');
                                 $slug = $get('slug');
                                 $villageId = $get('village_id');
 
-                                if (!$subdomain || !$slug) {
-                                    return 'Enter subdomain and slug to see preview';
+                                if (!$slug) {
+                                    return 'Enter slug to see preview';
                                 }
 
-                                if ($villageId) {
+                                if ($villageId && $villageId !== 'apex') {
                                     $village = Village::find($villageId);
                                     if ($village) {
                                         return "https://{$village->full_domain}/l/{$slug}";
                                     }
                                 }
 
+                                // Apex domain
                                 $domain = config('app.domain', 'kecamatanbayan.id');
-                                return "https://{$subdomain}.{$domain}/l/{$slug}";
+                                return "https://{$domain}/l/{$slug}";
                             })
                             ->extraAttributes(['class' => 'font-mono text-sm bg-gray-50 dark:bg-gray-800 p-2 rounded'])
                             ->columnSpanFull(),
                     ])
-                    ->columns(2),
+                    ->columns(1),
             ]);
     }
 
@@ -212,10 +214,10 @@ class ExternalLinkResource extends Resource
                     ->sortable()
                     ->weight('medium'),
 
-                Tables\Columns\TextColumn::make('village.name')
+                Tables\Columns\TextColumn::make('link_type')
+                    ->label('Domain')
                     ->badge()
-                    ->color('primary')
-                    ->placeholder('Apex Domain')
+                    ->color(fn($record) => $record->village ? 'primary' : 'warning')
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('place.name')
@@ -267,7 +269,7 @@ class ExternalLinkResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->placeholder('Never')
-                    ->color(fn($record) => $record->expires_at && strtotime($record->expires_at) < time() ? 'danger' : 'gray'),
+                    ->color(fn($record) => $record->expires_at && $record->expires_at->isPast() ? 'danger' : 'gray'),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -279,7 +281,7 @@ class ExternalLinkResource extends Resource
                     ->relationship('village', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All villages'),
+                    ->placeholder('All domains'),
 
                 Tables\Filters\SelectFilter::make('place')
                     ->relationship('place', 'name')
@@ -318,7 +320,7 @@ class ExternalLinkResource extends Resource
                     ->color('success')
                     ->url(fn($record) => $record->subdomain_url)
                     ->openUrlInNewTab()
-                    ->visible(fn($record) => $record->hasSubdomainRouting() && $record->is_active),
+                    ->visible(fn($record) => $record->hasValidRouting() && $record->is_active),
 
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make()

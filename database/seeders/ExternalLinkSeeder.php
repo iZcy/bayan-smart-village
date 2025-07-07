@@ -73,7 +73,6 @@ class ExternalLinkSeeder extends Seeder
                     'label' => $linkData['label'],
                     'url' => $linkData['url'],
                     'icon' => $linkData['icon'],
-                    'subdomain' => $village->slug, // Use village slug as subdomain
                     'slug' => $linkData['slug'],
                     'sort_order' => $index,
                     'is_active' => true,
@@ -95,21 +94,18 @@ class ExternalLinkSeeder extends Seeder
                 'label' => 'Main Website',
                 'url' => 'https://kecamatanbayan.id',
                 'icon' => 'website',
-                'subdomain' => 'www',
                 'slug' => 'home',
             ],
             [
                 'label' => 'Tourism Info',
                 'url' => 'https://tourism.kecamatanbayan.id',
                 'icon' => 'maps',
-                'subdomain' => 'visit',
                 'slug' => 'tourism',
             ],
             [
                 'label' => 'Government Portal',
                 'url' => 'https://pemda.lomboktimur.go.id',
                 'icon' => 'website',
-                'subdomain' => 'gov',
                 'slug' => 'portal',
             ],
         ];
@@ -121,7 +117,6 @@ class ExternalLinkSeeder extends Seeder
                     'label' => $linkData['label'],
                     'url' => $linkData['url'],
                     'icon' => $linkData['icon'],
-                    'subdomain' => $linkData['subdomain'],
                     'slug' => $linkData['slug'],
                     'sort_order' => $index,
                     'is_active' => true,
@@ -155,7 +150,6 @@ class ExternalLinkSeeder extends Seeder
                     'label' => $place->name . ' - Maps',
                     'url' => "https://maps.google.com/search/" . urlencode($place->address ?: $place->name),
                     'icon' => 'maps',
-                    'subdomain' => $place->village->slug,
                     'slug' => $slug,
                     'description' => "Google Maps location for {$place->name}",
                     'sort_order' => 10,
@@ -175,14 +169,26 @@ class ExternalLinkSeeder extends Seeder
             try {
                 $village = Village::active()->inRandomOrder()->first();
 
-                $link = ExternalLink::factory()->create([
-                    'village_id' => $village?->id,
-                    'subdomain' => $village ? $village->slug : ExternalLink::generateRandomSubdomain(),
-                ]);
+                $link = ExternalLink::factory()
+                    ->forVillage($village)
+                    ->create();
 
                 $this->command->info("  ✓ Created random link: {$link->label} -> {$link->subdomain_url}");
             } catch (\Exception $e) {
                 $this->command->warn("  ✗ Failed to create random link: " . $e->getMessage());
+            }
+        }
+
+        // Create some apex domain random links
+        for ($i = 0; $i < 3; $i++) {
+            try {
+                $link = ExternalLink::factory()
+                    ->apexDomain()
+                    ->create();
+
+                $this->command->info("  ✓ Created random apex link: {$link->label} -> {$link->subdomain_url}");
+            } catch (\Exception $e) {
+                $this->command->warn("  ✗ Failed to create random apex link: " . $e->getMessage());
             }
         }
     }

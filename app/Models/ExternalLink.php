@@ -17,7 +17,6 @@ class ExternalLink extends Model
         'label',
         'url',
         'icon',
-        'subdomain',
         'slug',
         'sort_order',
         'description',
@@ -44,10 +43,16 @@ class ExternalLink extends Model
         return $this->belongsTo(SmeTourismPlace::class, 'place_id');
     }
 
+    // Get the subdomain from the linked village
+    public function getSubdomainAttribute(): ?string
+    {
+        return $this->village ? $this->village->slug : null;
+    }
+
     // Get the full subdomain URL with /l/ prefix
     public function getSubdomainUrlAttribute(): ?string
     {
-        if (!$this->subdomain || !$this->slug) {
+        if (!$this->slug) {
             return null;
         }
 
@@ -56,9 +61,9 @@ class ExternalLink extends Model
             return "https://{$this->village->full_domain}/l/{$this->slug}";
         }
 
-        // Otherwise use the configured subdomain
+        // For apex domain links (no village)
         $domain = config('app.domain', 'kecamatanbayan.id');
-        return "https://{$this->subdomain}.{$domain}/l/{$this->slug}";
+        return "https://{$domain}/l/{$this->slug}";
     }
 
     // Get formatted original URL with protocol
@@ -71,16 +76,22 @@ class ExternalLink extends Model
         return $url;
     }
 
-    // Check if this link has subdomain routing
-    public function hasSubdomainRouting(): bool
+    // Check if this link has proper routing
+    public function hasValidRouting(): bool
     {
-        return !empty($this->subdomain) && !empty($this->slug);
+        return !empty($this->slug);
     }
 
-    // Scope for links with subdomain routing
-    public function scopeWithSubdomain($query)
+    // Check if this is an apex domain link (no village)
+    public function isApexDomainLink(): bool
     {
-        return $query->whereNotNull('subdomain')->whereNotNull('slug');
+        return is_null($this->village_id);
+    }
+
+    // Scope for links with proper routing
+    public function scopeWithValidRouting($query)
+    {
+        return $query->whereNotNull('slug');
     }
 
     // Scope for ordered links
@@ -101,14 +112,14 @@ class ExternalLink extends Model
         return $query->whereNull('village_id');
     }
 
-    // Generate a random subdomain if not provided
-    public static function generateRandomSubdomain(): string
+    // Scope for active links
+    public function scopeActive($query)
     {
-        do {
-            $subdomain = 'link-' . \Illuminate\Support\Str::random(6);
-        } while (self::where('subdomain', $subdomain)->exists());
-
-        return strtolower($subdomain);
+        return $query->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            });
     }
 
     // Generate a random slug if not provided
@@ -119,5 +130,25 @@ class ExternalLink extends Model
         } while (self::where('slug', $slug)->exists());
 
         return strtolower($slug);
+    }
+
+    // Get the effective domain for this link
+    public function getEffectiveDomainAttribute(): string
+    {
+        if ($this->village) {
+            return $this->village->full_domain;
+        }
+
+        return config('app.domain', 'kecamatanbayan.id');
+    }
+
+    // Get display text for the link type
+    public function getLinkTypeAttribute(): string
+    {
+        if ($this->village) {
+            return "Village: {$this->village->name}";
+        }
+
+        return 'Apex Domain';
     }
 }

@@ -73,6 +73,12 @@ class Village extends Model
         return $this->hasMany(ExternalLink::class)->orderBy('sort_order');
     }
 
+    // Get active external links
+    public function activeExternalLinks(): HasMany
+    {
+        return $this->externalLinks()->where('is_active', true);
+    }
+
     public function articles(): HasMany
     {
         return $this->hasMany(Article::class);

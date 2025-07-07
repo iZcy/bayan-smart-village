@@ -16,13 +16,13 @@ class ViewExternalLink extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('visit_subdomain')
+            Actions\Action::make('visit_link')
                 ->label('Visit Link')
                 ->icon('heroicon-o-arrow-top-right-on-square')
                 ->color('success')
                 ->url(fn() => $this->record->subdomain_url)
                 ->openUrlInNewTab()
-                ->visible(fn() => $this->record->hasSubdomainRouting()),
+                ->visible(fn() => $this->record->hasValidRouting()),
 
             Actions\EditAction::make()
                 ->icon('heroicon-m-pencil-square')
@@ -46,14 +46,20 @@ class ViewExternalLink extends ViewRecord
                             ->badge()
                             ->color('gray'),
 
+                        Infolists\Components\TextEntry::make('link_type')
+                            ->label('Domain Type')
+                            ->badge()
+                            ->color(fn($record) => $record->village ? 'primary' : 'warning')
+                            ->icon(fn($record) => $record->village ? 'heroicon-o-building-office-2' : 'heroicon-o-globe-alt'),
+
                         Infolists\Components\TextEntry::make('subdomain_url')
-                            ->label('Subdomain URL')
+                            ->label('Short URL')
                             ->url(fn($state) => $state, shouldOpenInNewTab: true)
                             ->icon('heroicon-o-globe-alt')
                             ->color('success')
                             ->copyable()
                             ->copyMessage('Link copied to clipboard!')
-                            ->visible(fn($record) => $record->hasSubdomainRouting()),
+                            ->visible(fn($record) => $record->hasValidRouting()),
 
                         Infolists\Components\TextEntry::make('formatted_url')
                             ->label('Target URL')
@@ -61,53 +67,89 @@ class ViewExternalLink extends ViewRecord
                             ->icon('heroicon-o-link')
                             ->color('info'),
 
+                        Infolists\Components\TextEntry::make('click_count')
+                            ->badge()
+                            ->color('info')
+                            ->icon('heroicon-o-cursor-arrow-ripple'),
+
                         Infolists\Components\TextEntry::make('sort_order')
                             ->badge()
                             ->color('warning')
                             ->icon('heroicon-o-bars-3'),
 
+                        Infolists\Components\IconEntry::make('is_active')
+                            ->label('Status')
+                            ->boolean()
+                            ->trueIcon('heroicon-o-check-circle')
+                            ->falseIcon('heroicon-o-x-circle')
+                            ->trueColor('success')
+                            ->falseColor('danger'),
+
                         Infolists\Components\TextEntry::make('created_at')
                             ->dateTime()
                             ->icon('heroicon-o-calendar'),
                     ])
-                    ->columns(2),
+                    ->columns(3),
 
-                Infolists\Components\Section::make('Subdomain Configuration')
+                Infolists\Components\Section::make('Associations')
                     ->schema([
-                        Infolists\Components\TextEntry::make('subdomain')
+                        Infolists\Components\TextEntry::make('village.name')
+                            ->label('Village')
+                            ->badge()
+                            ->color('primary')
+                            ->icon('heroicon-o-building-office-2')
+                            ->placeholder('Apex Domain Link'),
+
+                        Infolists\Components\TextEntry::make('place.name')
+                            ->label('Place')
+                            ->badge()
+                            ->color('secondary')
+                            ->icon('heroicon-o-map-pin')
+                            ->placeholder('No specific place'),
+
+                        Infolists\Components\TextEntry::make('effective_domain')
+                            ->label('Domain')
                             ->icon('heroicon-o-globe-alt')
-                            ->placeholder('No subdomain set'),
+                            ->color('info'),
+                    ])
+                    ->columns(3)
+                    ->collapsible(),
 
-                        Infolists\Components\TextEntry::make('slug')
-                            ->icon('heroicon-o-link')
-                            ->placeholder('No slug set'),
+                Infolists\Components\Section::make('Additional Information')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('description')
+                            ->placeholder('No description provided')
+                            ->columnSpanFull(),
 
-                        Infolists\Components\TextEntry::make('subdomain_url')
-                            ->label('Complete URL')
-                            ->url(fn($state) => $state, shouldOpenInNewTab: true)
-                            ->icon('heroicon-o-arrow-top-right-on-square')
-                            ->color('success')
-                            ->columnSpanFull()
-                            ->visible(fn($record) => $record->hasSubdomainRouting()),
+                        Infolists\Components\TextEntry::make('expires_at')
+                            ->label('Expires At')
+                            ->dateTime()
+                            ->placeholder('Never expires')
+                            ->color(fn($record) => $record->expires_at && $record->expires_at->isPast() ? 'danger' : 'gray')
+                            ->icon(fn($record) => $record->expires_at && $record->expires_at->isPast() ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-calendar'),
+
+                        Infolists\Components\TextEntry::make('updated_at')
+                            ->label('Last Updated')
+                            ->dateTime()
+                            ->icon('heroicon-o-clock'),
                     ])
                     ->columns(2)
-                    ->visible(fn($record) => $record->subdomain || $record->slug),
+                    ->collapsible(),
 
                 Infolists\Components\Section::make('QR Code')
                     ->schema([
                         Infolists\Components\View::make('filament.infolists.qr-code')
                             ->viewData(function ($record) {
-                                // FIXED: Resolve closures to actual values
                                 $url = $record->subdomain_url ?: $record->formatted_url;
-                                $hasSubdomainRouting = $record->hasSubdomainRouting();
+                                $hasValidRouting = $record->hasValidRouting();
 
                                 return [
                                     'url' => $url,
                                     'size' => 200,
-                                    'label' => $hasSubdomainRouting ?
-                                        'Subdomain Link QR Code' : 'Direct URL QR Code',
-                                    'description' => $hasSubdomainRouting ?
-                                        "Scan to visit {$record->subdomain}.kecamatanbayan.id/l/{$record->slug}" :
+                                    'label' => $hasValidRouting ?
+                                        'Short Link QR Code' : 'Direct URL QR Code',
+                                    'description' => $hasValidRouting ?
+                                        "Scan to visit {$record->effective_domain}/l/{$record->slug}" :
                                         "Scan to visit the direct URL",
                                 ];
                             })
