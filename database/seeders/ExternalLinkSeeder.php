@@ -14,28 +14,36 @@ class ExternalLinkSeeder extends Seeder
         $this->command->info('Creating external links...');
 
         $villages = Village::active()->get();
+        $isLocal = app()->environment('local');
+        $protocol = $isLocal ? 'http' : 'https';
 
         if ($villages->isEmpty()) {
             $this->command->warn('No active villages found. Creating apex domain links only.');
-            $this->createApexDomainLinks();
+            $this->createApexDomainLinks($protocol);
             return;
         }
 
         // Create village-specific links
         foreach ($villages->take(3) as $village) {
-            $this->createVillageLinks($village);
+            $this->createVillageLinks($village, $protocol);
         }
 
         // Create some apex domain links (no village)
-        $this->createApexDomainLinks();
+        $this->createApexDomainLinks($protocol);
 
         // Create some place-specific links
-        $this->createPlaceSpecificLinks();
+        $this->createPlaceSpecificLinks($protocol);
 
         $this->command->info('External link seeding completed!');
+
+        if ($isLocal) {
+            $this->command->info('🔧 Local environment detected - using HTTP protocol for links');
+        } else {
+            $this->command->info('🔒 Production environment - using HTTPS protocol for links');
+        }
     }
 
-    private function createVillageLinks(Village $village): void
+    private function createVillageLinks(Village $village, string $protocol): void
     {
         $this->command->info("Creating links for village: {$village->name}");
 
@@ -54,17 +62,27 @@ class ExternalLinkSeeder extends Seeder
             ],
             [
                 'label' => 'Village Info',
-                'url' => $village->url,
+                'url' => $village->url, // This will use the environment-aware protocol
                 'icon' => 'website',
                 'slug' => 'info',
             ],
             [
                 'label' => 'Contact Village',
-                'url' => 'mailto:' . $village->email,
+                'url' => 'mailto:' . ($village->email ?? 'contact@' . $village->slug . '.village.id'),
                 'icon' => 'email',
                 'slug' => 'contact',
             ],
         ];
+
+        // Add local testing links if in local environment
+        if (app()->environment('local')) {
+            $villageLinks[] = [
+                'label' => 'Local Test Page',
+                'url' => "http://localhost:8000/test/village/{$village->slug}",
+                'icon' => 'link',
+                'slug' => 'test',
+            ];
+        }
 
         foreach ($villageLinks as $index => $linkData) {
             try {
@@ -85,30 +103,49 @@ class ExternalLinkSeeder extends Seeder
         }
     }
 
-    private function createApexDomainLinks(): void
+    private function createApexDomainLinks(string $protocol): void
     {
         $this->command->info('Creating apex domain links...');
+
+        $baseDomain = config('app.domain', 'kecamatanbayan.id');
 
         $apexLinks = [
             [
                 'label' => 'Main Website',
-                'url' => 'https://kecamatanbayan.id',
+                'url' => "{$protocol}://{$baseDomain}",
                 'icon' => 'website',
                 'slug' => 'home',
             ],
             [
                 'label' => 'Tourism Info',
-                'url' => 'https://tourism.kecamatanbayan.id',
+                'url' => "{$protocol}://tourism.{$baseDomain}",
                 'icon' => 'maps',
                 'slug' => 'tourism',
             ],
-            [
+        ];
+
+        // Add different links based on environment
+        if (app()->environment('local')) {
+            $apexLinks[] = [
+                'label' => 'Local Admin',
+                'url' => 'http://localhost:8000/admin',
+                'icon' => 'website',
+                'slug' => 'admin',
+            ];
+            $apexLinks[] = [
+                'label' => 'Test API',
+                'url' => 'http://localhost:8000/test/links',
+                'icon' => 'link',
+                'slug' => 'api-test',
+            ];
+        } else {
+            $apexLinks[] = [
                 'label' => 'Government Portal',
                 'url' => 'https://pemda.lomboktimur.go.id',
                 'icon' => 'website',
                 'slug' => 'portal',
-            ],
-        ];
+            ];
+        }
 
         foreach ($apexLinks as $index => $linkData) {
             try {
@@ -129,7 +166,7 @@ class ExternalLinkSeeder extends Seeder
         }
     }
 
-    private function createPlaceSpecificLinks(): void
+    private function createPlaceSpecificLinks(string $protocol): void
     {
         $this->command->info('Creating place-specific links...');
 
@@ -144,14 +181,23 @@ class ExternalLinkSeeder extends Seeder
             try {
                 $slug = \Illuminate\Support\Str::slug($place->name);
 
+                // Create different types of links based on environment
+                if (app()->environment('local')) {
+                    $targetUrl = "http://localhost:8000/test/place/{$place->id}";
+                    $description = "Local test page for {$place->name}";
+                } else {
+                    $targetUrl = "https://maps.google.com/search/" . urlencode($place->address ?: $place->name);
+                    $description = "Google Maps location for {$place->name}";
+                }
+
                 $link = ExternalLink::create([
                     'village_id' => $place->village_id,
                     'place_id' => $place->id,
-                    'label' => $place->name . ' - Maps',
-                    'url' => "https://maps.google.com/search/" . urlencode($place->address ?: $place->name),
+                    'label' => $place->name . ' - Location',
+                    'url' => $targetUrl,
                     'icon' => 'maps',
                     'slug' => $slug,
-                    'description' => "Google Maps location for {$place->name}",
+                    'description' => $description,
                     'sort_order' => 10,
                     'is_active' => true,
                 ]);
@@ -169,9 +215,31 @@ class ExternalLinkSeeder extends Seeder
             try {
                 $village = Village::active()->inRandomOrder()->first();
 
+                // Generate environment-appropriate test URLs
+                $testUrls = [];
+                if (app()->environment('local')) {
+                    $testUrls = [
+                        'http://localhost:8000',
+                        'http://127.0.0.1:8000',
+                        'http://localhost:3000',
+                        'http://httpbin.org/get',
+                        'http://example.com',
+                    ];
+                } else {
+                    $testUrls = [
+                        'https://www.instagram.com/indonesia.travel',
+                        'https://www.facebook.com/wonderfulindonesia',
+                        'https://www.youtube.com/channel/UCvVNPfEqQr3lVKo-TQSAnRQ',
+                        'https://whatsapp.com',
+                        'https://maps.google.com',
+                    ];
+                }
+
                 $link = ExternalLink::factory()
                     ->forVillage($village)
-                    ->create();
+                    ->create([
+                        'url' => fake()->randomElement($testUrls),
+                    ]);
 
                 $this->command->info("  ✓ Created random link: {$link->label} -> {$link->subdomain_url}");
             } catch (\Exception $e) {
@@ -182,9 +250,15 @@ class ExternalLinkSeeder extends Seeder
         // Create some apex domain random links
         for ($i = 0; $i < 3; $i++) {
             try {
+                $testUrls = app()->environment('local')
+                    ? ['http://localhost:8000', 'http://httpbin.org/json']
+                    : ['https://indonesia.travel', 'https://kemenparekraf.go.id'];
+
                 $link = ExternalLink::factory()
                     ->apexDomain()
-                    ->create();
+                    ->create([
+                        'url' => fake()->randomElement($testUrls),
+                    ]);
 
                 $this->command->info("  ✓ Created random apex link: {$link->label} -> {$link->subdomain_url}");
             } catch (\Exception $e) {

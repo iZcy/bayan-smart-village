@@ -49,6 +49,12 @@ class ExternalLink extends Model
         return $this->village ? $this->village->slug : null;
     }
 
+    // Get the protocol based on environment
+    private function getProtocol(): string
+    {
+        return app()->environment('local') ? 'http' : 'https';
+    }
+
     // Get the full subdomain URL with /l/ prefix
     public function getSubdomainUrlAttribute(): ?string
     {
@@ -56,14 +62,16 @@ class ExternalLink extends Model
             return null;
         }
 
+        $protocol = $this->getProtocol();
+
         // If linked to a village, use village's domain
         if ($this->village_id && $this->village) {
-            return "https://{$this->village->full_domain}/l/{$this->slug}";
+            return "{$protocol}://{$this->village->full_domain}/l/{$this->slug}";
         }
 
         // For apex domain links (no village)
         $domain = config('app.domain', 'kecamatanbayan.id');
-        return "https://{$domain}/l/{$this->slug}";
+        return "{$protocol}://{$domain}/l/{$this->slug}";
     }
 
     // Get formatted original URL with protocol
@@ -71,7 +79,9 @@ class ExternalLink extends Model
     {
         $url = $this->url;
         if (!str_starts_with($url, 'http://') && !str_starts_with($url, 'https://')) {
-            $url = 'https://' . $url;
+            // Use environment-appropriate protocol for relative URLs
+            $protocol = $this->getProtocol();
+            $url = $protocol . '://' . $url;
         }
         return $url;
     }
@@ -150,5 +160,12 @@ class ExternalLink extends Model
         }
 
         return 'Apex Domain';
+    }
+
+    // Get environment-aware QR code URL
+    public function getQrCodeUrlAttribute(): string
+    {
+        $shortUrl = $this->subdomain_url ?: $this->formatted_url;
+        return "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" . urlencode($shortUrl);
     }
 }

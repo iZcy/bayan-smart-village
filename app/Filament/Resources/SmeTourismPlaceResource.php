@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\SmeTourismPlaceResource\Pages;
 use App\Filament\Resources\SmeTourismPlaceResource\RelationManagers;
 use App\Models\SmeTourismPlace;
+use App\Models\Village;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -37,6 +38,14 @@ class SmeTourismPlaceResource extends Resource
                         ->schema([
                             Forms\Components\Section::make('Place Details')
                                 ->schema([
+                                    Forms\Components\Select::make('village_id')
+                                        ->relationship('village', 'name')
+                                        ->searchable()
+                                        ->preload()
+                                        ->placeholder('Select a village')
+                                        ->helperText('Choose which village this place belongs to')
+                                        ->required(),
+
                                     Forms\Components\TextInput::make('name')
                                         ->required()
                                         ->maxLength(255)
@@ -117,7 +126,6 @@ class SmeTourismPlaceResource extends Resource
                                         ->valueLabel('Value')
                                         ->addActionLabel('Add Property')
                                         ->helperText('Add custom properties like opening hours, facilities, etc.')
-                                        ->default([])
                                         ->columnSpanFull(),
                                 ]),
                         ]),
@@ -141,6 +149,12 @@ class SmeTourismPlaceResource extends Resource
                     ->sortable()
                     ->weight('medium')
                     ->limit(30),
+
+                Tables\Columns\TextColumn::make('village.name')
+                    ->badge()
+                    ->color('secondary')
+                    ->searchable()
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('category.name')
                     ->badge()
@@ -169,6 +183,11 @@ class SmeTourismPlaceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('village')
+                    ->relationship('village', 'name')
+                    ->searchable()
+                    ->preload(),
+
                 Tables\Filters\SelectFilter::make('category')
                     ->relationship('category', 'name')
                     ->searchable()

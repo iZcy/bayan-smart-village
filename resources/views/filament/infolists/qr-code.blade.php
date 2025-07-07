@@ -5,12 +5,24 @@
   $qrLabel = is_string($label ?? '') ? $label ?? 'QR Code' : 'QR Code';
   $qrDescription = is_string($description ?? '') ? $description ?? '' : '';
   $qrSize = is_numeric($size ?? 200) ? $size ?? 200 : 200;
+
+  // Environment-aware styling
+  $isLocal = app()->environment('local');
+  $envClass = $isLocal ? 'border-yellow-300 bg-yellow-50' : 'border-gray-200 bg-white';
+  $envBadge = $isLocal ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800';
 @endphp
 
 <div class="flex flex-col items-center space-y-6 py-4">
   @if ($qrUrl)
+    {{-- Environment Badge --}}
+    @if ($isLocal)
+      <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $envBadge }}">
+        🔧 Local Development Mode
+      </div>
+    @endif
+
     {{-- QR Code Container --}}
-    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-600">
+    <div class="p-6 rounded-xl shadow-lg border {{ $envClass }} dark:border-gray-600 dark:bg-gray-800">
       <img
         src="https://api.qrserver.com/v1/create-qr-code/?size={{ $qrSize }}x{{ $qrSize }}&data={{ urlencode($qrUrl) }}&format=png&ecc=M&margin=10"
         alt="QR Code for {{ $qrUrl }}" class="block mx-auto"
@@ -30,6 +42,13 @@
             {{ $qrDescription }}
           </p>
         @endif
+
+        {{-- Environment Info --}}
+        @if ($isLocal)
+          <p class="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+            ⚠️ Using HTTP protocol for local development
+          </p>
+        @endif
       </div>
 
       {{-- URL Display --}}
@@ -40,6 +59,13 @@
         <div class="text-sm font-mono text-blue-600 dark:text-blue-400 break-all">
           {{ $qrUrl }}
         </div>
+
+        {{-- Environment-specific warnings --}}
+        @if ($isLocal && str_starts_with($qrUrl, 'http://localhost'))
+          <div class="mt-2 text-xs text-amber-600 dark:text-amber-400">
+            📱 Note: This localhost URL will only work on this computer
+          </div>
+        @endif
       </div>
 
       {{-- Action Buttons --}}
@@ -60,7 +86,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
           </svg>
-          Test Link
+          {{ $isLocal ? 'Test Local' : 'Test Link' }}
         </a>
 
         <button type="button" onclick="downloadQRCode('{{ addslashes($qrUrl) }}')"
@@ -72,6 +98,21 @@
           </svg>
           Download
         </button>
+
+        {{-- Environment-specific action --}}
+        @if ($isLocal)
+          <button type="button" onclick="openInNewTab('{{ $qrUrl }}')"
+            class="flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-yellow-600 border border-transparent rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors duration-200">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+              </path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            Debug
+          </button>
+        @endif
       </div>
 
       {{-- Success Message Container --}}
@@ -151,7 +192,7 @@
 
   function downloadQRCode(url) {
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}&format=png`;
-    const filename = `QRCode for ${url}.png`;
+    const filename = `QRCode_${encodeURIComponent(url.replace(/[^a-zA-Z0-9]/g, '_'))}.png`;
 
     fetch(qrUrl)
       .then(response => response.blob())
@@ -168,5 +209,9 @@
         console.error('Download failed:', error);
         alert('Failed to download QR code');
       });
+  }
+
+  function openInNewTab(url) {
+    window.open(url, '_blank');
   }
 </script>

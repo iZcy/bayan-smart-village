@@ -183,6 +183,8 @@ class ExternalLinkResource extends Resource
                                 $slug = $get('slug');
                                 $villageId = $get('village_id');
 
+                                $protocol = config("app.env", "local") ? "http://" : "https://";
+
                                 if (!$slug) {
                                     return 'Enter slug to see preview';
                                 }
@@ -190,13 +192,13 @@ class ExternalLinkResource extends Resource
                                 if ($villageId && $villageId !== 'apex') {
                                     $village = Village::find($villageId);
                                     if ($village) {
-                                        return "https://{$village->full_domain}/l/{$slug}";
+                                        return $protocol . "{$village->full_domain}/l/{$slug}";
                                     }
                                 }
 
                                 // Apex domain
                                 $domain = config('app.domain', 'kecamatanbayan.id');
-                                return "https://{$domain}/l/{$slug}";
+                                return $protocol . "{$domain}/l/{$slug}";
                             })
                             ->extraAttributes(['class' => 'font-mono text-sm bg-gray-50 dark:bg-gray-800 p-2 rounded'])
                             ->columnSpanFull(),

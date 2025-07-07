@@ -1,5 +1,4 @@
 <?php
-// app/Models/Image.php - Updated
 
 namespace App\Models;
 
@@ -18,6 +17,21 @@ class Image extends Model
         'image_url',
         'caption'
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($image) {
+            // Auto-assign village_id based on place_id if not set
+            if (!$image->village_id && $image->place_id) {
+                $place = SmeTourismPlace::find($image->place_id);
+                if ($place && $place->village_id) {
+                    $image->village_id = $place->village_id;
+                }
+            }
+        });
+    }
 
     public function village(): BelongsTo
     {

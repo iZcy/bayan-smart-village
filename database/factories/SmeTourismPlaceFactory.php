@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\SmeTourismPlace;
 use App\Models\Category;
+use App\Models\Village;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class SmeTourismPlaceFactory extends Factory
@@ -52,6 +53,7 @@ class SmeTourismPlaceFactory extends Factory
         ];
 
         $category = Category::inRandomOrder()->first();
+        $village = Village::active()->inRandomOrder()->first();
 
         if ($category && $category->type === 'sme') {
             $name = $this->faker->randomElement($smeNames);
@@ -64,6 +66,7 @@ class SmeTourismPlaceFactory extends Factory
         $longitude = $this->faker->randomFloat(8, 115.8, 116.5); // Lombok longitude range
 
         return [
+            'village_id' => $village ? $village->id : Village::factory(),
             'name' => $name,
             'description' => $this->faker->paragraphs(3, true),
             'address' => $this->faker->address . ', ' . $this->faker->randomElement($lombokLocations) . ', Lombok',
@@ -142,6 +145,13 @@ class SmeTourismPlaceFactory extends Factory
         return $this->state(fn(array $attributes) => [
             'latitude' => null,
             'longitude' => null,
+        ]);
+    }
+
+    public function forVillage(Village $village): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'village_id' => $village->id,
         ]);
     }
 }

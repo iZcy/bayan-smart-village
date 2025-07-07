@@ -71,7 +71,8 @@ class VillageResource extends Resource
                             ->default(true)
                             ->helperText('Inactive villages will not be accessible'),
                     ])
-                    ->columns(2),
+                    ->columns(2)
+                    ->collapsible(),
 
                 Forms\Components\Section::make('Contact Information')
                     ->schema([
@@ -120,13 +121,39 @@ class VillageResource extends Resource
 
                 Forms\Components\Section::make('Settings')
                     ->schema([
-                        Forms\Components\KeyValue::make('settings')
+                        Forms\Components\Repeater::make('settings_entries')
                             ->label('Village Settings')
-                            ->keyLabel('Setting Name')
-                            ->valueLabel('Value')
+                            ->schema([
+                                Forms\Components\TextInput::make('key')
+                                    ->label('Setting Name')
+                                    ->required()
+                                    ->placeholder('e.g., population, area_km2'),
+
+                                Forms\Components\TextInput::make('value')
+                                    ->label('Value')
+                                    ->required()
+                                    ->placeholder('e.g., 2500, 15.5'),
+                            ])
                             ->addActionLabel('Add Setting')
+                            ->columns(2)
+                            ->collapsed()
+                            ->collapsible()
                             ->helperText('Custom settings for this village')
-                            ->default([])
+                            ->mutateRelationshipDataBeforeCreateUsing(function (array $data): array {
+                                // This will be handled by model mutators
+                                return $data;
+                            })
+                            ->mutateRelationshipDataBeforeFillUsing(function (array $data): array {
+                                // Convert settings array to repeater format
+                                $entries = [];
+                                if (isset($data['settings']) && is_array($data['settings'])) {
+                                    foreach ($data['settings'] as $key => $value) {
+                                        $entries[] = ['key' => $key, 'value' => (string) $value];
+                                    }
+                                }
+                                $data['settings_entries'] = $entries;
+                                return $data;
+                            })
                             ->columnSpanFull(),
                     ]),
             ]);

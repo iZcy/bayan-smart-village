@@ -46,6 +46,27 @@ class Village extends Model
                 $village->slug = static::generateUniqueSlug($village->name);
             }
         });
+
+        static::saving(function ($village) {
+            // Handle settings_entries conversion
+            if (isset($village->attributes['settings_entries'])) {
+                $settings = [];
+                $entries = is_string($village->attributes['settings_entries'])
+                    ? json_decode($village->attributes['settings_entries'], true)
+                    : $village->attributes['settings_entries'];
+
+                if (is_array($entries)) {
+                    foreach ($entries as $entry) {
+                        if (isset($entry['key']) && isset($entry['value'])) {
+                            $settings[$entry['key']] = $entry['value'];
+                        }
+                    }
+                }
+
+                $village->settings = $settings;
+                unset($village->attributes['settings_entries']);
+            }
+        });
     }
 
     public static function generateUniqueSlug(string $name): string
@@ -60,6 +81,12 @@ class Village extends Model
         }
 
         return $slug;
+    }
+
+    // Get the protocol based on environment
+    private function getProtocol(): string
+    {
+        return app()->environment('local') ? 'http' : 'https';
     }
 
     // Relationships
@@ -102,7 +129,26 @@ class Village extends Model
 
     public function getUrlAttribute(): string
     {
-        return "https://{$this->full_domain}";
+        $protocol = $this->getProtocol();
+        return "{$protocol}://{$this->full_domain}";
+    }
+
+    // Handle settings conversion for Filament forms
+    public function getSettingsEntriesAttribute()
+    {
+        if (!$this->settings || !is_array($this->settings)) {
+            return [];
+        }
+
+        $entries = [];
+        foreach ($this->settings as $key => $value) {
+            $entries[] = [
+                'key' => $key,
+                'value' => (string) $value
+            ];
+        }
+
+        return $entries;
     }
 
     // Scopes

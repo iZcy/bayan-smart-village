@@ -15,14 +15,14 @@ class VillageSeeder extends Seeder
         // Create some featured villages first
         $featuredVillages = [
             [
-                'name' => 'Bayan Beleq',
-                'slug' => 'bayan-beleq',
+                'name' => 'Bayan',
+                'slug' => 'bayan',
                 'description' => 'Desa wisata dengan keindahan alam yang memukau dan budaya Sasak yang masih terjaga. Terkenal dengan pemandangan gunung Rinjani dan kehidupan tradisional masyarakat Sasak.',
                 'latitude' => -8.3500,
                 'longitude' => 116.4000,
                 'phone_number' => '+62 81234567001',
-                'email' => 'info@bayanbeleq.village.id',
-                'address' => 'Bayan Beleq, Bayan, Lombok Utara, NTB',
+                'email' => 'info@bayan.village.id',
+                'address' => 'Bayan, Bayan, Lombok Utara, NTB',
                 'is_active' => true,
                 'established_at' => Carbon::create(1980, 1, 1), // Changed to 1980
                 'settings' => [
