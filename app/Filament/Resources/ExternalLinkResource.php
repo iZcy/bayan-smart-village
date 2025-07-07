@@ -183,7 +183,7 @@ class ExternalLinkResource extends Resource
                                 $slug = $get('slug');
                                 $villageId = $get('village_id');
 
-                                $protocol = config("app.env", "local") ? "http://" : "https://";
+                                $protocol = request()->secure() ? "https://" : "http://";
 
                                 if (!$slug) {
                                     return 'Enter slug to see preview';
