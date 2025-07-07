@@ -1,4 +1,5 @@
 <?php
+// app/Models/Image.php - Updated
 
 namespace App\Models;
 
@@ -12,10 +13,16 @@ class Image extends Model
     use HasUuids, HasFactory;
 
     protected $fillable = [
+        'village_id',
         'place_id',
         'image_url',
         'caption'
     ];
+
+    public function village(): BelongsTo
+    {
+        return $this->belongsTo(Village::class);
+    }
 
     public function place(): BelongsTo
     {

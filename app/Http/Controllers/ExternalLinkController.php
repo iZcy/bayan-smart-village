@@ -1,25 +1,73 @@
 <?php
-// app/Http/Controllers/ExternalLinkController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\ExternalLink;
+use App\Models\Village;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class ExternalLinkController extends Controller
 {
-    public function redirect(Request $request, string $subdomain, string $slug)
+    public function redirect(Request $request, string $slug)
     {
-        // Find the external link by subdomain and slug
-        $link = ExternalLink::where('subdomain', $subdomain)
+        $host = $request->getHost();
+        $subdomain = $this->extractSubdomain($host);
+
+        // First, try to find by village subdomain
+        if ($subdomain) {
+            $village = Village::bySlug($subdomain)->active()->first();
+
+            if ($village) {
+                // Look for link in this village
+                $link = ExternalLink::where('village_id', $village->id)
+                    ->where('slug', $slug)
+                    ->first();
+
+                if ($link) {
+                    return $this->processLinkRedirect($link, $request);
+                }
+            }
+        }
+
+        // Fallback: Look for subdomain-based links (legacy)
+        if ($subdomain) {
+            $link = ExternalLink::where('subdomain', $subdomain)
+                ->where('slug', $slug)
+                ->first();
+
+            if ($link) {
+                return $this->processLinkRedirect($link, $request);
+            }
+        }
+
+        // Fallback: Look for apex domain links (no village)
+        $link = ExternalLink::whereNull('village_id')
             ->where('slug', $slug)
             ->first();
 
-        if (!$link) {
-            abort(404, "Short link not found: {$subdomain}.{$request->getHost()}/l/{$slug}");
+        if ($link) {
+            return $this->processLinkRedirect($link, $request);
         }
 
+        abort(404, "Short link not found: {$host}/l/{$slug}");
+    }
+
+    private function extractSubdomain(string $host): ?string
+    {
+        $baseDomain = config('app.domain', 'kecamatanbayan.id');
+
+        // Remove the base domain to get subdomain
+        if (str_ends_with($host, '.' . $baseDomain)) {
+            $subdomain = str_replace('.' . $baseDomain, '', $host);
+            return $subdomain !== $host ? $subdomain : null;
+        }
+
+        return null;
+    }
+
+    private function processLinkRedirect(ExternalLink $link, Request $request)
+    {
         // Check if link is active
         if (!$link->is_active) {
             abort(410, "This short link has been deactivated");
@@ -46,6 +94,8 @@ class ExternalLinkController extends Controller
         Log::info("Short link accessed", [
             'link_id' => $link->id,
             'label' => $link->label,
+            'village_id' => $link->village_id,
+            'village_name' => $link->village?->name,
             'subdomain' => $link->subdomain,
             'slug' => $link->slug,
             'target_url' => $link->url,
@@ -64,6 +114,8 @@ class ExternalLinkController extends Controller
         $validated = $request->validate([
             'url' => 'required|url',
             'label' => 'required|string|max:255',
+            'village_id' => 'sometimes|uuid|exists:villages,id',
+            'place_id' => 'sometimes|uuid|exists:sme_tourism_places,id',
             'subdomain' => 'sometimes|string|regex:/^[a-z0-9-]+$/',
             'slug' => 'sometimes|string|regex:/^[a-z0-9_-]+$/',
             'description' => 'sometimes|string',
@@ -75,15 +127,29 @@ class ExternalLinkController extends Controller
         $subdomain = $validated['subdomain'] ?? ExternalLink::generateRandomSubdomain();
         $slug = $validated['slug'] ?? ExternalLink::generateRandomSlug();
 
-        // Check for unique combination
-        if (ExternalLink::where('subdomain', $subdomain)->where('slug', $slug)->exists()) {
+        // Check for unique combination based on village or subdomain
+        if (isset($validated['village_id'])) {
+            // For village links, check uniqueness within village
+            $exists = ExternalLink::where('village_id', $validated['village_id'])
+                ->where('slug', $slug)
+                ->exists();
+        } else {
+            // For apex/subdomain links, check subdomain+slug combination
+            $exists = ExternalLink::where('subdomain', $subdomain)
+                ->where('slug', $slug)
+                ->exists();
+        }
+
+        if ($exists) {
             return response()->json([
-                'error' => 'This subdomain and slug combination already exists'
+                'error' => 'This slug already exists for the specified domain'
             ], 422);
         }
 
         // Create the link
         $link = ExternalLink::create([
+            'village_id' => $validated['village_id'] ?? null,
+            'place_id' => $validated['place_id'] ?? null,
             'label' => $validated['label'],
             'url' => $validated['url'],
             'subdomain' => $subdomain,
@@ -102,6 +168,8 @@ class ExternalLinkController extends Controller
                 'label' => $link->label,
                 'short_url' => $link->subdomain_url,
                 'target_url' => $link->formatted_url,
+                'village_id' => $link->village_id,
+                'village_name' => $link->village?->name,
                 'subdomain' => $link->subdomain,
                 'slug' => $link->slug,
                 'is_active' => $link->is_active,
@@ -116,9 +184,19 @@ class ExternalLinkController extends Controller
      */
     public function stats(string $subdomain, string $slug)
     {
-        $link = ExternalLink::where('subdomain', $subdomain)
-            ->where('slug', $slug)
-            ->first();
+        // Try to find by village first
+        $village = Village::bySlug($subdomain)->first();
+
+        if ($village) {
+            $link = ExternalLink::where('village_id', $village->id)
+                ->where('slug', $slug)
+                ->first();
+        } else {
+            // Fallback to subdomain lookup
+            $link = ExternalLink::where('subdomain', $subdomain)
+                ->where('slug', $slug)
+                ->first();
+        }
 
         if (!$link) {
             return response()->json(['error' => 'Link not found'], 404);
@@ -130,6 +208,8 @@ class ExternalLinkController extends Controller
                 'label' => $link->label,
                 'short_url' => $link->subdomain_url,
                 'target_url' => $link->formatted_url,
+                'village_id' => $link->village_id,
+                'village_name' => $link->village?->name,
                 'click_count' => $link->click_count,
                 'is_active' => $link->is_active,
                 'expires_at' => $link->expires_at,
@@ -144,7 +224,12 @@ class ExternalLinkController extends Controller
      */
     public function index(Request $request)
     {
-        $query = ExternalLink::query();
+        $query = ExternalLink::with(['village', 'place']);
+
+        // Filter by village
+        if ($request->has('village_id')) {
+            $query->where('village_id', $request->string('village_id'));
+        }
 
         // Filter by status
         if ($request->has('active')) {

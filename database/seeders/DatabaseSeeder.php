@@ -15,11 +15,12 @@ class DatabaseSeeder extends Seeder
 
         // Then seed all the tourism data
         $this->call([
-            CategorySeeder::class,
-            SmeTourismPlaceSeeder::class,
-            ArticleSeeder::class,
-            ImageSeeder::class,
-            ExternalLinkSeeder::class,
+            VillageSeeder::class,        // Create villages first
+            CategorySeeder::class,       // Then categories
+            SmeTourismPlaceSeeder::class, // Then places (will link to villages)
+            ArticleSeeder::class,        // Then articles
+            ImageSeeder::class,          // Then images
+            ExternalLinkSeeder::class,   // Finally external links (will link to villages)
         ]);
 
         $this->command->info('🎉 Bayan Smart Village database seeded successfully!');
@@ -56,6 +57,13 @@ class DatabaseSeeder extends Seeder
         User::create([
             'name' => 'Tourism Manager',
             'email' => 'tourism@bayansmart.com',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+        ]);
+
+        User::create([
+            'name' => 'Village Admin',
+            'email' => 'village@bayansmart.com',
             'email_verified_at' => now(),
             'password' => Hash::make('password'),
         ]);

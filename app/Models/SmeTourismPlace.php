@@ -1,4 +1,5 @@
 <?php
+// app/Models/SmeTourismPlace.php - Updated
 
 namespace App\Models;
 
@@ -13,6 +14,7 @@ class SmeTourismPlace extends Model
     use HasUuids, HasFactory;
 
     protected $fillable = [
+        'village_id',
         'name',
         'description',
         'address',
@@ -29,6 +31,11 @@ class SmeTourismPlace extends Model
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8'
     ];
+
+    public function village(): BelongsTo
+    {
+        return $this->belongsTo(Village::class);
+    }
 
     public function category(): BelongsTo
     {

@@ -1,10 +1,11 @@
 <?php
-// app/Filament/Resources/ExternalLinkResource.php
 
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ExternalLinkResource\Pages;
 use App\Models\ExternalLink;
+use App\Models\Village;
+use App\Models\SmeTourismPlace;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -96,6 +97,36 @@ class ExternalLinkResource extends Resource
                     ])
                     ->columns(3),
 
+                Forms\Components\Section::make('Association')
+                    ->description('Link this to a village and/or specific place')
+                    ->schema([
+                        Forms\Components\Select::make('village_id')
+                            ->relationship('village', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Select village (optional)')
+                            ->helperText('Leave empty for apex domain links')
+                            ->live()
+                            ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                // Clear place when village changes
+                                $set('place_id', null);
+                            }),
+
+                        Forms\Components\Select::make('place_id')
+                            ->relationship(
+                                'place',
+                                'name',
+                                fn(Forms\Get $get) => $get('village_id')
+                                    ? SmeTourismPlace::where('village_id', $get('village_id'))
+                                    : SmeTourismPlace::query()
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Select place (optional)')
+                            ->helperText('Optionally link to a specific place'),
+                    ])
+                    ->columns(2),
+
                 Forms\Components\Section::make('Short Link Configuration')
                     ->description('Configure your short link subdomain and slug')
                     ->schema([
@@ -149,12 +180,20 @@ class ExternalLinkResource extends Resource
                             ->content(function (Forms\Get $get) {
                                 $subdomain = $get('subdomain');
                                 $slug = $get('slug');
-                                $domain = config('app.domain', 'kecamatanbayan.id');
+                                $villageId = $get('village_id');
 
                                 if (!$subdomain || !$slug) {
                                     return 'Enter subdomain and slug to see preview';
                                 }
 
+                                if ($villageId) {
+                                    $village = Village::find($villageId);
+                                    if ($village) {
+                                        return "https://{$village->full_domain}/l/{$slug}";
+                                    }
+                                }
+
+                                $domain = config('app.domain', 'kecamatanbayan.id');
                                 return "https://{$subdomain}.{$domain}/l/{$slug}";
                             })
                             ->extraAttributes(['class' => 'font-mono text-sm bg-gray-50 dark:bg-gray-800 p-2 rounded'])
@@ -172,6 +211,19 @@ class ExternalLinkResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight('medium'),
+
+                Tables\Columns\TextColumn::make('village.name')
+                    ->badge()
+                    ->color('primary')
+                    ->placeholder('Apex Domain')
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('place.name')
+                    ->badge()
+                    ->color('secondary')
+                    ->placeholder('No place')
+                    ->searchable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('subdomain_url')
                     ->label('Short URL')
@@ -223,6 +275,18 @@ class ExternalLinkResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('village')
+                    ->relationship('village', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('All villages'),
+
+                Tables\Filters\SelectFilter::make('place')
+                    ->relationship('place', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('All places'),
+
                 Tables\Filters\SelectFilter::make('icon')
                     ->options([
                         'instagram' => 'Instagram',
@@ -242,6 +306,10 @@ class ExternalLinkResource extends Resource
                 Tables\Filters\Filter::make('expired')
                     ->label('Expired Links')
                     ->query(fn($query) => $query->whereNotNull('expires_at')->where('expires_at', '<', now())),
+
+                Tables\Filters\Filter::make('apex_domain')
+                    ->label('Apex Domain Links')
+                    ->query(fn($query) => $query->whereNull('village_id')),
             ])
             ->actions([
                 Tables\Actions\Action::make('visit_link')
@@ -251,16 +319,6 @@ class ExternalLinkResource extends Resource
                     ->url(fn($record) => $record->subdomain_url)
                     ->openUrlInNewTab()
                     ->visible(fn($record) => $record->hasSubdomainRouting() && $record->is_active),
-
-                Tables\Actions\Action::make('copy_link')
-                    ->label('Copy')
-                    ->icon('heroicon-o-clipboard-document')
-                    ->color('gray')
-                    ->action(function ($record) {
-                        // This would need JavaScript to actually copy
-                        return redirect()->back();
-                    })
-                    ->visible(fn($record) => $record->hasSubdomainRouting()),
 
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make()
@@ -279,22 +337,6 @@ class ExternalLinkResource extends Resource
                             foreach ($records as $record) {
                                 $record->update(['is_active' => !$record->is_active]);
                             }
-                        }),
-
-                    Tables\Actions\BulkAction::make('export_links')
-                        ->label('Export Links')
-                        ->icon('heroicon-o-document-arrow-down')
-                        ->color('gray')
-                        ->action(function ($records) {
-                            $csv = "Label,Short URL,Target URL,Clicks,Status\n";
-                            foreach ($records as $record) {
-                                $status = $record->is_active ? 'Active' : 'Inactive';
-                                $csv .= "\"{$record->label}\",\"{$record->subdomain_url}\",\"{$record->url}\",\"{$record->click_count}\",\"{$status}\"\n";
-                            }
-
-                            return response()->streamDownload(function () use ($csv) {
-                                echo $csv;
-                            }, 'short-links-' . now()->format('Y-m-d') . '.csv');
                         }),
                 ]),
             ])

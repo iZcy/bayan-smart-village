@@ -1,4 +1,5 @@
 <?php
+// app/Models/Article.php - Updated
 
 namespace App\Models;
 
@@ -12,11 +13,17 @@ class Article extends Model
     use HasUuids, HasFactory;
 
     protected $fillable = [
+        'village_id',
         'title',
         'content',
         'cover_image_url',
         'place_id'
     ];
+
+    public function village(): BelongsTo
+    {
+        return $this->belongsTo(Village::class);
+    }
 
     public function place(): BelongsTo
     {
