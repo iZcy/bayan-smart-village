@@ -222,7 +222,8 @@ class ProductSeeder extends Seeder
             $category = $categories->random();
 
             // Try to find a place in this village, otherwise just use the village
-            $place = $places->where('village_id', $village->id)->random();
+            $villageSpecificPlaces = $places->where('village_id', $village->id);
+            $place = $villageSpecificPlaces->isNotEmpty() ? $villageSpecificPlaces->random() : null;
 
             Product::factory()
                 ->create([
@@ -245,32 +246,34 @@ class ProductSeeder extends Seeder
                 ]);
         }
 
-        // Create some products with different characteristics
-        for ($i = 0; $i < 3; $i++) {
-            Product::factory()->create([
-                'category_id' => $categories->random()->id,
-                'is_featured' => true,
-            ]);
-        }
+        // Create some products with different characteristics - only if we have categories
+        if ($categories->isNotEmpty()) {
+            for ($i = 0; $i < 3; $i++) {
+                Product::factory()->create([
+                    'category_id' => $categories->random()->id,
+                    'is_featured' => true,
+                ]);
+            }
 
-        for ($i = 0; $i < 5; $i++) {
-            Product::factory()->create([
-                'category_id' => $categories->random()->id,
-                'availability' => 'seasonal',
-                'seasonal_availability' => ['June', 'July', 'August', 'September'],
-            ]);
-        }
+            for ($i = 0; $i < 5; $i++) {
+                Product::factory()->create([
+                    'category_id' => $categories->random()->id,
+                    'availability' => 'seasonal',
+                    'seasonal_availability' => ['June', 'July', 'August', 'September'],
+                ]);
+            }
 
-        for ($i = 0; $i < 8; $i++) {
-            $min = fake()->numberBetween(5000, 100000);
-            $max = fake()->numberBetween($min + 10000, 800000);
+            for ($i = 0; $i < 8; $i++) {
+                $min = fake()->numberBetween(5000, 100000);
+                $max = fake()->numberBetween($min + 10000, 800000);
 
-            Product::factory()->create([
-                'category_id' => $categories->random()->id,
-                'price' => null,
-                'price_range_min' => $min,
-                'price_range_max' => $max,
-            ]);
+                Product::factory()->create([
+                    'category_id' => $categories->random()->id,
+                    'price' => null,
+                    'price_range_min' => $min,
+                    'price_range_max' => $max,
+                ]);
+            }
         }
     }
 
