@@ -84,7 +84,33 @@ class ProductSeeder extends Seeder
     private function createFeaturedProducts(): void
     {
         $villages = Village::active()->get();
+
+        if ($villages->isEmpty()) {
+            $this->command->warn('No villages found. Skipping featured products creation.');
+            return;
+        }
+
         $categories = Category::all();
+
+        if ($categories->isEmpty()) {
+            $this->command->warn('No categories found. Skipping featured products creation.');
+            return;
+        }
+
+        // First, let's create any missing categories that we need
+        $requiredCategories = [
+            ['name' => 'Toko Pakaian', 'type' => 'sme'],
+            ['name' => 'Warung Makan', 'type' => 'sme'],
+            ['name' => 'Kerajinan Tangan', 'type' => 'sme'],
+            ['name' => 'Desa Wisata', 'type' => 'tourism'],
+        ];
+
+        foreach ($requiredCategories as $categoryData) {
+            Category::firstOrCreate(
+                ['name' => $categoryData['name']],
+                ['type' => $categoryData['type']]
+            );
+        }
 
         $featuredProducts = [
             [
@@ -138,8 +164,17 @@ class ProductSeeder extends Seeder
 
         foreach ($featuredProducts as $productData) {
             $category = Category::where('name', $productData['category_name'])->first();
+
+            if (!$category) {
+                $this->command->warn("Category '{$productData['category_name']}' not found. Skipping {$productData['name']}");
+                continue;
+            }
+
             $village = $villages->random();
-            $place = $village->places()->where('category_id', $category->id)->first();
+
+            // Try to find a place in this village with the right category, otherwise use any place in the village
+            $place = $village->places()->where('category_id', $category->id)->first()
+                ?? $village->places()->first();
 
             $product = Product::create([
                 'village_id' => $village->id,
@@ -172,34 +207,71 @@ class ProductSeeder extends Seeder
     private function createRandomProducts(): void
     {
         $villages = Village::active()->get();
+        $categories = Category::all();
+
+        if ($villages->isEmpty() || $categories->isEmpty()) {
+            $this->command->warn('Insufficient data for creating random products.');
+            return;
+        }
+
         $places = SmeTourismPlace::all();
 
         // Create 40 random products
         for ($i = 0; $i < 40; $i++) {
             $village = $villages->random();
+            $category = $categories->random();
+
+            // Try to find a place in this village, otherwise just use the village
             $place = $places->where('village_id', $village->id)->random();
 
             Product::factory()
-                ->withVillage($village)
-                ->withPlace($place)
-                ->create();
+                ->create([
+                    'village_id' => $village->id,
+                    'place_id' => $place?->id,
+                    'category_id' => $category->id,
+                ]);
         }
 
         // Create some products without places (village-level products)
         for ($i = 0; $i < 10; $i++) {
             $village = $villages->random();
+            $category = $categories->random();
 
             Product::factory()
-                ->withVillage($village)
                 ->create([
+                    'village_id' => $village->id,
                     'place_id' => null,
+                    'category_id' => $category->id,
                 ]);
         }
 
         // Create some products with different characteristics
-        Product::factory()->featured()->count(3)->create();
-        Product::factory()->seasonal()->count(5)->create();
-        Product::factory()->withPriceRange()->count(8)->create();
+        for ($i = 0; $i < 3; $i++) {
+            Product::factory()->create([
+                'category_id' => $categories->random()->id,
+                'is_featured' => true,
+            ]);
+        }
+
+        for ($i = 0; $i < 5; $i++) {
+            Product::factory()->create([
+                'category_id' => $categories->random()->id,
+                'availability' => 'seasonal',
+                'seasonal_availability' => ['June', 'July', 'August', 'September'],
+            ]);
+        }
+
+        for ($i = 0; $i < 8; $i++) {
+            $min = fake()->numberBetween(5000, 100000);
+            $max = fake()->numberBetween($min + 10000, 800000);
+
+            Product::factory()->create([
+                'category_id' => $categories->random()->id,
+                'price' => null,
+                'price_range_min' => $min,
+                'price_range_max' => $max,
+            ]);
+        }
     }
 
     private function addEcommerceLinks(): void
@@ -256,9 +328,14 @@ class ProductSeeder extends Seeder
         $products = Product::all();
         $tags = ProductTag::all();
 
+        if ($tags->isEmpty()) {
+            $this->command->warn('No tags found. Skipping tag assignment.');
+            return;
+        }
+
         foreach ($products as $product) {
             // Assign 2-5 random tags to each product
-            $productTags = $tags->random(fake()->numberBetween(2, 5));
+            $productTags = $tags->random(fake()->numberBetween(2, min(5, $tags->count())));
             $product->tags()->attach($productTags->pluck('id'));
 
             // Update tag usage counts

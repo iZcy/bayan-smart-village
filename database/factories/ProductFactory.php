@@ -56,7 +56,7 @@ class ProductFactory extends Factory
         return [
             'village_id' => $this->faker->boolean(80) ? Village::active()->inRandomOrder()->first()?->id : null,
             'place_id' => $this->faker->boolean(70) ? SmeTourismPlace::inRandomOrder()->first()?->id : null,
-            'category_id' => Category::inRandomOrder()->first()->id,
+            'category_id' => Category::inRandomOrder()->first()?->id ?? Category::factory(),
             'name' => $this->faker->randomElement($productNames),
             'description' => $this->generateRichDescription(),
             'short_description' => $this->faker->text(400),
@@ -142,7 +142,8 @@ class ProductFactory extends Factory
             'Kain Tradisional'
         ];
 
-        return $this->faker->randomElements($materials, $this->faker->numberBetween(1, 4));
+        $count = $this->faker->numberBetween(1, min(4, count($materials)));
+        return $this->faker->randomElements($materials, $count);
     }
 
     private function generateColors(): array
@@ -165,7 +166,8 @@ class ProductFactory extends Factory
             'Maroon'
         ];
 
-        return $this->faker->randomElements($colors, $this->faker->numberBetween(1, 5));
+        $count = $this->faker->numberBetween(1, min(5, count($colors)));
+        return $this->faker->randomElements($colors, $count);
     }
 
     private function generateSizes(): array
@@ -179,7 +181,8 @@ class ProductFactory extends Factory
         ];
 
         $selectedType = $this->faker->randomElement($sizeTypes);
-        return $this->faker->randomElements($selectedType, $this->faker->numberBetween(2, 4));
+        $count = $this->faker->numberBetween(2, min(4, count($selectedType)));
+        return $this->faker->randomElements($selectedType, $count);
     }
 
     private function generateFeatures(): array
@@ -202,7 +205,8 @@ class ProductFactory extends Factory
             'Multifungsi'
         ];
 
-        return $this->faker->randomElements($features, $this->faker->numberBetween(2, 6));
+        $count = $this->faker->numberBetween(2, min(6, count($features)));
+        return $this->faker->randomElements($features, $count);
     }
 
     private function generateCertifications(): array
@@ -218,7 +222,8 @@ class ProductFactory extends Factory
             'Handmade Certificate'
         ];
 
-        return $this->faker->randomElements($certifications, $this->faker->numberBetween(1, 3));
+        $count = $this->faker->numberBetween(1, min(3, count($certifications)));
+        return $this->faker->randomElements($certifications, $count);
     }
 
     public function withVillage(Village $village): static
