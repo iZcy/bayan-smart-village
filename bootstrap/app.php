@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Inertia\Middleware as InertiaMiddleware;
+use App\Http\Middleware\ResolveVillageSubdomain;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,8 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'resolve.village' => \App\Http\Middleware\ResolveVillageSubdomain::class,
+            'resolve.village' => ResolveVillageSubdomain::class,
         ]);
+
+        // Add this line to register Inertia middleware globally for 'web'
+        $middleware->appendToGroup('web', InertiaMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

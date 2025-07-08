@@ -10,7 +10,17 @@ import {
 import { useInView } from "react-intersection-observer";
 import MainLayout from "@/Layouts/MainLayout";
 
-const VillageHomePage = ({ village, places, articles, gallery, products }) => {
+const VillageHomePage = ({
+    village,
+    places = { tourism: [], sme: [] },
+    articles = [],
+    gallery = [],
+    products = [],
+}) => {
+    const tourismPlaces = places.tourism ?? [];
+    const smePlaces = places.sme ?? [];
+    console.log("places", places, typeof places, Array.isArray(places));
+
     const [currentSection, setCurrentSection] = useState(0);
     const [selectedTourismPlace, setSelectedTourismPlace] = useState(0);
     const [selectedSME, setSelectedSME] = useState(0);
@@ -31,12 +41,6 @@ const VillageHomePage = ({ village, places, articles, gallery, products }) => {
     const [smeRef, smeInView] = useInView({ threshold: 0.3 });
     const [articlesRef, articlesInView] = useInView({ threshold: 0.3 });
     const [galleryRef, galleryInView] = useInView({ threshold: 0.3 });
-
-    // Filter places by type
-    const tourismPlaces =
-        places?.filter((place) => place.category?.type === "tourism") || [];
-    const smePlaces =
-        places?.filter((place) => place.category?.type === "sme") || [];
 
     // Auto-scroll tourism places
     useEffect(() => {

@@ -8,7 +8,7 @@ import {
     AnimatePresence,
 } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import MainLayout from "../Layouts/MainLayout";
+import MainLayout from "../../Layouts/MainLayout";
 
 export default function PlaceShowPage({ village, place, relatedPlaces }) {
     const containerRef = useRef(null);

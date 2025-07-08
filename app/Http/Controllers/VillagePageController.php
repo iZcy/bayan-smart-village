@@ -87,7 +87,7 @@ class VillagePageController extends Controller
             ->latest()
             ->paginate(12);
 
-        return Inertia::render('Village/Articles', [
+        return Inertia::render('Village/ArticlesPage', [
             'village' => $village,
             'articles' => $articles,
             'filters' => [
@@ -113,7 +113,7 @@ class VillagePageController extends Controller
             ->limit(3)
             ->get();
 
-        return Inertia::render('Village/ArticleShow', [
+        return Inertia::render('Village/ArticleShowPage', [
             'village' => $village,
             'article' => $article,
             'relatedArticles' => $relatedArticles,
@@ -165,7 +165,7 @@ class VillagePageController extends Controller
             ->unique('id')
             ->values();
 
-        return Inertia::render('Village/Products', [
+        return Inertia::render('Village/ProductsPage', [
             'village' => $village,
             'products' => $products,
             'categories' => $categories,
@@ -213,7 +213,7 @@ class VillagePageController extends Controller
             ->limit(4)
             ->get();
 
-        return Inertia::render('Village/ProductShow', [
+        return Inertia::render('Village/ProductShowPage', [
             'village' => $village,
             'product' => $product,
             'relatedProducts' => $relatedProducts,
@@ -253,7 +253,7 @@ class VillagePageController extends Controller
             ->unique('id')
             ->values();
 
-        return Inertia::render('Village/Places', [
+        return Inertia::render('Village/PlacesPage', [
             'village' => $village,
             'places' => $places,
             'categories' => $categories,
@@ -294,7 +294,7 @@ class VillagePageController extends Controller
             ->limit(4)
             ->get();
 
-        return Inertia::render('Village/PlaceShow', [
+        return Inertia::render('Village/PlaceShowPage', [
             'village' => $village,
             'place' => $place,
             'relatedPlaces' => $relatedPlaces,
@@ -329,7 +329,7 @@ class VillagePageController extends Controller
             ->select('id', 'name')
             ->get();
 
-        return Inertia::render('Village/Gallery', [
+        return Inertia::render('Village/GalleryPage', [
             'village' => $village,
             'images' => $images,
             'places' => $places,
