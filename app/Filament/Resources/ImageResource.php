@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ImageResource extends Resource
 {
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 6;
 
     protected static ?string $model = Image::class;
 

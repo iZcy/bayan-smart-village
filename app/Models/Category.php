@@ -24,4 +24,20 @@ class Category extends Model
     {
         return $this->hasMany(SmeTourismPlace::class);
     }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function activeProducts(): HasMany
+    {
+        return $this->products()->where('is_active', true);
+    }
+
+    // Helper method to get category usage across places and products
+    public function getTotalUsageCountAttribute(): int
+    {
+        return $this->places()->count() + $this->products()->count();
+    }
 }

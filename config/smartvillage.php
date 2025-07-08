@@ -129,4 +129,60 @@ return [
             'random' => env('SEED_RANDOM_LINKS', 8),
         ],
     ],
+
+    /*
+|--------------------------------------------------------------------------
+| Products Configuration
+|--------------------------------------------------------------------------
+|
+| Configuration for the products feature
+|
+*/
+    'products' => [
+        'per_page' => env('PRODUCTS_PER_PAGE', 12),
+        'max_images_per_product' => env('PRODUCTS_MAX_IMAGES', 10),
+        'max_ecommerce_links' => env('PRODUCTS_MAX_ECOMMERCE_LINKS', 10),
+        'featured_limit' => env('PRODUCTS_FEATURED_LIMIT', 8),
+
+        'supported_platforms' => [
+            'tokopedia' => [
+                'name' => 'Tokopedia',
+                'icon' => 'tokopedia',
+                'color' => 'success',
+                'url_pattern' => 'tokopedia.com',
+            ],
+            'shopee' => [
+                'name' => 'Shopee',
+                'icon' => 'shopee',
+                'color' => 'warning',
+                'url_pattern' => 'shopee.co.id',
+            ],
+            'tiktok_shop' => [
+                'name' => 'TikTok Shop',
+                'icon' => 'tiktok',
+                'color' => 'danger',
+                'url_pattern' => 'shop.tiktok.com',
+            ],
+            'whatsapp' => [
+                'name' => 'WhatsApp',
+                'icon' => 'whatsapp',
+                'color' => 'success',
+                'url_pattern' => 'wa.me',
+            ],
+            'instagram' => [
+                'name' => 'Instagram',
+                'icon' => 'instagram',
+                'color' => 'secondary',
+                'url_pattern' => 'instagram.com',
+            ],
+        ],
+
+        'image_settings' => [
+            'max_size_mb' => 2,
+            'allowed_types' => ['jpg', 'jpeg', 'png', 'webp'],
+            'thumbnail_size' => [300, 300],
+            'medium_size' => [600, 600],
+            'large_size' => [1200, 1200],
+        ],
+    ],
 ];

@@ -56,4 +56,19 @@ class SmeTourismPlace extends Model
     {
         return $this->hasMany(ExternalLink::class, 'place_id')->orderBy('sort_order');
     }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class, 'place_id');
+    }
+
+    public function activeProducts(): HasMany
+    {
+        return $this->products()->where('is_active', true);
+    }
+
+    public function featuredProducts(): HasMany
+    {
+        return $this->products()->where('is_featured', true)->where('is_active', true);
+    }
 }

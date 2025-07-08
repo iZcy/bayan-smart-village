@@ -11,16 +11,17 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Create admin user first
-        $this->createAdminUser();
+        // $this->createAdminUser();
 
         // Then seed all the tourism data
         $this->call([
-            VillageSeeder::class,        // Create villages first
-            CategorySeeder::class,       // Then categories
-            SmeTourismPlaceSeeder::class, // Then places (will link to villages)
-            ArticleSeeder::class,        // Then articles
-            ImageSeeder::class,          // Then images
-            ExternalLinkSeeder::class,   // Finally external links (will link to villages)
+            // VillageSeeder::class,        // Create villages first
+            // CategorySeeder::class,       // Then categories
+            // SmeTourismPlaceSeeder::class, // Then places (will link to villages)
+            // ArticleSeeder::class,        // Then articles
+            // ImageSeeder::class,          // Then images
+            // ExternalLinkSeeder::class,   // External links
+            ProductSeeder::class,        // NEW: Add products seeder
         ]);
 
         $this->command->info('🎉 Bayan Smart Village database seeded successfully!');

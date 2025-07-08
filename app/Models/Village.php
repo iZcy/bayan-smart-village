@@ -171,4 +171,19 @@ class Village extends Model
                 ->orWhere('address', 'like', "%{$search}%");
         });
     }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function activeProducts(): HasMany
+    {
+        return $this->products()->where('is_active', true);
+    }
+
+    public function featuredProducts(): HasMany
+    {
+        return $this->products()->where('is_featured', true)->where('is_active', true);
+    }
 }

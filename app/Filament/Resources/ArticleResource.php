@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ArticleResource extends Resource
 {
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 5;
 
     protected static ?string $model = Article::class;
 

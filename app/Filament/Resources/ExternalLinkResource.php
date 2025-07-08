@@ -25,7 +25,7 @@ class ExternalLinkResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Short Links';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 7;
 
     public static function form(Form $form): Form
     {

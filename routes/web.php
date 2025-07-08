@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ExternalLinkController;
+use App\Http\Controllers\ProductController;
 use App\Http\Middleware\ResolveVillageSubdomain;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -326,3 +327,60 @@ try {
     // Handle case where database is not yet migrated
     // This prevents errors during initial setup
 }
+
+// Product routes for apex domain
+Route::domain($baseDomain)->group(function () {
+    // ... existing routes ...
+
+    // Public product routes
+    Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/', [ProductController::class, 'index'])->name('index');
+        Route::get('/featured', [ProductController::class, 'featured'])->name('featured');
+        Route::get('/categories', [ProductController::class, 'categories'])->name('categories');
+        Route::get('/tags', [ProductController::class, 'tags'])->name('tags');
+        Route::get('/search', [ProductController::class, 'search'])->name('search');
+        Route::get('/stats', [ProductController::class, 'stats'])->name('stats');
+        Route::get('/{slug}', [ProductController::class, 'show'])->name('show');
+    });
+
+    // Product e-commerce link tracking
+    Route::post('/products/{product}/links/{link}/click', [ProductController::class, 'trackLinkClick'])
+        ->name('products.link.click');
+
+    // API routes for products
+    Route::prefix('api/products')->name('api.products.')->group(function () {
+        Route::get('/', [ProductController::class, 'index'])->name('index');
+        Route::get('/featured', [ProductController::class, 'featured'])->name('featured');
+        Route::get('/search', [ProductController::class, 'search'])->name('search');
+        Route::get('/categories', [ProductController::class, 'categories'])->name('categories');
+        Route::get('/tags', [ProductController::class, 'tags'])->name('tags');
+        Route::get('/stats', [ProductController::class, 'stats'])->name('stats');
+        Route::get('/{slug}', [ProductController::class, 'show'])->name('show');
+        Route::post('/{product}/links/{link}/click', [ProductController::class, 'trackLinkClick'])->name('link.click');
+    });
+});
+
+// Product routes for village subdomains
+Route::domain('{village}.' . $baseDomain)
+    ->middleware([ResolveVillageSubdomain::class])
+    ->group(function () {
+        // ... existing routes ...
+
+        // Village product routes
+        Route::prefix('products')->name('village.products.')->group(function () {
+            Route::get('/', [ProductController::class, 'villageProducts'])->name('index');
+            Route::get('/{slug}', [ProductController::class, 'show'])->name('show');
+        });
+
+        // Place product routes
+        Route::get('/places/{place}/products', [ProductController::class, 'placeProducts'])
+            ->name('village.places.products');
+
+        // API routes for village products
+        Route::prefix('api')->name('village.api.')->group(function () {
+            Route::get('/products', [ProductController::class, 'villageProducts'])->name('products');
+            Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
+            Route::get('/places/{place}/products', [ProductController::class, 'placeProducts'])->name('places.products');
+            Route::post('/products/{product}/links/{link}/click', [ProductController::class, 'trackLinkClick'])->name('products.link.click');
+        });
+    });
