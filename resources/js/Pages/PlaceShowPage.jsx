@@ -10,7 +10,7 @@ import {
 import { useInView } from "react-intersection-observer";
 import MainLayout from "../Layouts/MainLayout";
 
-export default function PlaceShow({ village, place, relatedPlaces }) {
+export default function PlaceShowPage({ village, place, relatedPlaces }) {
     const containerRef = useRef(null);
     const { scrollYProgress } = useScroll({
         target: containerRef,
