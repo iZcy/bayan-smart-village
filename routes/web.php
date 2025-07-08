@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ExternalLinkController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\VillagePageController;
 use App\Http\Middleware\ResolveVillageSubdomain;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -29,6 +30,21 @@ Route::domain($baseDomain)->group(function () {
         Route::get('/{village}/{slug}/stats', [ExternalLinkController::class, 'stats'])->name('stats');
     });
 
+    // Public product routes
+    Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/', [ProductController::class, 'index'])->name('index');
+        Route::get('/featured', [ProductController::class, 'featured'])->name('featured');
+        Route::get('/categories', [ProductController::class, 'categories'])->name('categories');
+        Route::get('/tags', [ProductController::class, 'tags'])->name('tags');
+        Route::get('/search', [ProductController::class, 'search'])->name('search');
+        Route::get('/stats', [ProductController::class, 'stats'])->name('stats');
+        Route::get('/{slug}', [ProductController::class, 'show'])->name('show');
+    });
+
+    // Product e-commerce link tracking
+    Route::post('/products/{product}/links/{link}/click', [ProductController::class, 'trackLinkClick'])
+        ->name('products.link.click');
+
     // Testing/debugging routes (remove in production)
     Route::get('/test/links', function () {
         $links = \App\Models\ExternalLink::with('village')->get();
@@ -48,85 +64,32 @@ Route::domain($baseDomain)->group(function () {
             })
         ]);
     });
-
-    Route::get('/test/villages', function () {
-        $villages = \App\Models\Village::active()->get();
-        return response()->json([
-            'total_villages' => $villages->count(),
-            'villages' => $villages->map(function ($village) {
-                return [
-                    'id' => $village->id,
-                    'name' => $village->name,
-                    'slug' => $village->slug,
-                    'domain' => $village->full_domain,
-                    'url' => $village->url,
-                    'places_count' => $village->places()->count(),
-                    'links_count' => $village->externalLinks()->count(),
-                ];
-            })
-        ]);
-    });
-
-    // Debug route for apex domain
-    Route::get('/debug/{slug}', function (Request $request, $slug) {
-        return response()->json([
-            'debug_info' => [
-                'host' => $request->getHost(),
-                'requested_slug' => $slug,
-                'is_apex_domain' => true,
-                'village_from_middleware' => null,
-                'all_matching_slugs' => \App\Models\ExternalLink::where('slug', $slug)->get()->map(function ($l) {
-                    return [
-                        'id' => $l->id,
-                        'village_id' => $l->village_id,
-                        'village_name' => $l->village?->name,
-                        'is_active' => $l->is_active,
-                        'target_url' => $l->formatted_url ?? $l->url,
-                    ];
-                }),
-            ]
-        ]);
-    });
 });
 
 // Routes for village subdomains (e.g., village-name.kecamatanbayan.id)
 Route::domain('{village}.' . $baseDomain)
     ->middleware([ResolveVillageSubdomain::class])
     ->group(function () {
-        // Simple test route WITHOUT middleware to check domain routing
-        Route::get('/simple-test', function ($village) {
-            return response()->json([
-                'message' => 'Domain routing works!',
-                'detected_village_param' => $village,
-                'host' => request()->getHost(),
-                'path' => request()->path(),
-            ]);
-        });
         // Village homepage
-        Route::get('/', function (Request $request) {
-            // Get village from request (set by middleware)
-            $village = $request->attributes->get('village');
+        Route::get('/', [VillagePageController::class, 'home'])->name('village.home');
 
-            if (!$village) {
-                abort(404, 'Village not found');
-            }
+        // Articles
+        Route::get('/articles', [VillagePageController::class, 'articles'])->name('village.articles');
+        Route::get('/articles/{article}', [VillagePageController::class, 'articleShow'])->name('village.articles.show');
 
-            return response()->json([
-                'message' => "Welcome to {$village->name}",
-                'village' => [
-                    'name' => $village->name,
-                    'slug' => $village->slug,
-                    'description' => $village->description,
-                    'domain' => $village->full_domain,
-                    'places_count' => $village->places()->count(),
-                    'links_count' => $village->activeExternalLinks()->count(),
-                ]
-            ]);
-        })->name('village.home');
+        // Products
+        Route::get('/products', [VillagePageController::class, 'products'])->name('village.products');
+        Route::get('/products/{product:slug}', [VillagePageController::class, 'productShow'])->name('village.products.show');
+
+        // Places
+        Route::get('/places', [VillagePageController::class, 'places'])->name('village.places');
+        Route::get('/places/{place}', [VillagePageController::class, 'placeShow'])->name('village.places.show');
+
+        // Gallery
+        Route::get('/gallery', [VillagePageController::class, 'gallery'])->name('village.gallery');
 
         // Short link redirect for village subdomains
         Route::get('/l/{slug}', function (Request $request, $slug) {
-            // Debug the parameters
             Log::info('Route parameters debug', [
                 'slug_from_route' => $slug,
                 'path' => $request->path(),
@@ -140,6 +103,9 @@ Route::domain('{village}.' . $baseDomain)
         // Village-specific API
         Route::prefix('api')->name('village.api.')->group(function () {
             Route::get('/links', [ExternalLinkController::class, 'domainLinks'])->name('links');
+            Route::get('/products', [ProductController::class, 'villageProducts'])->name('products');
+            Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
+            Route::post('/products/{product}/links/{link}/click', [ProductController::class, 'trackLinkClick'])->name('products.link.click');
 
             Route::get('/places', function (Request $request) {
                 $village = $request->attributes->get('village');
@@ -191,108 +157,9 @@ Route::domain('{village}.' . $baseDomain)
                 ]);
             })->name('info');
         });
-
-        // Test routes for villages (remove in production)
-        Route::get('/test', function (Request $request) {
-            $village = $request->attributes->get('village');
-
-            if (!$village) {
-                return response()->json(['error' => 'Village not found'], 404);
-            }
-
-            $links = $village->externalLinks;
-
-            return response()->json([
-                'village' => $village->name,
-                'domain' => request()->getHost(),
-                'detected_village' => $village->slug,
-                'links' => $links->map(function ($link) {
-                    return [
-                        'label' => $link->label,
-                        'slug' => $link->slug,
-                        'short_url' => $link->subdomain_url,
-                        'target_url' => $link->formatted_url,
-                        'click_count' => $link->click_count,
-                    ];
-                })
-            ]);
-        });
-
-        // Add test/links route for village subdomains
-        Route::get('/test/links', function (Request $request) {
-            $village = $request->attributes->get('village');
-
-            if (!$village) {
-                return response()->json(['error' => 'Village not found'], 404);
-            }
-
-            $links = $village->externalLinks()->with('village')->get();
-
-            return response()->json([
-                'village' => $village->name,
-                'domain' => request()->getHost(),
-                'detected_village' => $village->slug,
-                'total_links' => $links->count(),
-                'links' => $links->map(function ($link) {
-                    return [
-                        'id' => $link->id,
-                        'label' => $link->label,
-                        'slug' => $link->slug,
-                        'village' => $link->village?->name,
-                        'short_url' => $link->subdomain_url,
-                        'target_url' => $link->formatted_url,
-                        'click_count' => $link->click_count,
-                    ];
-                })
-            ]);
-        });
-
-        // Debug route for redirect issues
-        Route::get('/debug/{slug}', function (Request $request, $slug) {
-            $village = $request->attributes->get('village');
-
-            $linkQuery = \App\Models\ExternalLink::where('slug', $slug);
-
-            if ($village) {
-                $link = $linkQuery->where('village_id', $village->id)->active()->first();
-            } else {
-                $link = $linkQuery->whereNull('village_id')->active()->first();
-            }
-
-            return response()->json([
-                'debug_info' => [
-                    'host' => $request->getHost(),
-                    'requested_slug' => $slug,
-                    'village_from_middleware' => $village ? [
-                        'id' => $village->id,
-                        'name' => $village->name,
-                        'slug' => $village->slug,
-                    ] : null,
-                    'link_found' => $link ? [
-                        'id' => $link->id,
-                        'label' => $link->label,
-                        'slug' => $link->slug,
-                        'village_id' => $link->village_id,
-                        'is_active' => $link->is_active,
-                        'target_url' => $link->formatted_url,
-                        'url_raw' => $link->url,
-                    ] : null,
-                    'all_matching_slugs' => \App\Models\ExternalLink::where('slug', $slug)->get()->map(function ($l) {
-                        return [
-                            'id' => $l->id,
-                            'village_id' => $l->village_id,
-                            'village_name' => $l->village?->name,
-                            'is_active' => $l->is_active,
-                            'target_url' => $l->formatted_url,
-                        ];
-                    }),
-                ]
-            ]);
-        });
     });
 
 // Handle custom domains dynamically
-// Note: In production, you might want to cache this or handle it differently
 try {
     $villagesWithCustomDomains = \App\Models\Village::whereNotNull('domain')->active()->get();
 
@@ -300,19 +167,15 @@ try {
         Route::domain($village->domain)
             ->middleware([ResolveVillageSubdomain::class])
             ->group(function () use ($village) {
-                // Custom domain homepage
-                Route::get('/', function () use ($village) {
-                    return response()->json([
-                        'message' => "Welcome to {$village->name} (Custom Domain)",
-                        'village' => [
-                            'name' => $village->name,
-                            'slug' => $village->slug,
-                            'custom_domain' => $village->domain,
-                            'places_count' => $village->places()->count(),
-                            'links_count' => $village->activeExternalLinks()->count(),
-                        ]
-                    ]);
-                })->name("custom.{$village->slug}.home");
+                // Custom domain routes - same as subdomain routes
+                Route::get('/', [VillagePageController::class, 'home'])->name("custom.{$village->slug}.home");
+                Route::get('/articles', [VillagePageController::class, 'articles'])->name("custom.{$village->slug}.articles");
+                Route::get('/articles/{article}', [VillagePageController::class, 'articleShow'])->name("custom.{$village->slug}.articles.show");
+                Route::get('/products', [VillagePageController::class, 'products'])->name("custom.{$village->slug}.products");
+                Route::get('/products/{product:slug}', [VillagePageController::class, 'productShow'])->name("custom.{$village->slug}.products.show");
+                Route::get('/places', [VillagePageController::class, 'places'])->name("custom.{$village->slug}.places");
+                Route::get('/places/{place}', [VillagePageController::class, 'placeShow'])->name("custom.{$village->slug}.places.show");
+                Route::get('/gallery', [VillagePageController::class, 'gallery'])->name("custom.{$village->slug}.gallery");
 
                 // Short link redirect for custom domains
                 Route::get('/l/{slug}', [ExternalLinkController::class, 'redirect'])
@@ -325,62 +188,4 @@ try {
     }
 } catch (\Exception $e) {
     // Handle case where database is not yet migrated
-    // This prevents errors during initial setup
 }
-
-// Product routes for apex domain
-Route::domain($baseDomain)->group(function () {
-    // ... existing routes ...
-
-    // Public product routes
-    Route::prefix('products')->name('products.')->group(function () {
-        Route::get('/', [ProductController::class, 'index'])->name('index');
-        Route::get('/featured', [ProductController::class, 'featured'])->name('featured');
-        Route::get('/categories', [ProductController::class, 'categories'])->name('categories');
-        Route::get('/tags', [ProductController::class, 'tags'])->name('tags');
-        Route::get('/search', [ProductController::class, 'search'])->name('search');
-        Route::get('/stats', [ProductController::class, 'stats'])->name('stats');
-        Route::get('/{slug}', [ProductController::class, 'show'])->name('show');
-    });
-
-    // Product e-commerce link tracking
-    Route::post('/products/{product}/links/{link}/click', [ProductController::class, 'trackLinkClick'])
-        ->name('products.link.click');
-
-    // API routes for products
-    Route::prefix('api/products')->name('api.products.')->group(function () {
-        Route::get('/', [ProductController::class, 'index'])->name('index');
-        Route::get('/featured', [ProductController::class, 'featured'])->name('featured');
-        Route::get('/search', [ProductController::class, 'search'])->name('search');
-        Route::get('/categories', [ProductController::class, 'categories'])->name('categories');
-        Route::get('/tags', [ProductController::class, 'tags'])->name('tags');
-        Route::get('/stats', [ProductController::class, 'stats'])->name('stats');
-        Route::get('/{slug}', [ProductController::class, 'show'])->name('show');
-        Route::post('/{product}/links/{link}/click', [ProductController::class, 'trackLinkClick'])->name('link.click');
-    });
-});
-
-// Product routes for village subdomains
-Route::domain('{village}.' . $baseDomain)
-    ->middleware([ResolveVillageSubdomain::class])
-    ->group(function () {
-        // ... existing routes ...
-
-        // Village product routes
-        Route::prefix('products')->name('village.products.')->group(function () {
-            Route::get('/', [ProductController::class, 'villageProducts'])->name('index');
-            Route::get('/{slug}', [ProductController::class, 'show'])->name('show');
-        });
-
-        // Place product routes
-        Route::get('/places/{place}/products', [ProductController::class, 'placeProducts'])
-            ->name('village.places.products');
-
-        // API routes for village products
-        Route::prefix('api')->name('village.api.')->group(function () {
-            Route::get('/products', [ProductController::class, 'villageProducts'])->name('products');
-            Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
-            Route::get('/places/{place}/products', [ProductController::class, 'placeProducts'])->name('places.products');
-            Route::post('/products/{product}/links/{link}/click', [ProductController::class, 'trackLinkClick'])->name('products.link.click');
-        });
-    });
