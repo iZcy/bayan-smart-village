@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
     private function createAdminUser(): void
     {
         // Check if admin user already exists
-        $existingUser = User::where('email', 'admin@bayansmart.com')->first();
+        $existingUser = User::where('email', 'admin@kecamatanbayan.id')->first();
 
         if ($existingUser) {
             $this->command->info('⚠️  Admin user already exists. Skipping user creation.');

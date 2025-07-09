@@ -40,6 +40,7 @@ return new class extends Migration
             $table->index(['place_id', 'is_active']);
             $table->index(['category_id', 'is_active']);
             $table->index(['is_featured', 'is_active']);
+            $table->index('slug');
             $table->unique(['village_id', 'slug']);
 
             $table->foreign('village_id')->references('id')->on('villages')->onDelete('set null');

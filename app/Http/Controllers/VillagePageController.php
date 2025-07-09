@@ -37,16 +37,17 @@ class VillagePageController extends Controller
             ->limit(8)
             ->get();
 
-        // Get recent articles (limit to 6)
+        // Get recent articles with proper relationships
         $articles = $village->articles()
-            ->latest()
+            ->with(['place'])
+            ->orderBy('created_at', 'desc')
             ->limit(6)
             ->get();
 
         // Get gallery images (limit to 12)
         $gallery = $village->images()
             ->with('place')
-            ->latest()
+            ->orderBy('created_at', 'desc')
             ->limit(12)
             ->get();
 
@@ -78,25 +79,47 @@ class VillagePageController extends Controller
             abort(404, 'Village not found');
         }
 
-        $articles = $village->articles()
-            ->with(['place'])
-            ->when($request->search, function ($query, $search) {
-                return $query->where('title', 'like', "%{$search}%")
+        // Build query with proper relationships
+        $articlesQuery = $village->articles()
+            ->with(['place']);
+
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $articlesQuery->where(function ($query) use ($search) {
+                $query->where('title', 'like', "%{$search}%")
                     ->orWhere('content', 'like', "%{$search}%");
-            })
-            ->latest()
+            });
+        }
+
+        // Apply place filter if specified
+        if ($request->filled('place')) {
+            $articlesQuery->where('place_id', $request->place);
+        }
+
+        $articles = $articlesQuery
+            ->orderBy('created_at', 'desc')
             ->paginate(12);
+
+        // Get places for filter dropdown
+        $places = $village->places()
+            ->whereHas('articles') // Only places that have articles
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
 
         return Inertia::render('Village/ArticlesPage', [
             'village' => $village,
             'articles' => $articles,
+            'places' => $places,
             'filters' => [
                 'search' => $request->search,
+                'place' => $request->place,
             ],
         ]);
     }
 
-    public function articleShow(Request $request, $articleId)
+    public function articleShow(Request $request, $village, $slug)
     {
         $village = $request->attributes->get('village');
 
@@ -104,7 +127,8 @@ class VillagePageController extends Controller
             abort(404, 'Village not found');
         }
 
-        $article = Article::where('id', $articleId)
+        // Find article by slug instead of ID
+        $article = Article::where('slug', $slug)
             ->where('village_id', $village->id)
             ->with(['place', 'village'])
             ->first();
@@ -113,10 +137,11 @@ class VillagePageController extends Controller
             abort(404, 'Article not found');
         }
 
-        // Get related articles
+        // Get related articles from the same village
         $relatedArticles = $village->articles()
             ->where('id', '!=', $article->id)
-            ->latest()
+            ->with(['place'])
+            ->orderBy('created_at', 'desc')
             ->limit(3)
             ->get();
 
@@ -184,7 +209,7 @@ class VillagePageController extends Controller
         ]);
     }
 
-    public function productShow(Request $request, $productSlug)
+    public function productShow(Request $request, $village, $slug)
     {
         $village = $request->attributes->get('village');
 
@@ -192,7 +217,7 @@ class VillagePageController extends Controller
             abort(404, 'Village not found');
         }
 
-        $product = Product::where('slug', $productSlug)
+        $product = Product::where('slug', $slug)
             ->where('village_id', $village->id)
             ->active()
             ->with([
@@ -280,7 +305,7 @@ class VillagePageController extends Controller
         ]);
     }
 
-    public function placeShow(Request $request, $placeId)
+    public function placeShow(Request $request, $village, $slug)
     {
         $village = $request->attributes->get('village');
 
@@ -288,7 +313,8 @@ class VillagePageController extends Controller
             abort(404, 'Village not found');
         }
 
-        $place = SmeTourismPlace::where('id', $placeId)
+        // Find place by slug instead of ID
+        $place = SmeTourismPlace::where('slug', $slug)
             ->where('village_id', $village->id)
             ->with([
                 'village',
@@ -342,7 +368,7 @@ class VillagePageController extends Controller
             ->when($request->place, function ($query, $place) {
                 return $query->where('place_id', $place);
             })
-            ->latest()
+            ->orderBy('created_at', 'desc')
             ->paginate(24);
 
         // Get places for filters

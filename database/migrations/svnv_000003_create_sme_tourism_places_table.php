@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('sme_tourism_places', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->string('slug')->nullable();
             $table->uuid('village_id')->nullable();
             $table->string('name');
             $table->text('description');
@@ -24,6 +25,7 @@ return new class extends Migration
 
             $table->index('village_id');
             $table->index(['village_id', 'category_id']);
+            $table->index(['village_id', 'slug']);
             $table->foreign('village_id')->references('id')->on('villages')->onDelete('set null');
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
         });

@@ -344,7 +344,7 @@ const PlaceCard = ({ place, index, village }) => {
             whileHover={{ y: -10, scale: 1.02 }}
             className="group bg-white/5 backdrop-blur-md rounded-2xl overflow-hidden border border-white/10 hover:border-white/30 transition-all duration-300"
         >
-            <Link href={`/places/${place.id}`}>
+            <Link href={`/places/${place.slug}`}>
                 <div className="relative h-56 overflow-hidden">
                     {place.image_url ? (
                         <img

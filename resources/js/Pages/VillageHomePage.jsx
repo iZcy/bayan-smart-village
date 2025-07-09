@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import {
     motion,
     useScroll,
@@ -19,7 +19,6 @@ const VillageHomePage = ({
 }) => {
     const tourismPlaces = places.tourism ?? [];
     const smePlaces = places.sme ?? [];
-    console.log("places", places, typeof places, Array.isArray(places));
 
     const [currentSection, setCurrentSection] = useState(0);
     const [selectedTourismPlace, setSelectedTourismPlace] = useState(0);
@@ -892,119 +891,137 @@ const VillageHomePage = ({
                                 }}
                                 className="group perspective-1000"
                             >
-                                <div className="bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden border border-white/20 hover:border-white/40 transition-all duration-500 transform-gpu">
-                                    <div className="relative h-48 overflow-hidden">
-                                        {article.cover_image_url ? (
-                                            <motion.img
-                                                src={article.cover_image_url}
-                                                alt={article.title}
-                                                className="w-full h-full object-cover"
-                                                whileHover={{ scale: 1.1 }}
-                                                transition={{ duration: 0.5 }}
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center relative">
-                                                <motion.span
-                                                    className="text-4xl text-white"
-                                                    animate={{
-                                                        rotate: [0, 10, -10, 0],
-                                                        scale: [1, 1.1, 1],
+                                <Link href={`/articles/${article.slug}`}>
+                                    <div className="bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden border border-white/20 hover:border-white/40 transition-all duration-500 transform-gpu">
+                                        <div className="relative h-48 overflow-hidden">
+                                            {article.cover_image_url ? (
+                                                <motion.img
+                                                    src={
+                                                        article.cover_image_url
+                                                    }
+                                                    alt={article.title}
+                                                    className="w-full h-full object-cover"
+                                                    whileHover={{ scale: 1.1 }}
+                                                    transition={{
+                                                        duration: 0.5,
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center relative">
+                                                    <motion.span
+                                                        className="text-4xl text-white"
+                                                        animate={{
+                                                            rotate: [
+                                                                0, 10, -10, 0,
+                                                            ],
+                                                            scale: [1, 1.1, 1],
+                                                        }}
+                                                        transition={{
+                                                            duration: 2,
+                                                            repeat: Infinity,
+                                                            delay: index * 0.2,
+                                                        }}
+                                                    >
+                                                        📖
+                                                    </motion.span>
+
+                                                    {/* Floating particles */}
+                                                    <motion.div
+                                                        animate={{
+                                                            y: [0, -20, 0],
+                                                            opacity: [
+                                                                0.3, 1, 0.3,
+                                                            ],
+                                                        }}
+                                                        transition={{
+                                                            duration: 3,
+                                                            repeat: Infinity,
+                                                            delay: index * 0.5,
+                                                        }}
+                                                        className="absolute top-4 right-4 w-2 h-2 bg-white/60 rounded-full"
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {/* Hover overlay */}
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                whileHover={{ opacity: 1 }}
+                                                className="absolute inset-0 bg-black/40 flex items-center justify-center"
+                                            >
+                                                <motion.div
+                                                    initial={{
+                                                        scale: 0,
+                                                        rotate: -180,
+                                                    }}
+                                                    whileHover={{
+                                                        scale: 1,
+                                                        rotate: 0,
                                                     }}
                                                     transition={{
-                                                        duration: 2,
+                                                        duration: 0.3,
+                                                    }}
+                                                    className="bg-white/20 backdrop-blur-sm rounded-full p-4"
+                                                >
+                                                    <span className="text-white text-xl">
+                                                        👁️
+                                                    </span>
+                                                </motion.div>
+                                            </motion.div>
+                                        </div>
+
+                                        <div className="p-6">
+                                            <motion.h3
+                                                className="text-xl font-bold text-white mb-3 line-clamp-2 group-hover:text-blue-200 transition-colors duration-300"
+                                                initial={{ y: 20 }}
+                                                whileInView={{ y: 0 }}
+                                                transition={{
+                                                    delay: index * 0.1 + 0.3,
+                                                }}
+                                            >
+                                                {article.title}
+                                            </motion.h3>
+
+                                            <motion.p
+                                                className="text-white/70 text-sm line-clamp-3 mb-4 leading-relaxed"
+                                                initial={{ y: 20, opacity: 0 }}
+                                                whileInView={{
+                                                    y: 0,
+                                                    opacity: 1,
+                                                }}
+                                                transition={{
+                                                    delay: index * 0.1 + 0.4,
+                                                }}
+                                            >
+                                                {article.content
+                                                    ?.replace(/<[^>]*>/g, "")
+                                                    .substring(0, 120)}
+                                                ...
+                                            </motion.p>
+
+                                            <motion.button
+                                                whileHover={{
+                                                    scale: 1.05,
+                                                    x: 5,
+                                                }}
+                                                whileTap={{ scale: 0.95 }}
+                                                className="text-blue-200 hover:text-white transition-all duration-300 text-sm font-semibold flex items-center group"
+                                            >
+                                                Read Story
+                                                <motion.span
+                                                    className="ml-2"
+                                                    animate={{ x: [0, 5, 0] }}
+                                                    transition={{
+                                                        duration: 1.5,
                                                         repeat: Infinity,
-                                                        delay: index * 0.2,
                                                     }}
                                                 >
-                                                    📖
+                                                    →
                                                 </motion.span>
-
-                                                {/* Floating particles */}
-                                                <motion.div
-                                                    animate={{
-                                                        y: [0, -20, 0],
-                                                        opacity: [0.3, 1, 0.3],
-                                                    }}
-                                                    transition={{
-                                                        duration: 3,
-                                                        repeat: Infinity,
-                                                        delay: index * 0.5,
-                                                    }}
-                                                    className="absolute top-4 right-4 w-2 h-2 bg-white/60 rounded-full"
-                                                />
-                                            </div>
-                                        )}
-
-                                        {/* Hover overlay */}
-                                        <motion.div
-                                            initial={{ opacity: 0 }}
-                                            whileHover={{ opacity: 1 }}
-                                            className="absolute inset-0 bg-black/40 flex items-center justify-center"
-                                        >
-                                            <motion.div
-                                                initial={{
-                                                    scale: 0,
-                                                    rotate: -180,
-                                                }}
-                                                whileHover={{
-                                                    scale: 1,
-                                                    rotate: 0,
-                                                }}
-                                                transition={{ duration: 0.3 }}
-                                                className="bg-white/20 backdrop-blur-sm rounded-full p-4"
-                                            >
-                                                <span className="text-white text-xl">
-                                                    👁️
-                                                </span>
-                                            </motion.div>
-                                        </motion.div>
+                                            </motion.button>
+                                        </div>
                                     </div>
-
-                                    <div className="p-6">
-                                        <motion.h3
-                                            className="text-xl font-bold text-white mb-3 line-clamp-2 group-hover:text-blue-200 transition-colors duration-300"
-                                            initial={{ y: 20 }}
-                                            whileInView={{ y: 0 }}
-                                            transition={{
-                                                delay: index * 0.1 + 0.3,
-                                            }}
-                                        >
-                                            {article.title}
-                                        </motion.h3>
-
-                                        <motion.p
-                                            className="text-white/70 text-sm line-clamp-3 mb-4 leading-relaxed"
-                                            initial={{ y: 20, opacity: 0 }}
-                                            whileInView={{ y: 0, opacity: 1 }}
-                                            transition={{
-                                                delay: index * 0.1 + 0.4,
-                                            }}
-                                        >
-                                            {article.content
-                                                ?.replace(/<[^>]*>/g, "")
-                                                .substring(0, 120)}
-                                            ...
-                                        </motion.p>
-
-                                        <motion.button
-                                            whileHover={{ scale: 1.05, x: 5 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            className="text-blue-200 hover:text-white transition-all duration-300 text-sm font-semibold flex items-center group"
-                                        >
-                                            Read Story
-                                            <motion.span
-                                                className="ml-2"
-                                                animate={{ x: [0, 5, 0] }}
-                                                transition={{
-                                                    duration: 1.5,
-                                                    repeat: Infinity,
-                                                }}
-                                            >
-                                                →
-                                            </motion.span>
-                                        </motion.button>
-                                    </div>
-                                </div>
+                                </Link>
                             </motion.div>
                         ))}
                     </div>

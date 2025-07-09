@@ -41,6 +41,7 @@ class SmeTourismPlaceSeeder extends Seeder
         $featuredPlaces = [
             [
                 'name' => 'Pantai Senggigi',
+                'slug' => null,
                 'description' => 'Pantai terindah di Lombok dengan pemandangan sunset yang menakjubkan. Dilengkapi dengan berbagai fasilitas wisata dan akses yang mudah.',
                 'address' => 'Senggigi, Batu Layar, Lombok Barat',
                 'latitude' => -8.4811,
@@ -51,6 +52,7 @@ class SmeTourismPlaceSeeder extends Seeder
             ],
             [
                 'name' => 'Warung Makan Bu Rudy',
+                'slug' => null,
                 'description' => 'Warung makan legendaris yang menyajikan ayam taliwang dan plecing kangkung autentik khas Lombok. Sudah berdiri sejak 1979.',
                 'address' => 'Jl. Diponegoro No. 123, Mataram',
                 'latitude' => -8.5833,
@@ -61,6 +63,7 @@ class SmeTourismPlaceSeeder extends Seeder
             ],
             [
                 'name' => 'Desa Wisata Sasak Sade',
+                'slug' => null,
                 'description' => 'Desa wisata yang masih mempertahankan budaya dan tradisi Sasak asli. Pengunjung dapat belajar tentang kehidupan tradisional masyarakat Lombok.',
                 'address' => 'Sade, Pujut, Lombok Tengah',
                 'latitude' => -8.8833,
@@ -83,6 +86,7 @@ class SmeTourismPlaceSeeder extends Seeder
             SmeTourismPlace::create([
                 'village_id' => $village->id,
                 'name' => $placeData['name'],
+                'slug' => null,
                 'description' => $placeData['description'],
                 'address' => $placeData['address'],
                 'latitude' => $placeData['latitude'],

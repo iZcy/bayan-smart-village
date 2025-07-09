@@ -182,7 +182,7 @@ const ArticleCard = ({ article, index, village }) => {
             whileHover={{ y: -10, scale: 1.02 }}
             className="group bg-white/5 backdrop-blur-md rounded-2xl overflow-hidden border border-white/10 hover:border-white/30 transition-all duration-300"
         >
-            <Link href={`/articles/${article.id}`}>
+            <Link href={`/articles/${article.slug}`}>
                 <div className="relative h-48 overflow-hidden">
                     {article.cover_image_url ? (
                         <img

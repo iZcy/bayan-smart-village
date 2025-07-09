@@ -39,11 +39,6 @@ Route::domain($baseDomain)->group(function () {
     // Product e-commerce link tracking
     Route::post('/products/{product}/links/{link}/click', [ProductController::class, 'trackLinkClick'])
         ->name('products.link.click');
-
-    // Fallback everything to filament's /admin/login
-    // Route::fallback(function () {
-    //     return redirect(filament()->getLoginUrl());
-    // });
 });
 
 // Routes for village subdomains (e.g., village-name.kecamatanbayan.id)
@@ -53,17 +48,17 @@ Route::domain('{village}.' . $baseDomain)
         // Village homepage
         Route::get('/', [VillagePageController::class, 'home'])->name('village.home');
 
-        // Articles
+        // Articles - Updated to use slugs
         Route::get('/articles', [VillagePageController::class, 'articles'])->name('village.articles');
-        Route::get('/articles/{article}', [VillagePageController::class, 'articleShow'])->name('village.articles.show');
+        Route::get('/articles/{slug}', [VillagePageController::class, 'articleShow'])->name('village.articles.show');
 
-        // Products
+        // Products - Already using slugs
         Route::get('/products', [VillagePageController::class, 'products'])->name('village.products');
-        Route::get('/products/{product}', [VillagePageController::class, 'productShow'])->name('village.products.show');
+        Route::get('/products/{slug}', [VillagePageController::class, 'productShow'])->name('village.products.show');
 
-        // Places
+        // Places - Updated to use slugs
         Route::get('/places', [VillagePageController::class, 'places'])->name('village.places');
-        Route::get('/places/{place}', [VillagePageController::class, 'placeShow'])->name('village.places.show');
+        Route::get('/places/{slug}', [VillagePageController::class, 'placeShow'])->name('village.places.show');
 
         // Gallery
         Route::get('/gallery', [VillagePageController::class, 'gallery'])->name('village.gallery');
@@ -101,6 +96,7 @@ Route::domain('{village}.' . $baseDomain)
                         return [
                             'id' => $place->id,
                             'name' => $place->name,
+                            'slug' => $place->slug,
                             'description' => $place->description,
                             'category' => $place->category->name,
                             'phone_number' => $place->phone_number,
@@ -109,6 +105,35 @@ Route::domain('{village}.' . $baseDomain)
                     })
                 ]);
             })->name('places');
+
+            Route::get('/articles', function (Request $request) {
+                $village = $request->attributes->get('village');
+                if (!$village) {
+                    abort(404, 'Village not found');
+                }
+
+                $articles = $village->articles()->with('place')->latest()->get();
+
+                return response()->json([
+                    'village' => $village->name,
+                    'articles' => $articles->map(function ($article) {
+                        return [
+                            'id' => $article->id,
+                            'title' => $article->title,
+                            'slug' => $article->slug,
+                            'excerpt' => $article->excerpt,
+                            'cover_image_url' => $article->cover_image_url,
+                            'place' => $article->place ? [
+                                'id' => $article->place->id,
+                                'name' => $article->place->name,
+                                'slug' => $article->place->slug,
+                            ] : null,
+                            'reading_time' => $article->reading_time,
+                            'created_at' => $article->created_at,
+                        ];
+                    })
+                ]);
+            })->name('articles');
 
             Route::get('/info', function (Request $request) {
                 $village = $request->attributes->get('village');
@@ -147,14 +172,14 @@ try {
         Route::domain($village->domain)
             ->middleware([ResolveVillageSubdomain::class])
             ->group(function () use ($village) {
-                // Custom domain routes - same as subdomain routes
+                // Custom domain routes - same as subdomain routes but with slugs
                 Route::get('/', [VillagePageController::class, 'home'])->name("custom.{$village->slug}.home");
                 Route::get('/articles', [VillagePageController::class, 'articles'])->name("custom.{$village->slug}.articles");
-                Route::get('/articles/{article}', [VillagePageController::class, 'articleShow'])->name("custom.{$village->slug}.articles.show");
+                Route::get('/articles/{slug}', [VillagePageController::class, 'articleShow'])->name("custom.{$village->slug}.articles.show");
                 Route::get('/products', [VillagePageController::class, 'products'])->name("custom.{$village->slug}.products");
-                Route::get('/products/{product}', [VillagePageController::class, 'productShow'])->name("custom.{$village->slug}.products.show");
+                Route::get('/products/{slug}', [VillagePageController::class, 'productShow'])->name("custom.{$village->slug}.products.show");
                 Route::get('/places', [VillagePageController::class, 'places'])->name("custom.{$village->slug}.places");
-                Route::get('/places/{place}', [VillagePageController::class, 'placeShow'])->name("custom.{$village->slug}.places.show");
+                Route::get('/places/{slug}', [VillagePageController::class, 'placeShow'])->name("custom.{$village->slug}.places.show");
                 Route::get('/gallery', [VillagePageController::class, 'gallery'])->name("custom.{$village->slug}.gallery");
 
                 // Short link redirect for custom domains

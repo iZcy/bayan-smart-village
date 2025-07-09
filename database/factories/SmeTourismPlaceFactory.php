@@ -68,6 +68,7 @@ class SmeTourismPlaceFactory extends Factory
         return [
             'village_id' => $village ? $village->id : Village::factory(),
             'name' => $name,
+            'slug' => null,
             'description' => $this->faker->paragraphs(3, true),
             'address' => $this->faker->address . ', ' . $this->faker->randomElement($lombokLocations) . ', Lombok',
             'latitude' => $latitude,

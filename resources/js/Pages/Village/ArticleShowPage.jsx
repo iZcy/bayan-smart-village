@@ -583,7 +583,7 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
                                     className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
                                 >
                                     <Link
-                                        href={`/articles/${relatedArticle.id}`}
+                                        href={`/articles/${relatedArticle.slug}`}
                                     >
                                         <div className="aspect-video bg-gradient-to-br from-blue-400 to-purple-500 relative overflow-hidden">
                                             {relatedArticle.cover_image_url ? (

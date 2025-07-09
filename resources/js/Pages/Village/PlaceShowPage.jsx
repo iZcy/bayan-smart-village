@@ -70,15 +70,7 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
 
     return (
         <MainLayout title={place.name} description={place.description}>
-            <Head>
-                <title>
-                    {place.name} - {village.name}
-                </title>
-                <meta
-                    name="description"
-                    content={place.description?.substring(0, 160)}
-                />
-            </Head>
+            <Head title={`${place.name} - ${village.name}`} />
 
             <audio ref={audioRef} loop>
                 <source src="/audio/village-ambience.mp3" type="audio/mpeg" />
@@ -590,7 +582,7 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
                                         viewport={{ once: true }}
                                     >
                                         <Link
-                                            href={`/places/${relatedPlace.id}`}
+                                            href={`/places/${relatedPlace.slug}`}
                                             className="block group"
                                         >
                                             <motion.div
