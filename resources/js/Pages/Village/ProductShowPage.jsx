@@ -171,53 +171,6 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                     )}
                 </motion.div>
 
-                {/* Enhanced product badges in hero content */}
-                <motion.div
-                    initial={{ opacity: 0, y: 100 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1.2, delay: 0.5 }}
-                    className="mb-6 flex flex-wrap justify-center gap-3"
-                >
-                    {product.place && (
-                        <motion.span
-                            className="inline-block px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/20"
-                            whileHover={{
-                                scale: 1.05,
-                                backgroundColor: "rgba(255,255,255,0.3)",
-                            }}
-                        >
-                            🏪 {product.place.name}
-                        </motion.span>
-                    )}
-                    {product.category && (
-                        <motion.span
-                            className="inline-block px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/20"
-                            whileHover={{
-                                scale: 1.05,
-                                backgroundColor: "rgba(255,255,255,0.3)",
-                            }}
-                        >
-                            📦 {product.category.name}
-                        </motion.span>
-                    )}
-                    {product.is_featured && (
-                        <motion.span
-                            className="inline-block px-4 py-2 bg-gradient-to-r from-yellow-400/30 to-orange-400/30 backdrop-blur-md text-white rounded-full text-sm font-medium border border-yellow-400/30"
-                            whileHover={{ scale: 1.05 }}
-                            animate={{
-                                boxShadow: [
-                                    "0 0 0 rgba(255,255,0,0)",
-                                    "0 0 20px rgba(255,255,0,0.3)",
-                                    "0 0 0 rgba(255,255,0,0)",
-                                ],
-                            }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                        >
-                            ⭐ Featured
-                        </motion.span>
-                    )}
-                </motion.div>
-
                 {/* Geometric Elements - Enroute Health Style */}
                 <motion.div
                     style={{ y: geometryY, rotate: geometryRotate }}
