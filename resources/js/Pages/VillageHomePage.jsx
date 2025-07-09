@@ -23,7 +23,7 @@ const VillageHomePage = ({
     const [currentSection, setCurrentSection] = useState(0);
     const [selectedTourismPlace, setSelectedTourismPlace] = useState(0);
     const [selectedSME, setSelectedSME] = useState(0);
-    const [isPlaying, setIsPlaying] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(true);
 
     // Audio refs for each section
     const audioRefs = useRef([]);
@@ -39,7 +39,14 @@ const VillageHomePage = ({
     const [tourismRef, tourismInView] = useInView({ threshold: 0.3 });
     const [smeRef, smeInView] = useInView({ threshold: 0.3 });
     const [articlesRef, articlesInView] = useInView({ threshold: 0.3 });
-    const [galleryRef, galleryInView] = useInView({ threshold: 0.3 });
+    const [galleryRef, galleryInView] = useInView({
+        threshold: 0.1, // Lower threshold
+        rootMargin: "0px 0px -10% 0px", // Trigger earlier
+    });
+
+    useEffect(() => {
+        console.log("Gallery intersection status:", galleryInView);
+    }, [galleryInView]);
 
     // Auto-scroll tourism places
     useEffect(() => {
@@ -63,25 +70,93 @@ const VillageHomePage = ({
         return () => clearInterval(interval);
     }, [smePlaces.length]);
 
-    // Play different music based on section
+    const [scrollBasedSection, setScrollBasedSection] = useState(0);
+
     useEffect(() => {
-        if (heroInView) setCurrentSection(0);
-        else if (tourismInView) setCurrentSection(1);
-        else if (smeInView) setCurrentSection(2);
-        else if (articlesInView) setCurrentSection(3);
-        else if (galleryInView) setCurrentSection(4);
-    }, [heroInView, tourismInView, smeInView, articlesInView, galleryInView]);
+        const handleScroll = () => {
+            const scrollPosition = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+
+            // Calculate scroll percentage
+            const scrollPercentage =
+                scrollPosition / (documentHeight - windowHeight);
+
+            console.log("Scroll percentage:", scrollPercentage);
+
+            // If we're near the bottom (90%+), force gallery section
+            if (scrollPercentage >= 0.9) {
+                setScrollBasedSection(4);
+                console.log("Scroll-based: Setting to Gallery (4)");
+            } else if (scrollPercentage >= 0.7) {
+                setScrollBasedSection(3);
+            } else if (scrollPercentage >= 0.5) {
+                setScrollBasedSection(2);
+            } else if (scrollPercentage >= 0.25) {
+                setScrollBasedSection(1);
+            } else {
+                setScrollBasedSection(0);
+            }
+        };
+
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    // Modified section detection that combines both approaches:
+    useEffect(() => {
+        console.log("Section detection:", {
+            heroInView,
+            tourismInView,
+            smeInView,
+            articlesInView,
+            galleryInView,
+            currentSection,
+            scrollBasedSection,
+        });
+
+        // Use scroll-based detection as fallback when intersection observer fails
+        let newSection = currentSection;
+
+        if (galleryInView) {
+            newSection = 4;
+            console.log("Intersection: Setting section to 4 (Gallery)");
+        } else if (articlesInView && !galleryInView) {
+            newSection = 3;
+            console.log("Intersection: Setting section to 3 (Articles)");
+        } else if (smeInView && !articlesInView) {
+            newSection = 2;
+            console.log("Intersection: Setting section to 2 (SME)");
+        } else if (tourismInView && !smeInView) {
+            newSection = 1;
+            console.log("Intersection: Setting section to 1 (Tourism)");
+        } else if (heroInView && !tourismInView) {
+            newSection = 0;
+            console.log("Intersection: Setting section to 0 (Hero)");
+        } else {
+            // Fallback to scroll-based detection when no sections are in view
+            newSection = scrollBasedSection;
+            console.log(
+                "Fallback: Using scroll-based section:",
+                scrollBasedSection
+            );
+        }
+
+        if (newSection !== currentSection) {
+            setCurrentSection(newSection);
+        }
+    }, [
+        heroInView,
+        tourismInView,
+        smeInView,
+        articlesInView,
+        galleryInView,
+        scrollBasedSection,
+        currentSection,
+    ]);
 
     // Enhanced audio management for each section
     useEffect(() => {
-        // const audioFiles = [
-        //     "/audio/village-hero.mp3", // Hero section
-        //     "/audio/village-tourism.mp3", // Tourism section
-        //     "/audio/village-business.mp3", // SME section
-        //     "/audio/village-stories.mp3", // Articles section
-        //     "/audio/village-nature.mp3", // Gallery section
-        // ];
-
         const audioFiles = [
             "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3",
             "/audio/aggressive-phonk-phonk-2025-mix-239735.mp3",
@@ -108,8 +183,15 @@ const VillageHomePage = ({
 
     // Switch music based on current section
     useEffect(() => {
-        if (!isPlaying) return;
+        if (!isPlaying) {
+            // Stop all audio when music is turned off
+            audioRefs.current.forEach((audio) => {
+                audio.pause();
+            });
+            return;
+        }
 
+        // Play the audio for the current section and pause others
         audioRefs.current.forEach((audio, index) => {
             if (index === currentSection) {
                 audio.play().catch(console.log);
@@ -119,9 +201,25 @@ const VillageHomePage = ({
         });
     }, [currentSection, isPlaying]);
 
+    // Fixed toggle music function
     const toggleMusic = () => {
-        setIsPlaying(!isPlaying);
-        // In a real implementation, you'd control actual audio here
+        setIsPlaying((prev) => {
+            const newState = !prev;
+
+            if (!newState) {
+                // If turning off, pause all audio
+                audioRefs.current.forEach((audio) => {
+                    audio.pause();
+                });
+            } else {
+                // If turning on, play the current section's audio
+                if (audioRefs.current[currentSection]) {
+                    audioRefs.current[currentSection].play().catch(console.log);
+                }
+            }
+
+            return newState;
+        });
     };
 
     return (
