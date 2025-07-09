@@ -5,6 +5,9 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
     server: {
+        cors: true,
+        host: true,
+        port: 5173,
         headers: {
             "Access-Control-Allow-Origin": "*", // ✅ Enable CORS for dev
         },

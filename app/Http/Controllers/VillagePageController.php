@@ -96,15 +96,22 @@ class VillagePageController extends Controller
         ]);
     }
 
-    public function articleShow(Request $request, Article $article)
+    public function articleShow(Request $request, $articleId)
     {
         $village = $request->attributes->get('village');
 
-        if (!$village || $article->village_id !== $village->id) {
-            abort(404, 'Article not found');
+        if (!$village) {
+            abort(404, 'Village not found');
         }
 
-        $article->load(['place', 'village']);
+        $article = Article::where('id', $articleId)
+            ->where('village_id', $village->id)
+            ->with(['place', 'village'])
+            ->first();
+
+        if (!$article) {
+            abort(404, 'Article not found');
+        }
 
         // Get related articles
         $relatedArticles = $village->articles()
@@ -177,26 +184,34 @@ class VillagePageController extends Controller
         ]);
     }
 
-    public function productShow(Request $request, Product $product)
+    public function productShow(Request $request, $productSlug)
     {
         $village = $request->attributes->get('village');
 
-        if (!$village || $product->village_id !== $village->id) {
-            abort(404, 'Product not found');
+        if (!$village) {
+            abort(404, 'Village not found');
         }
 
-        $product->load([
-            'village',
-            'place',
-            'category',
-            'ecommerceLinks' => function ($query) {
-                $query->active()->ordered();
-            },
-            'images' => function ($query) {
-                $query->ordered();
-            },
-            'tags'
-        ]);
+        $product = Product::where('slug', $productSlug)
+            ->where('village_id', $village->id)
+            ->active()
+            ->with([
+                'village',
+                'place',
+                'category',
+                'ecommerceLinks' => function ($query) {
+                    $query->active()->ordered();
+                },
+                'images' => function ($query) {
+                    $query->ordered();
+                },
+                'tags'
+            ])
+            ->first();
+
+        if (!$product) {
+            abort(404, 'Product not found');
+        }
 
         // Increment view count
         $product->incrementViewCount();
@@ -265,26 +280,33 @@ class VillagePageController extends Controller
         ]);
     }
 
-    public function placeShow(Request $request, SmeTourismPlace $place)
+    public function placeShow(Request $request, $placeId)
     {
         $village = $request->attributes->get('village');
 
-        if (!$village || $place->village_id !== $village->id) {
-            abort(404, 'Place not found');
+        if (!$village) {
+            abort(404, 'Village not found');
         }
 
-        $place->load([
-            'village',
-            'category',
-            'images',
-            'articles',
-            'externalLinks' => function ($query) {
-                $query->active()->ordered();
-            },
-            'products' => function ($query) {
-                $query->active()->limit(6);
-            }
-        ]);
+        $place = SmeTourismPlace::where('id', $placeId)
+            ->where('village_id', $village->id)
+            ->with([
+                'village',
+                'category',
+                'images',
+                'articles',
+                'externalLinks' => function ($query) {
+                    $query->active()->ordered();
+                },
+                'products' => function ($query) {
+                    $query->active()->limit(6);
+                }
+            ])
+            ->first();
+
+        if (!$place) {
+            abort(404, 'Place not found');
+        }
 
         // Get related places
         $relatedPlaces = $village->places()

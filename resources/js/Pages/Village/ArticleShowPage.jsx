@@ -46,11 +46,11 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
                 <source src="/audio/village-ambient.mp3" type="audio/mpeg" />
             </audio>
 
-            {/* Hero Section - Firewatch Style */}
+            {/* Enhanced Firewatch-Style Hero Section */}
             <section className="relative h-screen overflow-hidden">
-                {/* Background Image with Parallax */}
+                {/* Dynamic Background with Layered Parallax */}
                 <motion.div
-                    style={{ y: heroY, scale: heroScale, opacity: heroOpacity }}
+                    style={{ y: heroY, scale: heroScale }}
                     className="absolute inset-0"
                 >
                     {article.cover_image_url ? (
@@ -60,35 +60,111 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-orange-400 via-red-500 to-pink-600">
-                            <div className="absolute inset-0 opacity-20">
-                                <svg
-                                    viewBox="0 0 1200 600"
-                                    className="w-full h-full"
-                                >
-                                    {/* Mountain silhouettes */}
-                                    <path
-                                        d="M0,600 L0,200 Q300,150 600,180 T1200,160 L1200,600 Z"
-                                        fill="#1a1a1a"
-                                        opacity="0.8"
-                                    />
-                                    <path
-                                        d="M0,600 L0,300 Q400,250 800,270 T1200,250 L1200,600 Z"
-                                        fill="#2a2a2a"
-                                        opacity="0.6"
-                                    />
-                                    <path
-                                        d="M0,600 L0,400 Q500,350 1000,370 T1200,350 L1200,600 Z"
-                                        fill="#3a3a3a"
-                                        opacity="0.4"
-                                    />
-                                </svg>
-                            </div>
+                        <div className="w-full h-full bg-gradient-to-br from-orange-400 via-red-500 to-pink-600 relative">
+                            {/* Firewatch-style Mountain Silhouettes */}
+                            <svg
+                                viewBox="0 0 1200 600"
+                                className="absolute inset-0 w-full h-full"
+                            >
+                                <defs>
+                                    <linearGradient
+                                        id="mountainGrad1"
+                                        x1="0%"
+                                        y1="0%"
+                                        x2="100%"
+                                        y2="100%"
+                                    >
+                                        <stop
+                                            offset="0%"
+                                            stopColor="rgba(26, 26, 26, 0.9)"
+                                        />
+                                        <stop
+                                            offset="100%"
+                                            stopColor="rgba(42, 42, 42, 0.7)"
+                                        />
+                                    </linearGradient>
+                                    <linearGradient
+                                        id="mountainGrad2"
+                                        x1="0%"
+                                        y1="0%"
+                                        x2="100%"
+                                        y2="100%"
+                                    >
+                                        <stop
+                                            offset="0%"
+                                            stopColor="rgba(42, 42, 42, 0.8)"
+                                        />
+                                        <stop
+                                            offset="100%"
+                                            stopColor="rgba(58, 58, 58, 0.6)"
+                                        />
+                                    </linearGradient>
+                                </defs>
+
+                                {/* Back mountains */}
+                                <motion.path
+                                    initial={{ pathLength: 0, opacity: 0 }}
+                                    animate={{ pathLength: 1, opacity: 1 }}
+                                    transition={{ duration: 3, delay: 0.5 }}
+                                    d="M0,600 L0,180 Q200,120 400,150 Q600,100 800,140 Q1000,80 1200,120 L1200,600 Z"
+                                    fill="url(#mountainGrad1)"
+                                />
+
+                                {/* Middle mountains */}
+                                <motion.path
+                                    initial={{ pathLength: 0, opacity: 0 }}
+                                    animate={{ pathLength: 1, opacity: 1 }}
+                                    transition={{ duration: 3, delay: 1 }}
+                                    d="M0,600 L0,280 Q300,220 600,250 Q900,200 1200,230 L1200,600 Z"
+                                    fill="url(#mountainGrad2)"
+                                />
+
+                                {/* Front mountains */}
+                                <motion.path
+                                    initial={{ pathLength: 0, opacity: 0 }}
+                                    animate={{ pathLength: 1, opacity: 1 }}
+                                    transition={{ duration: 3, delay: 1.5 }}
+                                    d="M0,600 L0,380 Q400,320 800,350 Q1000,330 1200,340 L1200,600 Z"
+                                    fill="rgba(58, 58, 58, 0.9)"
+                                />
+                            </svg>
+
+                            {/* Firewatch Tower */}
+                            <motion.div
+                                initial={{ y: 50, opacity: 0 }}
+                                animate={{ y: 0, opacity: 0.8 }}
+                                transition={{ duration: 2, delay: 2 }}
+                                className="absolute bottom-32 right-1/4 w-1 h-16 bg-black/60"
+                            >
+                                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full w-6 h-6 bg-black/60 rounded-sm" />
+                            </motion.div>
+
+                            {/* Floating particles */}
+                            {[...Array(8)].map((_, i) => (
+                                <motion.div
+                                    key={i}
+                                    className="absolute w-1 h-1 bg-white/30 rounded-full"
+                                    style={{
+                                        left: `${Math.random() * 100}%`,
+                                        top: `${Math.random() * 60}%`,
+                                    }}
+                                    animate={{
+                                        y: [0, -20, 0],
+                                        opacity: [0.3, 1, 0.3],
+                                        scale: [1, 1.5, 1],
+                                    }}
+                                    transition={{
+                                        duration: 3 + Math.random() * 2,
+                                        repeat: Infinity,
+                                        delay: Math.random() * 2,
+                                    }}
+                                />
+                            ))}
                         </div>
                     )}
                 </motion.div>
 
-                {/* Geometric Elements - Enroute Health Style */}
+                {/* Enhanced Geometric Elements */}
                 <motion.div
                     style={{ y: geometryY, rotate: geometryRotate }}
                     className="absolute top-20 right-20 w-32 h-32 opacity-20"
@@ -97,22 +173,41 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
                         viewBox="0 0 100 100"
                         className="w-full h-full text-white"
                     >
-                        <polygon
+                        <motion.polygon
                             points="50,15 90,85 10,85"
                             fill="currentColor"
                             opacity="0.6"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 2.5, duration: 1 }}
                         />
-                        <circle
+                        <motion.circle
                             cx="50"
                             cy="50"
                             r="20"
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2"
+                            initial={{ pathLength: 0 }}
+                            animate={{ pathLength: 1 }}
+                            transition={{ delay: 3, duration: 1.5 }}
+                        />
+                        <motion.rect
+                            x="35"
+                            y="35"
+                            width="30"
+                            height="30"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1"
+                            initial={{ rotate: 45, scale: 0 }}
+                            animate={{ rotate: 0, scale: 1 }}
+                            transition={{ delay: 3.5, duration: 1 }}
                         />
                     </svg>
                 </motion.div>
 
+                {/* Additional geometric elements */}
                 <motion.div
                     style={{ y: geometryY, rotate: geometryRotate }}
                     className="absolute bottom-32 left-16 w-24 h-24 opacity-15"
@@ -121,63 +216,89 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
                         viewBox="0 0 100 100"
                         className="w-full h-full text-white"
                     >
-                        <rect
-                            x="20"
-                            y="20"
-                            width="60"
-                            height="60"
+                        <motion.polygon
+                            points="50,10 80,30 80,70 50,90 20,70 20,30"
                             fill="none"
                             stroke="currentColor"
-                            strokeWidth="3"
-                        />
-                        <rect
-                            x="35"
-                            y="35"
-                            width="30"
-                            height="30"
-                            fill="currentColor"
-                            opacity="0.4"
+                            strokeWidth="2"
+                            initial={{ pathLength: 0 }}
+                            animate={{ pathLength: 1 }}
+                            transition={{ delay: 4, duration: 2 }}
                         />
                     </svg>
                 </motion.div>
 
-                {/* Overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+                {/* Atmospheric overlay */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1, duration: 2 }}
+                    className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
+                />
 
-                {/* Hero Content */}
+                {/* Enhanced Hero Content */}
                 <div className="absolute inset-0 flex items-center justify-center text-center z-10">
                     <div className="max-w-4xl px-6">
+                        {/* Breadcrumb with animation */}
                         <motion.div
-                            initial={{ opacity: 0, y: 100 }}
+                            initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 1.2, delay: 0.5 }}
+                            transition={{ duration: 1, delay: 0.5 }}
                             className="mb-6"
                         >
                             {article.place && (
-                                <span className="inline-block px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium mb-4">
+                                <motion.span
+                                    className="inline-block px-4 py-2 bg-white/10 backdrop-blur-md text-white rounded-full text-sm font-medium mb-4 border border-white/20"
+                                    whileHover={{
+                                        scale: 1.05,
+                                        backgroundColor:
+                                            "rgba(255,255,255,0.2)",
+                                    }}
+                                    transition={{ duration: 0.3 }}
+                                >
                                     📍 {article.place.name}
-                                </span>
+                                </motion.span>
                             )}
                         </motion.div>
 
+                        {/* Enhanced Title */}
                         <motion.h1
-                            initial={{ opacity: 0, y: 80 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 1, delay: 0.8 }}
+                            initial={{ opacity: 0, y: 80, scale: 0.9 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{
+                                duration: 1.2,
+                                delay: 0.8,
+                                type: "spring",
+                            }}
                             className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight"
                         >
-                            {article.title}
+                            <motion.span
+                                className="inline-block"
+                                whileHover={{
+                                    scale: 1.05,
+                                    textShadow:
+                                        "0 0 20px rgba(255,255,255,0.5)",
+                                }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                {article.title}
+                            </motion.span>
                         </motion.h1>
 
+                        {/* Enhanced Meta Information */}
                         <motion.div
                             initial={{ opacity: 0, y: 60 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 1, delay: 1.1 }}
-                            className="flex items-center justify-center space-x-6 text-white/80"
+                            className="flex items-center justify-center space-x-8 text-white/80 mb-8"
                         >
-                            <time
+                            <motion.time
                                 dateTime={article.created_at}
-                                className="flex items-center"
+                                className="flex items-center bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full"
+                                whileHover={{
+                                    scale: 1.05,
+                                    backgroundColor: "rgba(0,0,0,0.5)",
+                                }}
                             >
                                 <svg
                                     className="w-4 h-4 mr-2"
@@ -199,8 +320,15 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
                                     month: "long",
                                     day: "numeric",
                                 })}
-                            </time>
-                            <span className="flex items-center">
+                            </motion.time>
+
+                            <motion.span
+                                className="flex items-center bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full"
+                                whileHover={{
+                                    scale: 1.05,
+                                    backgroundColor: "rgba(0,0,0,0.5)",
+                                }}
+                            >
                                 <svg
                                     className="w-4 h-4 mr-2"
                                     fill="none"
@@ -220,16 +348,17 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
                                         .split(" ").length / 200
                                 ) || 5}{" "}
                                 min read
-                            </span>
+                            </motion.span>
                         </motion.div>
 
+                        {/* Enhanced CTA Button */}
                         <motion.div
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.8, delay: 1.4 }}
                             className="mt-8"
                         >
-                            <button
+                            <motion.button
                                 onClick={() => {
                                     document
                                         .getElementById("content")
@@ -237,14 +366,36 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
                                             behavior: "smooth",
                                         });
                                 }}
-                                className="group inline-flex items-center px-8 py-4 bg-white/10 backdrop-blur-md text-white rounded-full hover:bg-white/20 transition-all duration-300"
+                                className="group relative inline-flex items-center px-8 py-4 bg-gradient-to-r from-white/10 to-white/20 backdrop-blur-md text-white rounded-full border border-white/30 overflow-hidden"
+                                whileHover={{
+                                    scale: 1.05,
+                                    boxShadow:
+                                        "0 20px 40px rgba(255,255,255,0.1)",
+                                }}
+                                whileTap={{ scale: 0.95 }}
                             >
-                                Read Story
-                                <svg
-                                    className="w-5 h-5 ml-2 group-hover:translate-y-1 transition-transform duration-300"
+                                {/* Button background animation */}
+                                <motion.div
+                                    className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-red-500/20"
+                                    initial={{ x: "-100%" }}
+                                    whileHover={{ x: "100%" }}
+                                    transition={{ duration: 0.6 }}
+                                />
+
+                                <span className="relative z-10 font-semibold">
+                                    Read Story
+                                </span>
+
+                                <motion.svg
+                                    className="w-5 h-5 ml-2 relative z-10"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
+                                    animate={{ y: [0, 3, 0] }}
+                                    transition={{
+                                        duration: 1.5,
+                                        repeat: Infinity,
+                                    }}
                                 >
                                     <path
                                         strokeLinecap="round"
@@ -252,11 +403,36 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
                                         strokeWidth={2}
                                         d="M19 14l-7 7m0 0l-7-7m7 7V3"
                                     />
-                                </svg>
-                            </button>
+                                </motion.svg>
+                            </motion.button>
                         </motion.div>
                     </div>
                 </div>
+
+                {/* Enhanced Scroll Indicator */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 2, duration: 1 }}
+                    className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white/70"
+                >
+                    <motion.div
+                        animate={{ y: [0, 10, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="flex flex-col items-center"
+                    >
+                        <span className="text-sm mb-2 font-medium">
+                            Scroll to explore
+                        </span>
+                        <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center relative overflow-hidden">
+                            <motion.div
+                                animate={{ y: [0, 16, 0] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                                className="w-1 h-3 bg-white/70 rounded-full mt-2"
+                            />
+                        </div>
+                    </motion.div>
+                </motion.div>
             </section>
 
             {/* Article Content */}

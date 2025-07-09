@@ -91,43 +91,130 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
 
             {/* Hero Section - Firewatch Style */}
             <section className="relative h-screen overflow-hidden">
-                {/* Background Image with Parallax */}
+                {/* Replace the existing hero background with this enhanced version */}
                 <motion.div
                     style={{ y: heroY, scale: heroScale, opacity: heroOpacity }}
                     className="absolute inset-0"
                 >
                     {product.primary_image_url ? (
-                        <img
-                            src={product.primary_image_url}
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-green-400 via-blue-500 to-purple-600">
-                            <div className="absolute inset-0 opacity-20">
-                                <svg
-                                    viewBox="0 0 1200 600"
-                                    className="w-full h-full"
-                                >
-                                    {/* Mountain silhouettes */}
-                                    <path
-                                        d="M0,600 L0,200 Q300,150 600,180 T1200,160 L1200,600 Z"
-                                        fill="#1a1a1a"
-                                        opacity="0.8"
-                                    />
-                                    <path
-                                        d="M0,600 L0,300 Q400,250 800,270 T1200,250 L1200,600 Z"
-                                        fill="#2a2a2a"
-                                        opacity="0.6"
-                                    />
-                                    <path
-                                        d="M0,600 L0,400 Q500,350 1000,370 T1200,350 L1200,600 Z"
-                                        fill="#3a3a3a"
-                                        opacity="0.4"
-                                    />
-                                </svg>
-                            </div>
+                        <div className="relative w-full h-full">
+                            <img
+                                src={product.primary_image_url}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                            />
+                            {/* Product-specific overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
                         </div>
+                    ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 relative">
+                            {/* Product-themed geometric background */}
+                            <svg
+                                viewBox="0 0 1200 600"
+                                className="absolute inset-0 w-full h-full"
+                            >
+                                {/* Shopping/commerce themed shapes */}
+                                <motion.rect
+                                    x="100"
+                                    y="200"
+                                    width="150"
+                                    height="200"
+                                    fill="rgba(255,255,255,0.1)"
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ delay: 1, duration: 2 }}
+                                />
+                                <motion.circle
+                                    cx="800"
+                                    cy="150"
+                                    r="80"
+                                    fill="rgba(255,255,255,0.08)"
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ delay: 1.5, duration: 2 }}
+                                />
+
+                                {/* Mountain silhouettes for products */}
+                                <motion.path
+                                    initial={{ pathLength: 0 }}
+                                    animate={{ pathLength: 1 }}
+                                    transition={{ duration: 3, delay: 0.5 }}
+                                    d="M0,600 L0,250 Q300,200 600,230 T1200,210 L1200,600 Z"
+                                    fill="rgba(26, 26, 26, 0.7)"
+                                />
+                            </svg>
+
+                            {/* Floating product icons */}
+                            {[...Array(6)].map((_, i) => (
+                                <motion.div
+                                    key={i}
+                                    className="absolute text-white/20 text-2xl"
+                                    style={{
+                                        left: `${20 + Math.random() * 60}%`,
+                                        top: `${20 + Math.random() * 40}%`,
+                                    }}
+                                    animate={{
+                                        y: [0, -30, 0],
+                                        rotate: [0, 180, 360],
+                                        opacity: [0.2, 0.4, 0.2],
+                                    }}
+                                    transition={{
+                                        duration: 4 + Math.random() * 2,
+                                        repeat: Infinity,
+                                        delay: Math.random() * 2,
+                                    }}
+                                >
+                                    {["🛍️", "📦", "🏷️", "💎", "🎁", "⭐"][i]}
+                                </motion.div>
+                            ))}
+                        </div>
+                    )}
+                </motion.div>
+
+                {/* Enhanced product badges in hero content */}
+                <motion.div
+                    initial={{ opacity: 0, y: 100 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1.2, delay: 0.5 }}
+                    className="mb-6 flex flex-wrap justify-center gap-3"
+                >
+                    {product.place && (
+                        <motion.span
+                            className="inline-block px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/20"
+                            whileHover={{
+                                scale: 1.05,
+                                backgroundColor: "rgba(255,255,255,0.3)",
+                            }}
+                        >
+                            🏪 {product.place.name}
+                        </motion.span>
+                    )}
+                    {product.category && (
+                        <motion.span
+                            className="inline-block px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/20"
+                            whileHover={{
+                                scale: 1.05,
+                                backgroundColor: "rgba(255,255,255,0.3)",
+                            }}
+                        >
+                            📦 {product.category.name}
+                        </motion.span>
+                    )}
+                    {product.is_featured && (
+                        <motion.span
+                            className="inline-block px-4 py-2 bg-gradient-to-r from-yellow-400/30 to-orange-400/30 backdrop-blur-md text-white rounded-full text-sm font-medium border border-yellow-400/30"
+                            whileHover={{ scale: 1.05 }}
+                            animate={{
+                                boxShadow: [
+                                    "0 0 0 rgba(255,255,0,0)",
+                                    "0 0 20px rgba(255,255,0,0.3)",
+                                    "0 0 0 rgba(255,255,0,0)",
+                                ],
+                            }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                        >
+                            ⭐ Featured
+                        </motion.span>
                     )}
                 </motion.div>
 

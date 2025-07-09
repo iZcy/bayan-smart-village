@@ -73,6 +73,45 @@ const VillageHomePage = ({
         else if (galleryInView) setCurrentSection(4);
     }, [heroInView, tourismInView, smeInView, articlesInView, galleryInView]);
 
+    // Enhanced audio management for each section
+    useEffect(() => {
+        const audioFiles = [
+            "/audio/village-hero.mp3", // Hero section
+            "/audio/village-tourism.mp3", // Tourism section
+            "/audio/village-business.mp3", // SME section
+            "/audio/village-stories.mp3", // Articles section
+            "/audio/village-nature.mp3", // Gallery section
+        ];
+
+        // Initialize audio refs
+        audioRefs.current = audioFiles.map((src) => {
+            const audio = new Audio(src);
+            audio.volume = 0.3;
+            audio.loop = true;
+            return audio;
+        });
+
+        return () => {
+            audioRefs.current.forEach((audio) => {
+                audio.pause();
+                audio.currentTime = 0;
+            });
+        };
+    }, []);
+
+    // Switch music based on current section
+    useEffect(() => {
+        if (!isPlaying) return;
+
+        audioRefs.current.forEach((audio, index) => {
+            if (index === currentSection) {
+                audio.play().catch(console.log);
+            } else {
+                audio.pause();
+            }
+        });
+    }, [currentSection, isPlaying]);
+
     const toggleMusic = () => {
         setIsPlaying(!isPlaying);
         // In a real implementation, you'd control actual audio here
@@ -97,27 +136,66 @@ const VillageHomePage = ({
                 ref={heroRef}
                 className="relative h-screen overflow-hidden"
             >
-                {/* Background Mountains */}
+                {/* Animated Sky Background */}
                 <motion.div
                     style={{ y: mountainsY }}
-                    className="absolute inset-0 bg-gradient-to-b from-blue-400 via-green-300 to-green-500"
+                    className="absolute inset-0"
                 >
-                    <div className="absolute inset-0 opacity-30">
-                        <svg viewBox="0 0 1200 600" className="w-full h-full">
-                            <path
-                                d="M0,600 L0,300 Q200,200 400,250 T800,200 Q1000,180 1200,220 L1200,600 Z"
-                                fill="#2d5016"
-                            />
-                            <path
-                                d="M0,600 L0,350 Q300,280 600,300 T1200,280 L1200,600 Z"
-                                fill="#3d6b1f"
-                            />
-                            <path
-                                d="M0,600 L0,400 Q400,350 800,380 T1200,360 L1200,600 Z"
-                                fill="#4d7c2f"
-                            />
-                        </svg>
+                    <div className="absolute inset-0 bg-gradient-to-b from-blue-300 via-blue-400 to-green-300">
+                        {/* Floating clouds */}
+                        <motion.div
+                            animate={{ x: [-100, window.innerWidth + 100] }}
+                            transition={{
+                                duration: 30,
+                                repeat: Infinity,
+                                ease: "linear",
+                            }}
+                            className="absolute top-20 w-32 h-16 bg-white/20 rounded-full blur-sm"
+                        />
+                        <motion.div
+                            animate={{ x: [-150, window.innerWidth + 150] }}
+                            transition={{
+                                duration: 45,
+                                repeat: Infinity,
+                                ease: "linear",
+                                delay: 10,
+                            }}
+                            className="absolute top-32 w-24 h-12 bg-white/15 rounded-full blur-sm"
+                        />
                     </div>
+                </motion.div>
+
+                {/* Enhanced Mountain Layers */}
+                <motion.div
+                    style={{ y: mountainsY }}
+                    className="absolute inset-0 opacity-40"
+                >
+                    <svg viewBox="0 0 1200 600" className="w-full h-full">
+                        {/* Back mountains */}
+                        <motion.path
+                            initial={{ pathLength: 0 }}
+                            animate={{ pathLength: 1 }}
+                            transition={{ duration: 3, delay: 0.5 }}
+                            d="M0,600 L0,280 Q200,180 400,220 Q600,160 800,200 Q1000,140 1200,180 L1200,600 Z"
+                            fill="rgba(45, 80, 22, 0.8)"
+                        />
+                        {/* Middle mountains */}
+                        <motion.path
+                            initial={{ pathLength: 0 }}
+                            animate={{ pathLength: 1 }}
+                            transition={{ duration: 3, delay: 1 }}
+                            d="M0,600 L0,350 Q300,280 600,300 Q900,250 1200,280 L1200,600 Z"
+                            fill="rgba(61, 107, 31, 0.9)"
+                        />
+                        {/* Front mountains */}
+                        <motion.path
+                            initial={{ pathLength: 0 }}
+                            animate={{ pathLength: 1 }}
+                            transition={{ duration: 3, delay: 1.5 }}
+                            d="M0,600 L0,400 Q400,350 800,380 T1200,360 L1200,600 Z"
+                            fill="rgba(77, 124, 47, 1)"
+                        />
+                    </svg>
                 </motion.div>
 
                 {/* Trees - Left */}
@@ -265,38 +343,75 @@ const VillageHomePage = ({
                 ref={tourismRef}
                 className="min-h-screen bg-gradient-to-b from-green-500 to-green-700 relative overflow-hidden py-20"
             >
-                <div className="container mx-auto px-6 h-full">
+                {/* Parallax elements */}
+                <motion.div
+                    style={{ y: useTransform(scrollY, [800, 1600], [0, -200]) }}
+                    className="absolute inset-0 opacity-10"
+                >
+                    <div className="absolute top-20 left-10 w-20 h-20 bg-white/20 rounded-full" />
+                    <div className="absolute bottom-40 right-20 w-32 h-32 bg-white/15 rounded-full" />
+                </motion.div>
+
+                <div className="container mx-auto px-6 h-full relative z-10">
                     <motion.h2
                         initial={{ opacity: 0, y: 50 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                         className="text-5xl font-bold text-white text-center mb-16"
                     >
-                        Tourism Destinations
+                        🏞️ Tourism Destinations
                     </motion.h2>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
-                        {/* Map - Left */}
+                        {/* Interactive Map - Left */}
                         <motion.div
                             initial={{ opacity: 0, x: -50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8 }}
                             className="bg-white/10 backdrop-blur-md rounded-2xl p-6 flex items-center justify-center"
                         >
-                            <div className="w-full h-80 bg-green-400/30 rounded-xl flex items-center justify-center">
-                                <div className="text-center text-white">
-                                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        📍
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={selectedTourismPlace}
+                                    initial={{ scale: 0.8, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0.8, opacity: 0 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="w-full h-80 bg-gradient-to-br from-green-400/30 to-blue-400/30 rounded-xl flex items-center justify-center relative overflow-hidden"
+                                >
+                                    {/* Animated map elements */}
+                                    <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{
+                                            duration: 20,
+                                            repeat: Infinity,
+                                            ease: "linear",
+                                        }}
+                                        className="absolute top-4 right-4 w-8 h-8 border-2 border-white/50 rounded-full"
+                                    />
+
+                                    <div className="text-center text-white">
+                                        <motion.div
+                                            animate={{ y: [0, -10, 0] }}
+                                            transition={{
+                                                duration: 2,
+                                                repeat: Infinity,
+                                            }}
+                                            className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4"
+                                        >
+                                            📍
+                                        </motion.div>
+                                        <h3 className="text-xl font-semibold mb-2">
+                                            {tourismPlaces[selectedTourismPlace]
+                                                ?.name ||
+                                                "Beautiful Destination"}
+                                        </h3>
+                                        <p className="text-sm opacity-75">
+                                            Interactive location view
+                                        </p>
                                     </div>
-                                    <h3 className="text-xl font-semibold mb-2">
-                                        {tourismPlaces[selectedTourismPlace]
-                                            ?.name || "Tourism Location"}
-                                    </h3>
-                                    <p className="text-sm opacity-75">
-                                        Interactive map view
-                                    </p>
-                                </div>
-                            </div>
+                                </motion.div>
+                            </AnimatePresence>
                         </motion.div>
 
                         {/* Description - Center */}
@@ -356,29 +471,33 @@ const VillageHomePage = ({
                             </AnimatePresence>
                         </motion.div>
 
-                        {/* Places List - Right */}
+                        {/* Enhanced Places List - Right */}
                         <motion.div
                             initial={{ opacity: 0, x: 50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, delay: 0.4 }}
-                            className="space-y-4"
+                            className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20"
                         >
-                            {tourismPlaces.slice(0, 4).map((place, index) => (
+                            {tourismPlaces.slice(0, 6).map((place, index) => (
                                 <motion.div
                                     key={place.id}
                                     onClick={() =>
                                         setSelectedTourismPlace(index)
                                     }
+                                    layoutId={`tourism-${place.id}`}
+                                    whileHover={{ scale: 1.02, x: 10 }}
+                                    whileTap={{ scale: 0.98 }}
                                     className={`p-4 rounded-xl cursor-pointer transition-all duration-300 ${
                                         selectedTourismPlace === index
-                                            ? "bg-white/20 backdrop-blur-md border border-white/30"
+                                            ? "bg-white/20 backdrop-blur-md border border-white/30 shadow-lg"
                                             : "bg-white/10 backdrop-blur-sm hover:bg-white/15"
                                     }`}
-                                    whileHover={{ scale: 1.02, y: -2 }}
-                                    whileTap={{ scale: 0.98 }}
                                 >
                                     <div className="flex items-center space-x-4">
-                                        <div className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center">
+                                        <motion.div
+                                            className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center relative overflow-hidden"
+                                            whileHover={{ rotate: 5 }}
+                                        >
                                             {place.image_url ? (
                                                 <img
                                                     src={place.image_url}
@@ -390,7 +509,14 @@ const VillageHomePage = ({
                                                     🏞️
                                                 </span>
                                             )}
-                                        </div>
+                                            {selectedTourismPlace === index && (
+                                                <motion.div
+                                                    layoutId="selection-indicator"
+                                                    className="absolute inset-0 border-2 border-white rounded-lg"
+                                                />
+                                            )}
+                                        </motion.div>
+
                                         <div className="flex-1 text-white">
                                             <h4 className="font-semibold text-lg">
                                                 {place.name}
@@ -399,12 +525,21 @@ const VillageHomePage = ({
                                                 {place.category?.name}
                                             </p>
                                         </div>
-                                        <div
-                                            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                                                selectedTourismPlace === index
-                                                    ? "bg-white"
-                                                    : "bg-white/30"
-                                            }`}
+
+                                        <motion.div
+                                            animate={{
+                                                scale:
+                                                    selectedTourismPlace ===
+                                                    index
+                                                        ? 1.2
+                                                        : 1,
+                                                opacity:
+                                                    selectedTourismPlace ===
+                                                    index
+                                                        ? 1
+                                                        : 0.3,
+                                            }}
+                                            className="w-3 h-3 rounded-full bg-white"
                                         />
                                     </div>
                                 </motion.div>
@@ -414,43 +549,82 @@ const VillageHomePage = ({
                 </div>
             </section>
 
-            {/* SME Section */}
+            {/* Enhanced SME Section - Reversed Layout */}
             <section
                 ref={smeRef}
                 className="min-h-screen bg-gradient-to-b from-amber-500 to-orange-600 relative overflow-hidden py-20"
             >
-                <div className="container mx-auto px-6 h-full">
+                {/* Parallax business elements */}
+                <motion.div
+                    style={{
+                        y: useTransform(scrollY, [1600, 2400], [0, -150]),
+                    }}
+                    className="absolute inset-0 opacity-10"
+                >
+                    <div className="absolute top-32 right-16 w-24 h-24 border-2 border-white/30 rotate-45" />
+                    <div className="absolute bottom-20 left-20 w-16 h-16 bg-white/20 rounded-full" />
+                    <div className="absolute top-1/2 left-1/3 w-32 h-32 border border-white/20 rounded-lg rotate-12" />
+                </motion.div>
+
+                <div className="container mx-auto px-6 h-full relative z-10">
                     <motion.h2
                         initial={{ opacity: 0, y: 50 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                         className="text-5xl font-bold text-white text-center mb-16"
                     >
-                        Local Businesses
+                        🏪 Local Businesses
                     </motion.h2>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
-                        {/* Places List - Left */}
+                        {/* Enhanced SME Places List - LEFT */}
                         <motion.div
                             initial={{ opacity: 0, x: -50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8 }}
-                            className="space-y-4"
+                            className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20"
                         >
-                            {smePlaces.slice(0, 4).map((place, index) => (
+                            {smePlaces.slice(0, 6).map((place, index) => (
                                 <motion.div
                                     key={place.id}
                                     onClick={() => setSelectedSME(index)}
+                                    layoutId={`sme-${place.id}`}
+                                    whileHover={{ scale: 1.02, x: -10 }}
+                                    whileTap={{ scale: 0.98 }}
                                     className={`p-4 rounded-xl cursor-pointer transition-all duration-300 ${
                                         selectedSME === index
-                                            ? "bg-white/20 backdrop-blur-md border border-white/30"
+                                            ? "bg-white/20 backdrop-blur-md border border-white/30 shadow-lg"
                                             : "bg-white/10 backdrop-blur-sm hover:bg-white/15"
                                     }`}
-                                    whileHover={{ scale: 1.02, y: -2 }}
-                                    whileTap={{ scale: 0.98 }}
                                 >
                                     <div className="flex items-center space-x-4">
-                                        <div className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center">
+                                        <motion.div
+                                            animate={{
+                                                scale:
+                                                    selectedSME === index
+                                                        ? 1.2
+                                                        : 1,
+                                                opacity:
+                                                    selectedSME === index
+                                                        ? 1
+                                                        : 0.3,
+                                            }}
+                                            className="w-3 h-3 rounded-full bg-white"
+                                        />
+
+                                        <div className="flex-1 text-white">
+                                            <h4 className="font-semibold text-lg">
+                                                {place.name}
+                                            </h4>
+                                            <p className="text-sm opacity-75 line-clamp-2">
+                                                {place.category?.name}
+                                            </p>
+                                        </div>
+
+                                        <motion.div
+                                            className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center relative overflow-hidden"
+                                            whileHover={{ rotate: -5 }}
+                                        >
                                             {place.image_url ? (
                                                 <img
                                                     src={place.image_url}
@@ -462,28 +636,19 @@ const VillageHomePage = ({
                                                     🏪
                                                 </span>
                                             )}
-                                        </div>
-                                        <div className="flex-1 text-white">
-                                            <h4 className="font-semibold text-lg">
-                                                {place.name}
-                                            </h4>
-                                            <p className="text-sm opacity-75 line-clamp-2">
-                                                {place.category?.name}
-                                            </p>
-                                        </div>
-                                        <div
-                                            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                                                selectedSME === index
-                                                    ? "bg-white"
-                                                    : "bg-white/30"
-                                            }`}
-                                        />
+                                            {selectedSME === index && (
+                                                <motion.div
+                                                    layoutId="sme-selection-indicator"
+                                                    className="absolute inset-0 border-2 border-white rounded-lg"
+                                                />
+                                            )}
+                                        </motion.div>
                                     </div>
                                 </motion.div>
                             ))}
                         </motion.div>
 
-                        {/* Description - Center */}
+                        {/* Description - CENTER (same as before but enhanced) */}
                         <motion.div
                             initial={{ opacity: 0, y: 50 }}
                             whileInView={{ opacity: 1, y: 0 }}
@@ -493,38 +658,63 @@ const VillageHomePage = ({
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={selectedSME}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: 20 }}
-                                    transition={{ duration: 0.5 }}
-                                    className="text-white"
+                                    initial={{
+                                        opacity: 0,
+                                        x: -20,
+                                        rotateY: 45,
+                                    }}
+                                    animate={{ opacity: 1, x: 0, rotateY: 0 }}
+                                    exit={{ opacity: 0, x: 20, rotateY: -45 }}
+                                    transition={{
+                                        duration: 0.6,
+                                        type: "spring",
+                                    }}
+                                    className="text-white bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10"
                                 >
-                                    <h3 className="text-3xl font-bold mb-4">
+                                    <motion.h3
+                                        className="text-3xl font-bold mb-4"
+                                        initial={{ y: 20 }}
+                                        animate={{ y: 0 }}
+                                        transition={{ delay: 0.2 }}
+                                    >
                                         {smePlaces[selectedSME]?.name ||
                                             "Local Business"}
-                                    </h3>
-                                    <p className="text-lg opacity-90 mb-6 leading-relaxed">
+                                    </motion.h3>
+
+                                    <motion.p
+                                        className="text-lg opacity-90 mb-6 leading-relaxed"
+                                        initial={{ y: 20 }}
+                                        animate={{ y: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                    >
                                         {smePlaces[selectedSME]?.description ||
                                             "Supporting local economy through quality products and services."}
-                                    </p>
-                                    <div className="space-y-2">
-                                        <div className="flex items-center">
-                                            <span className="text-orange-200">
+                                    </motion.p>
+
+                                    <motion.div
+                                        className="space-y-3"
+                                        initial={{ y: 20 }}
+                                        animate={{ y: 0 }}
+                                        transition={{ delay: 0.4 }}
+                                    >
+                                        <div className="flex items-center p-3 bg-orange-500/20 rounded-lg">
+                                            <span className="text-orange-200 text-xl mr-3">
                                                 📍
                                             </span>
-                                            <span className="ml-2">
+                                            <span className="text-sm">
                                                 {smePlaces[selectedSME]
                                                     ?.address ||
                                                     "Village Location"}
                                             </span>
                                         </div>
+
                                         {smePlaces[selectedSME]
                                             ?.phone_number && (
-                                            <div className="flex items-center">
-                                                <span className="text-orange-200">
+                                            <div className="flex items-center p-3 bg-orange-500/20 rounded-lg">
+                                                <span className="text-orange-200 text-xl mr-3">
                                                     📞
                                                 </span>
-                                                <span className="ml-2">
+                                                <span className="text-sm">
                                                     {
                                                         smePlaces[selectedSME]
                                                             .phone_number
@@ -532,144 +722,660 @@ const VillageHomePage = ({
                                                 </span>
                                             </div>
                                         )}
-                                    </div>
+
+                                        <motion.button
+                                            whileHover={{ scale: 1.05, y: -2 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                                        >
+                                            Visit Business →
+                                        </motion.button>
+                                    </motion.div>
                                 </motion.div>
                             </AnimatePresence>
                         </motion.div>
 
-                        {/* Map - Right */}
+                        {/* Interactive Business Map - RIGHT */}
                         <motion.div
                             initial={{ opacity: 0, x: 50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, delay: 0.4 }}
                             className="bg-white/10 backdrop-blur-md rounded-2xl p-6 flex items-center justify-center"
                         >
-                            <div className="w-full h-80 bg-orange-400/30 rounded-xl flex items-center justify-center">
-                                <div className="text-center text-white">
-                                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        🏪
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={selectedSME}
+                                    initial={{
+                                        scale: 0.8,
+                                        opacity: 0,
+                                        rotateY: -45,
+                                    }}
+                                    animate={{
+                                        scale: 1,
+                                        opacity: 1,
+                                        rotateY: 0,
+                                    }}
+                                    exit={{
+                                        scale: 0.8,
+                                        opacity: 0,
+                                        rotateY: 45,
+                                    }}
+                                    transition={{
+                                        duration: 0.6,
+                                        type: "spring",
+                                    }}
+                                    className="w-full h-80 bg-gradient-to-br from-orange-400/30 to-red-400/30 rounded-xl flex items-center justify-center relative overflow-hidden"
+                                >
+                                    {/* Animated business elements */}
+                                    <motion.div
+                                        animate={{
+                                            rotate: [0, 10, -10, 0],
+                                            scale: [1, 1.1, 1],
+                                        }}
+                                        transition={{
+                                            duration: 4,
+                                            repeat: Infinity,
+                                        }}
+                                        className="absolute top-6 left-6 w-6 h-6 bg-white/30 rounded-sm"
+                                    />
+
+                                    <motion.div
+                                        animate={{
+                                            y: [0, -20, 0],
+                                            opacity: [0.5, 1, 0.5],
+                                        }}
+                                        transition={{
+                                            duration: 3,
+                                            repeat: Infinity,
+                                            delay: 1,
+                                        }}
+                                        className="absolute bottom-6 right-6 w-8 h-8 border-2 border-white/40 rounded-full"
+                                    />
+
+                                    <div className="text-center text-white">
+                                        <motion.div
+                                            animate={{
+                                                rotateY: [0, 360],
+                                                scale: [1, 1.2, 1],
+                                            }}
+                                            transition={{
+                                                duration: 3,
+                                                repeat: Infinity,
+                                            }}
+                                            className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center mx-auto mb-4"
+                                        >
+                                            🏪
+                                        </motion.div>
+                                        <h3 className="text-xl font-semibold mb-2">
+                                            {smePlaces[selectedSME]?.name ||
+                                                "Business Location"}
+                                        </h3>
+                                        <p className="text-sm opacity-75">
+                                            Interactive business view
+                                        </p>
+
+                                        {/* Business category indicator */}
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: "60%" }}
+                                            transition={{
+                                                delay: 0.5,
+                                                duration: 1,
+                                            }}
+                                            className="h-1 bg-gradient-to-r from-orange-300 to-red-300 mx-auto mt-4 rounded-full"
+                                        />
                                     </div>
-                                    <h3 className="text-xl font-semibold mb-2">
-                                        {smePlaces[selectedSME]?.name ||
-                                            "Business Location"}
-                                    </h3>
-                                    <p className="text-sm opacity-75">
-                                        Interactive map view
-                                    </p>
-                                </div>
-                            </div>
+                                </motion.div>
+                            </AnimatePresence>
                         </motion.div>
                     </div>
                 </div>
             </section>
 
-            {/* Articles Section */}
+            {/* Enhanced Articles Section - Ryze Designs Style */}
             <section
                 ref={articlesRef}
-                className="min-h-screen bg-gradient-to-b from-blue-600 to-purple-700 py-20"
+                className="min-h-screen bg-gradient-to-b from-blue-600 to-purple-700 py-20 relative overflow-hidden"
             >
-                <div className="container mx-auto px-6">
-                    <motion.h2
+                {/* Floating geometric elements */}
+                <motion.div
+                    style={{
+                        y: useTransform(scrollY, [2400, 3200], [0, -100]),
+                        rotate: useTransform(scrollY, [2400, 3200], [0, 180]),
+                    }}
+                    className="absolute top-20 right-20 w-32 h-32 border border-white/20 rounded-lg"
+                />
+                <motion.div
+                    style={{
+                        y: useTransform(scrollY, [2400, 3200], [0, -80]),
+                        rotate: useTransform(scrollY, [2400, 3200], [0, -90]),
+                    }}
+                    className="absolute bottom-40 left-10 w-20 h-20 bg-white/10 rounded-full"
+                />
+
+                <div className="container mx-auto px-6 relative z-10">
+                    <motion.div
                         initial={{ opacity: 0, y: 50 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
-                        className="text-5xl font-bold text-white text-center mb-16"
+                        className="text-center mb-16"
                     >
-                        Village Stories
-                    </motion.h2>
+                        <h2 className="text-5xl font-bold text-white mb-4">
+                            📖 Village Stories
+                        </h2>
+                        <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: "12rem" }}
+                            transition={{ delay: 0.5, duration: 1 }}
+                            className="h-1 bg-gradient-to-r from-blue-400 to-purple-400 mx-auto"
+                        />
+                    </motion.div>
 
+                    {/* Articles Grid with staggered animations */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {articles?.slice(0, 6).map((article, index) => (
                             <motion.div
                                 key={article.id}
-                                initial={{ opacity: 0, y: 50 }}
-                                whileInView={{ opacity: 1, y: 0 }}
+                                initial={{ opacity: 0, y: 100, rotateX: 45 }}
+                                whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
                                 transition={{
-                                    duration: 0.6,
-                                    delay: index * 0.1,
+                                    duration: 0.8,
+                                    delay: index * 0.15,
+                                    type: "spring",
+                                    stiffness: 100,
                                 }}
-                                whileHover={{ y: -10, scale: 1.02 }}
-                                className="bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden border border-white/20 hover:border-white/40 transition-all duration-300"
+                                whileHover={{
+                                    y: -20,
+                                    scale: 1.05,
+                                    rotateY: 5,
+                                    transition: { duration: 0.3 },
+                                }}
+                                className="group perspective-1000"
                             >
-                                <div className="h-48 bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center">
-                                    {article.cover_image_url ? (
-                                        <img
-                                            src={article.cover_image_url}
-                                            alt={article.title}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <span className="text-4xl text-white">
-                                            📖
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="p-6">
-                                    <h3 className="text-xl font-bold text-white mb-3 line-clamp-2">
-                                        {article.title}
-                                    </h3>
-                                    <p className="text-white/70 text-sm line-clamp-3 mb-4">
-                                        {article.content
-                                            ?.replace(/<[^>]*>/g, "")
-                                            .substring(0, 120)}
-                                        ...
-                                    </p>
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className="text-blue-200 hover:text-white transition-colors duration-200 text-sm font-semibold"
-                                    >
-                                        Read More →
-                                    </motion.button>
+                                <div className="bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden border border-white/20 hover:border-white/40 transition-all duration-500 transform-gpu">
+                                    <div className="relative h-48 overflow-hidden">
+                                        {article.cover_image_url ? (
+                                            <motion.img
+                                                src={article.cover_image_url}
+                                                alt={article.title}
+                                                className="w-full h-full object-cover"
+                                                whileHover={{ scale: 1.1 }}
+                                                transition={{ duration: 0.5 }}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center relative">
+                                                <motion.span
+                                                    className="text-4xl text-white"
+                                                    animate={{
+                                                        rotate: [0, 10, -10, 0],
+                                                        scale: [1, 1.1, 1],
+                                                    }}
+                                                    transition={{
+                                                        duration: 2,
+                                                        repeat: Infinity,
+                                                        delay: index * 0.2,
+                                                    }}
+                                                >
+                                                    📖
+                                                </motion.span>
+
+                                                {/* Floating particles */}
+                                                <motion.div
+                                                    animate={{
+                                                        y: [0, -20, 0],
+                                                        opacity: [0.3, 1, 0.3],
+                                                    }}
+                                                    transition={{
+                                                        duration: 3,
+                                                        repeat: Infinity,
+                                                        delay: index * 0.5,
+                                                    }}
+                                                    className="absolute top-4 right-4 w-2 h-2 bg-white/60 rounded-full"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Hover overlay */}
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            whileHover={{ opacity: 1 }}
+                                            className="absolute inset-0 bg-black/40 flex items-center justify-center"
+                                        >
+                                            <motion.div
+                                                initial={{
+                                                    scale: 0,
+                                                    rotate: -180,
+                                                }}
+                                                whileHover={{
+                                                    scale: 1,
+                                                    rotate: 0,
+                                                }}
+                                                transition={{ duration: 0.3 }}
+                                                className="bg-white/20 backdrop-blur-sm rounded-full p-4"
+                                            >
+                                                <span className="text-white text-xl">
+                                                    👁️
+                                                </span>
+                                            </motion.div>
+                                        </motion.div>
+                                    </div>
+
+                                    <div className="p-6">
+                                        <motion.h3
+                                            className="text-xl font-bold text-white mb-3 line-clamp-2 group-hover:text-blue-200 transition-colors duration-300"
+                                            initial={{ y: 20 }}
+                                            whileInView={{ y: 0 }}
+                                            transition={{
+                                                delay: index * 0.1 + 0.3,
+                                            }}
+                                        >
+                                            {article.title}
+                                        </motion.h3>
+
+                                        <motion.p
+                                            className="text-white/70 text-sm line-clamp-3 mb-4 leading-relaxed"
+                                            initial={{ y: 20, opacity: 0 }}
+                                            whileInView={{ y: 0, opacity: 1 }}
+                                            transition={{
+                                                delay: index * 0.1 + 0.4,
+                                            }}
+                                        >
+                                            {article.content
+                                                ?.replace(/<[^>]*>/g, "")
+                                                .substring(0, 120)}
+                                            ...
+                                        </motion.p>
+
+                                        <motion.button
+                                            whileHover={{ scale: 1.05, x: 5 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            className="text-blue-200 hover:text-white transition-all duration-300 text-sm font-semibold flex items-center group"
+                                        >
+                                            Read Story
+                                            <motion.span
+                                                className="ml-2"
+                                                animate={{ x: [0, 5, 0] }}
+                                                transition={{
+                                                    duration: 1.5,
+                                                    repeat: Infinity,
+                                                }}
+                                            >
+                                                →
+                                            </motion.span>
+                                        </motion.button>
+                                    </div>
                                 </div>
                             </motion.div>
                         ))}
                     </div>
+
+                    {/* Call to action */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1, duration: 0.8 }}
+                        className="text-center mt-12"
+                    >
+                        <motion.button
+                            whileHover={{ scale: 1.05, y: -3 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                        >
+                            Read All Stories →
+                        </motion.button>
+                    </motion.div>
                 </div>
             </section>
 
-            {/* Gallery Section */}
+            {/* Enhanced Gallery Section - Artistic Ryze Designs Style */}
             <section
                 ref={galleryRef}
-                className="min-h-screen bg-gradient-to-b from-purple-700 to-pink-600 py-20"
+                className="min-h-screen bg-gradient-to-b from-purple-700 to-pink-600 py-20 relative overflow-hidden"
             >
-                <div className="container mx-auto px-6">
-                    <motion.h2
+                {/* Floating geometric art elements */}
+                <motion.div
+                    style={{
+                        y: useTransform(scrollY, [3200, 4000], [0, -120]),
+                        rotate: useTransform(scrollY, [3200, 4000], [0, 90]),
+                    }}
+                    className="absolute top-32 left-16 w-24 h-24 border-2 border-white/30"
+                />
+                <motion.div
+                    style={{
+                        y: useTransform(scrollY, [3200, 4000], [0, -80]),
+                        rotate: useTransform(scrollY, [3200, 4000], [0, -120]),
+                    }}
+                    className="absolute top-64 right-20 w-16 h-16 bg-white/20 rounded-full"
+                />
+                <motion.div
+                    style={{
+                        y: useTransform(scrollY, [3200, 4000], [0, -60]),
+                        rotate: useTransform(scrollY, [3200, 4000], [0, 60]),
+                    }}
+                    className="absolute bottom-40 left-1/3 w-32 h-32 border border-white/25 rotate-45"
+                />
+
+                <div className="container mx-auto px-6 relative z-10">
+                    <motion.div
                         initial={{ opacity: 0, y: 50 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
-                        className="text-5xl font-bold text-white text-center mb-16"
+                        className="text-center mb-16"
                     >
-                        Village Gallery
-                    </motion.h2>
+                        <h2 className="text-5xl font-bold text-white mb-4">
+                            📸 Village Gallery
+                        </h2>
+                        <motion.p
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            transition={{ delay: 0.3, duration: 0.8 }}
+                            className="text-xl text-white/80 mb-6"
+                        >
+                            Capturing moments and memories from {village?.name}
+                        </motion.p>
+                        <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: "8rem" }}
+                            transition={{ delay: 0.5, duration: 1 }}
+                            className="h-1 bg-gradient-to-r from-pink-400 to-purple-400 mx-auto"
+                        />
+                    </motion.div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {gallery?.slice(0, 12).map((image, index) => (
-                            <motion.div
-                                key={image.id}
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                transition={{
-                                    duration: 0.5,
-                                    delay: index * 0.05,
-                                }}
-                                whileHover={{ scale: 1.05, zIndex: 10 }}
-                                className="aspect-square bg-white/10 backdrop-blur-md rounded-xl overflow-hidden border border-white/20"
-                            >
-                                {image.image_url ? (
-                                    <img
-                                        src={image.image_url}
-                                        alt={image.caption || "Village photo"}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-white/50">
-                                        <span className="text-4xl">🖼️</span>
+                    {/* Artistic Grid Layout - Ryze Designs Inspired */}
+                    <div className="grid grid-cols-12 gap-4 max-w-7xl mx-auto">
+                        {gallery?.slice(0, 12).map((image, index) => {
+                            // Create varied grid layouts for artistic effect
+                            const gridPatterns = [
+                                "col-span-6 row-span-2", // Large
+                                "col-span-4 row-span-1", // Medium
+                                "col-span-3 row-span-1", // Small
+                                "col-span-4 row-span-2", // Tall
+                                "col-span-5 row-span-1", // Wide
+                                "col-span-3 row-span-1", // Small
+                                "col-span-6 row-span-1", // Wide medium
+                                "col-span-3 row-span-2", // Tall small
+                            ];
+
+                            const aspectRatios = [
+                                "aspect-video",
+                                "aspect-square",
+                                "aspect-[4/3]",
+                                "aspect-[3/4]",
+                                "aspect-[16/10]",
+                            ];
+
+                            return (
+                                <motion.div
+                                    key={image.id}
+                                    initial={{
+                                        opacity: 0,
+                                        scale: 0.6,
+                                        rotateY: 45,
+                                        z: -100,
+                                    }}
+                                    whileInView={{
+                                        opacity: 1,
+                                        scale: 1,
+                                        rotateY: 0,
+                                        z: 0,
+                                    }}
+                                    transition={{
+                                        duration: 0.8,
+                                        delay: (index % 6) * 0.1,
+                                        type: "spring",
+                                        stiffness: 100,
+                                    }}
+                                    whileHover={{
+                                        scale: 1.05,
+                                        rotateY: 8,
+                                        z: 50,
+                                        transition: { duration: 0.3 },
+                                    }}
+                                    className={`${
+                                        gridPatterns[
+                                            index % gridPatterns.length
+                                        ]
+                                    } cursor-pointer group relative overflow-hidden rounded-2xl transform-gpu perspective-1000`}
+                                >
+                                    <div
+                                        className={`w-full ${
+                                            aspectRatios[
+                                                index % aspectRatios.length
+                                            ]
+                                        } bg-gradient-to-br from-purple-500 to-pink-600 relative overflow-hidden`}
+                                    >
+                                        {image.image_url ? (
+                                            <motion.img
+                                                src={image.image_url}
+                                                alt={
+                                                    image.caption ||
+                                                    "Village photo"
+                                                }
+                                                className="w-full h-full object-cover"
+                                                whileHover={{ scale: 1.1 }}
+                                                transition={{ duration: 0.5 }}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-white/50 relative">
+                                                <motion.span
+                                                    className="text-4xl"
+                                                    animate={{
+                                                        rotate: [0, 5, -5, 0],
+                                                        scale: [1, 1.1, 1],
+                                                    }}
+                                                    transition={{
+                                                        duration: 3,
+                                                        repeat: Infinity,
+                                                        delay: index * 0.2,
+                                                    }}
+                                                >
+                                                    🖼️
+                                                </motion.span>
+                                            </div>
+                                        )}
+
+                                        {/* Artistic overlay effects */}
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            whileHover={{ opacity: 1 }}
+                                            className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20"
+                                        />
+
+                                        {/* Geometric hover indicators */}
+                                        <motion.div
+                                            initial={{ scale: 0, rotate: -90 }}
+                                            whileHover={{ scale: 1, rotate: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                            className="absolute top-4 right-4 w-8 h-8 border-2 border-white/80 rounded-full flex items-center justify-center backdrop-blur-sm"
+                                        >
+                                            <motion.span
+                                                animate={{ rotate: 360 }}
+                                                transition={{
+                                                    duration: 2,
+                                                    repeat: Infinity,
+                                                    ease: "linear",
+                                                }}
+                                                className="text-white text-sm"
+                                            >
+                                                ↗
+                                            </motion.span>
+                                        </motion.div>
+
+                                        {/* Image info overlay */}
+                                        <motion.div
+                                            initial={{ y: "100%", opacity: 0 }}
+                                            whileHover={{ y: 0, opacity: 1 }}
+                                            transition={{
+                                                duration: 0.4,
+                                                ease: "easeOut",
+                                            }}
+                                            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4"
+                                        >
+                                            {image.place && (
+                                                <motion.div
+                                                    initial={{
+                                                        x: -20,
+                                                        opacity: 0,
+                                                    }}
+                                                    whileHover={{
+                                                        x: 0,
+                                                        opacity: 1,
+                                                    }}
+                                                    transition={{ delay: 0.1 }}
+                                                    className="text-xs text-purple-300 mb-1 flex items-center"
+                                                >
+                                                    <span className="mr-1">
+                                                        📍
+                                                    </span>
+                                                    {image.place.name}
+                                                </motion.div>
+                                            )}
+
+                                            {image.caption && (
+                                                <motion.div
+                                                    initial={{
+                                                        x: -20,
+                                                        opacity: 0,
+                                                    }}
+                                                    whileHover={{
+                                                        x: 0,
+                                                        opacity: 1,
+                                                    }}
+                                                    transition={{ delay: 0.2 }}
+                                                    className="text-sm text-white font-medium line-clamp-2"
+                                                >
+                                                    {image.caption}
+                                                </motion.div>
+                                            )}
+
+                                            <motion.div
+                                                initial={{ x: -20, opacity: 0 }}
+                                                whileHover={{
+                                                    x: 0,
+                                                    opacity: 1,
+                                                }}
+                                                transition={{ delay: 0.3 }}
+                                                className="text-xs text-gray-300 mt-2 flex items-center justify-between"
+                                            >
+                                                <span>
+                                                    {new Date(
+                                                        image.created_at
+                                                    ).toLocaleDateString()}
+                                                </span>
+                                                <motion.span
+                                                    animate={{
+                                                        scale: [1, 1.2, 1],
+                                                    }}
+                                                    transition={{
+                                                        duration: 2,
+                                                        repeat: Infinity,
+                                                    }}
+                                                    className="text-pink-300"
+                                                >
+                                                    ❤️
+                                                </motion.span>
+                                            </motion.div>
+                                        </motion.div>
+
+                                        {/* Artistic corner decorations */}
+                                        <motion.div
+                                            initial={{ scale: 0 }}
+                                            whileInView={{ scale: 1 }}
+                                            transition={{
+                                                delay: index * 0.05 + 0.5,
+                                            }}
+                                            className="absolute top-0 left-0 w-0 h-0 border-l-[20px] border-t-[20px] border-l-transparent border-t-white/20"
+                                        />
                                     </div>
-                                )}
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Gallery stats with animated counters */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 50 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1.2, duration: 0.8 }}
+                        className="grid grid-cols-3 gap-8 mt-16 max-w-2xl mx-auto"
+                    >
+                        {[
+                            {
+                                label: "Total Photos",
+                                value: gallery?.length || 0,
+                                icon: "📸",
+                            },
+                            {
+                                label: "Locations",
+                                value: new Set(
+                                    gallery
+                                        ?.map((img) => img.place?.id)
+                                        .filter(Boolean)
+                                ).size,
+                                icon: "📍",
+                            },
+                            { label: "Memories", value: "∞", icon: "💫" },
+                        ].map((stat, index) => (
+                            <motion.div
+                                key={stat.label}
+                                initial={{ scale: 0, rotateY: 90 }}
+                                whileInView={{ scale: 1, rotateY: 0 }}
+                                transition={{
+                                    delay: 1.5 + index * 0.2,
+                                    duration: 0.6,
+                                    type: "spring",
+                                }}
+                                whileHover={{ scale: 1.1, y: -5 }}
+                                className="text-center bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20"
+                            >
+                                <motion.div
+                                    animate={{ rotate: [0, 10, -10, 0] }}
+                                    transition={{
+                                        duration: 2,
+                                        repeat: Infinity,
+                                        delay: index,
+                                    }}
+                                    className="text-3xl mb-2"
+                                >
+                                    {stat.icon}
+                                </motion.div>
+                                <div className="text-2xl font-bold text-white mb-1">
+                                    {stat.value}
+                                </div>
+                                <div className="text-sm text-white/70">
+                                    {stat.label}
+                                </div>
                             </motion.div>
                         ))}
-                    </div>
+                    </motion.div>
+
+                    {/* Call to action */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 2, duration: 0.8 }}
+                        className="text-center mt-12"
+                    >
+                        <motion.button
+                            whileHover={{
+                                scale: 1.05,
+                                y: -3,
+                                boxShadow: "0 20px 40px rgba(255,255,255,0.1)",
+                            }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center mx-auto"
+                        >
+                            <span className="mr-2">🖼️</span>
+                            View Full Gallery
+                            <motion.span
+                                animate={{ x: [0, 5, 0] }}
+                                transition={{ duration: 1.5, repeat: Infinity }}
+                                className="ml-2"
+                            >
+                                →
+                            </motion.span>
+                        </motion.button>
+                    </motion.div>
                 </div>
             </section>
         </MainLayout>

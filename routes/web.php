@@ -13,11 +13,6 @@ $baseDomain = config('app.domain', 'kecamatanbayan.id');
 
 // Routes for the main/apex domain
 Route::domain($baseDomain)->group(function () {
-    // Main website routes
-    Route::get('/', function () {
-        return view('welcome');
-    });
-
     // Short link redirect for apex domain
     Route::get('/l/{slug}', [ExternalLinkController::class, 'redirect'])
         ->name('short-link.redirect');
@@ -45,25 +40,10 @@ Route::domain($baseDomain)->group(function () {
     Route::post('/products/{product}/links/{link}/click', [ProductController::class, 'trackLinkClick'])
         ->name('products.link.click');
 
-    // Testing/debugging routes (remove in production)
-    Route::get('/test/links', function () {
-        $links = \App\Models\ExternalLink::with('village')->get();
-        return response()->json([
-            'total_links' => $links->count(),
-            'apex_links' => $links->whereNull('village_id')->count(),
-            'village_links' => $links->whereNotNull('village_id')->count(),
-            'links' => $links->map(function ($link) {
-                return [
-                    'id' => $link->id,
-                    'label' => $link->label,
-                    'slug' => $link->slug,
-                    'village' => $link->village?->name,
-                    'short_url' => $link->subdomain_url,
-                    'target_url' => $link->formatted_url,
-                ];
-            })
-        ]);
-    });
+    // Fallback everything to filament's /admin/login
+    // Route::fallback(function () {
+    //     return redirect(filament()->getLoginUrl());
+    // });
 });
 
 // Routes for village subdomains (e.g., village-name.kecamatanbayan.id)
@@ -79,7 +59,7 @@ Route::domain('{village}.' . $baseDomain)
 
         // Products
         Route::get('/products', [VillagePageController::class, 'products'])->name('village.products');
-        Route::get('/products/{product:slug}', [VillagePageController::class, 'productShow'])->name('village.products.show');
+        Route::get('/products/{product}', [VillagePageController::class, 'productShow'])->name('village.products.show');
 
         // Places
         Route::get('/places', [VillagePageController::class, 'places'])->name('village.places');
@@ -172,7 +152,7 @@ try {
                 Route::get('/articles', [VillagePageController::class, 'articles'])->name("custom.{$village->slug}.articles");
                 Route::get('/articles/{article}', [VillagePageController::class, 'articleShow'])->name("custom.{$village->slug}.articles.show");
                 Route::get('/products', [VillagePageController::class, 'products'])->name("custom.{$village->slug}.products");
-                Route::get('/products/{product:slug}', [VillagePageController::class, 'productShow'])->name("custom.{$village->slug}.products.show");
+                Route::get('/products/{product}', [VillagePageController::class, 'productShow'])->name("custom.{$village->slug}.products.show");
                 Route::get('/places', [VillagePageController::class, 'places'])->name("custom.{$village->slug}.places");
                 Route::get('/places/{place}', [VillagePageController::class, 'placeShow'])->name("custom.{$village->slug}.places.show");
                 Route::get('/gallery', [VillagePageController::class, 'gallery'])->name("custom.{$village->slug}.gallery");

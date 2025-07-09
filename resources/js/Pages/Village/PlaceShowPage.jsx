@@ -88,46 +88,106 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
                 ref={containerRef}
                 className="min-h-screen bg-black text-white overflow-hidden"
             >
-                {/* Geometric Background Elements */}
-                <div className="fixed inset-0 pointer-events-none z-0">
-                    {geometryElements.map((element) => (
-                        <motion.div
-                            key={element.id}
-                            className="absolute opacity-10"
-                            style={{
-                                left: `${element.x}%`,
-                                top: `${element.y}%`,
-                                width: `${element.size}px`,
-                                height: `${element.size}px`,
-                            }}
-                            initial={{
-                                scale: 0,
-                                rotate: 0,
-                                opacity: 0,
-                            }}
-                            animate={{
-                                scale: 1,
-                                rotate: element.rotation,
-                                opacity: [0, 0.1, 0.05, 0.1],
-                            }}
-                            transition={{
-                                duration: 4,
-                                delay: element.delay,
-                                repeat: Infinity,
-                                repeatType: "reverse",
-                            }}
-                        >
-                            {element.type === "circle" && (
-                                <div className="w-full h-full rounded-full border-2 border-green-400" />
-                            )}
-                            {element.type === "triangle" && (
-                                <div className="w-0 h-0 border-l-[30px] border-r-[30px] border-b-[52px] border-l-transparent border-r-transparent border-b-blue-400" />
-                            )}
-                            {element.type === "square" && (
-                                <div className="w-full h-full border-2 border-purple-400 rotate-45" />
-                            )}
-                        </motion.div>
-                    ))}
+                {/* Enhanced Place-specific background */}
+                <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{
+                        backgroundImage: place.image_url
+                            ? `url(${place.image_url})`
+                            : "linear-gradient(45deg, #1a365d 0%, #2d5a87 50%, #4a90a4 100%)",
+                    }}
+                >
+                    {!place.image_url && (
+                        <>
+                            {/* Place-specific geometric patterns */}
+                            <svg
+                                className="absolute inset-0 w-full h-full"
+                                viewBox="0 0 1200 600"
+                            >
+                                {/* Tourism vs SME different patterns */}
+                                {place.category?.type === "tourism" ? (
+                                    <>
+                                        {/* Nature-inspired patterns for tourism */}
+                                        <motion.path
+                                            initial={{ pathLength: 0 }}
+                                            animate={{ pathLength: 1 }}
+                                            transition={{
+                                                duration: 4,
+                                                delay: 1,
+                                            }}
+                                            d="M0,600 L0,200 Q200,150 400,180 Q600,120 800,160 Q1000,100 1200,140 L1200,600 Z"
+                                            fill="rgba(34, 197, 94, 0.2)"
+                                        />
+                                        <motion.circle
+                                            cx="300"
+                                            cy="150"
+                                            r="50"
+                                            fill="rgba(59, 130, 246, 0.2)"
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            transition={{
+                                                delay: 2,
+                                                duration: 1.5,
+                                            }}
+                                        />
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* Business-inspired patterns for SME */}
+                                        <motion.rect
+                                            x="200"
+                                            y="150"
+                                            width="100"
+                                            height="150"
+                                            fill="rgba(249, 115, 22, 0.2)"
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            transition={{
+                                                delay: 1.5,
+                                                duration: 2,
+                                            }}
+                                        />
+                                        <motion.polygon
+                                            points="800,100 900,200 700,200"
+                                            fill="rgba(168, 85, 247, 0.2)"
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            transition={{
+                                                delay: 2,
+                                                duration: 1.5,
+                                            }}
+                                        />
+                                    </>
+                                )}
+                            </svg>
+
+                            {/* Category-specific floating elements */}
+                            {[...Array(5)].map((_, i) => (
+                                <motion.div
+                                    key={i}
+                                    className="absolute text-white/20 text-3xl"
+                                    style={{
+                                        left: `${15 + Math.random() * 70}%`,
+                                        top: `${15 + Math.random() * 50}%`,
+                                    }}
+                                    animate={{
+                                        y: [0, -20, 0],
+                                        rotate: [0, 10, -10, 0],
+                                        opacity: [0.2, 0.4, 0.2],
+                                    }}
+                                    transition={{
+                                        duration: 3 + Math.random() * 2,
+                                        repeat: Infinity,
+                                        delay: Math.random() * 3,
+                                    }}
+                                >
+                                    {place.category?.type === "tourism"
+                                        ? ["🏞️", "🌲", "🏔️", "🌊", "🦋"][i]
+                                        : ["🏪", "🛠️", "📈", "💼", "🏭"][i]}
+                                </motion.div>
+                            ))}
+                        </>
+                    )}
                 </div>
 
                 {/* Navigation Dots */}
