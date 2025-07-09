@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->command->info('🎉 Bayan Smart Village database seeded successfully!');
-        $this->command->info('📧 Admin email: admin@bayansmart.com');
+        $this->command->info('📧 Admin email: admin@kecamatanbayan.id');
         $this->command->info('🔑 Admin password: password');
     }
 
@@ -42,7 +42,7 @@ class DatabaseSeeder extends Seeder
         // Create main admin user
         User::create([
             'name' => 'Bayan Smart Village Admin',
-            'email' => 'admin@bayansmart.com',
+            'email' => 'admin@kecamatanbayan.id',
             'email_verified_at' => now(),
             'password' => Hash::make('password'),
         ]);
