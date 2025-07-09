@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ExternalLinkController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\StuntingCalculatorController;
 use App\Http\Controllers\VillagePageController;
 use App\Http\Middleware\ResolveVillageSubdomain;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,12 @@ $baseDomain = config('app.domain', 'kecamatanbayan.id');
 
 // Routes for the main/apex domain
 Route::domain($baseDomain)->group(function () {
+    // Stunting Calculator Routes
+    Route::prefix('stunting-calculator')->name('stunting.')->group(function () {
+        Route::get('/', [StuntingCalculatorController::class, 'index'])->name('index');
+        Route::post('/calculate', [StuntingCalculatorController::class, 'calculate'])->name('calculate');
+    });
+
     // Short link redirect for apex domain
     Route::get('/l/{slug}', [ExternalLinkController::class, 'redirect'])
         ->name('short-link.redirect');
@@ -39,6 +46,11 @@ Route::domain($baseDomain)->group(function () {
     // Product e-commerce link tracking
     Route::post('/products/{product}/links/{link}/click', [ProductController::class, 'trackLinkClick'])
         ->name('products.link.click');
+
+    // Fallback to Filament admin
+    Route::fallback(function () {
+        return redirect(filament()->getLoginUrl());
+    });
 });
 
 // Routes for village subdomains (e.g., village-name.kecamatanbayan.id)

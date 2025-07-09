@@ -31,7 +31,7 @@ class SmeTourismPlace extends Model
     protected $casts = [
         'custom_fields' => 'array',
         'latitude' => 'decimal:8',
-        'longitude' => 'decimal:8'
+        'longitude' => 'decimal:8',
     ];
 
     protected static function boot()

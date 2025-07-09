@@ -59,14 +59,6 @@ class ViewSmeTourismPlace extends ViewRecord
                     ->columns(2)
                     ->hidden(fn($record) => !$record->latitude || !$record->longitude),
 
-                Infolists\Components\Section::make('Custom Properties')
-                    ->schema([
-                        Infolists\Components\KeyValueEntry::make('custom_fields')
-                            ->label('')
-                            ->columnSpanFull(),
-                    ])
-                    ->hidden(fn($record) => empty($record->custom_fields)),
-
                 Infolists\Components\Section::make('Related Content')
                     ->schema([
                         Infolists\Components\RepeatableEntry::make('articles')
