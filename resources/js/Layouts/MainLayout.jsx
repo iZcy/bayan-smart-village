@@ -449,6 +449,27 @@ export default function MainLayout({ children, title = "", description = "" }) {
                             <span className="ml-1">
                                 Made with ❤️ for our community
                             </span>
+                            <span className="mx-2">•</span>
+                            <span className="text-gray-500">
+                                Powered by{" "}
+                                <a
+                                    href="https://claude.ai"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-400 hover:text-blue-300 transition-colors hover:underline"
+                                >
+                                    Claude
+                                </a>
+                                {" & "}
+                                <a
+                                    href="https://chatgpt.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-green-400 hover:text-green-300 transition-colors hover:underline"
+                                >
+                                    ChatGPT
+                                </a>
+                            </span>
                         </p>
 
                         <div className="flex items-center space-x-4 mt-4 md:mt-0">
