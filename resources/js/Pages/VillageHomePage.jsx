@@ -17,6 +17,7 @@ const VillageHomePage = ({
     gallery = [],
     products = [],
 }) => {
+    console.log(products);
     const tourismPlaces = places.tourism ?? [];
     const smePlaces = places.sme ?? [];
 
@@ -38,15 +39,12 @@ const VillageHomePage = ({
     const [heroRef, heroInView] = useInView({ threshold: 0.3 });
     const [tourismRef, tourismInView] = useInView({ threshold: 0.3 });
     const [smeRef, smeInView] = useInView({ threshold: 0.3 });
+    const [productsRef, productsInView] = useInView({ threshold: 0.3 });
     const [articlesRef, articlesInView] = useInView({ threshold: 0.3 });
     const [galleryRef, galleryInView] = useInView({
         threshold: 0.1, // Lower threshold
         rootMargin: "0px 0px -10% 0px", // Trigger earlier
     });
-
-    useEffect(() => {
-        console.log("Gallery intersection status:", galleryInView);
-    }, [galleryInView]);
 
     // Auto-scroll tourism places
     useEffect(() => {
@@ -82,12 +80,9 @@ const VillageHomePage = ({
             const scrollPercentage =
                 scrollPosition / (documentHeight - windowHeight);
 
-            console.log("Scroll percentage:", scrollPercentage);
-
             // If we're near the bottom (90%+), force gallery section
             if (scrollPercentage >= 0.9) {
                 setScrollBasedSection(4);
-                console.log("Scroll-based: Setting to Gallery (4)");
             } else if (scrollPercentage >= 0.7) {
                 setScrollBasedSection(3);
             } else if (scrollPercentage >= 0.5) {
@@ -105,41 +100,22 @@ const VillageHomePage = ({
 
     // Modified section detection that combines both approaches:
     useEffect(() => {
-        console.log("Section detection:", {
-            heroInView,
-            tourismInView,
-            smeInView,
-            articlesInView,
-            galleryInView,
-            currentSection,
-            scrollBasedSection,
-        });
-
-        // Use scroll-based detection as fallback when intersection observer fails
         let newSection = currentSection;
 
         if (galleryInView) {
-            newSection = 4;
-            console.log("Intersection: Setting section to 4 (Gallery)");
-        } else if (articlesInView && !galleryInView) {
+            newSection = 5; // Updated to 5
+        } else if (productsInView && !galleryInView) {
+            newSection = 4; // New products section
+        } else if (articlesInView && !productsInView) {
             newSection = 3;
-            console.log("Intersection: Setting section to 3 (Articles)");
         } else if (smeInView && !articlesInView) {
             newSection = 2;
-            console.log("Intersection: Setting section to 2 (SME)");
         } else if (tourismInView && !smeInView) {
             newSection = 1;
-            console.log("Intersection: Setting section to 1 (Tourism)");
         } else if (heroInView && !tourismInView) {
             newSection = 0;
-            console.log("Intersection: Setting section to 0 (Hero)");
         } else {
-            // Fallback to scroll-based detection when no sections are in view
             newSection = scrollBasedSection;
-            console.log(
-                "Fallback: Using scroll-based section:",
-                scrollBasedSection
-            );
         }
 
         if (newSection !== currentSection) {
@@ -150,6 +126,7 @@ const VillageHomePage = ({
         tourismInView,
         smeInView,
         articlesInView,
+        productsInView, // Add this
         galleryInView,
         scrollBasedSection,
         currentSection,
@@ -163,6 +140,7 @@ const VillageHomePage = ({
             "/audio/departure-cinematic-trailer-intro-music-139612.mp3",
             "/audio/funny-tango-dramatic-music-for-vlog-video-1-minute-150834.mp3",
             "/audio/whispers-of-the-trenches-ww-i-song-350973.mp3",
+            "/audio/sport-news-formula-1-vibes-265165.mp3",
         ];
 
         // Initialize audio refs
@@ -937,6 +915,235 @@ const VillageHomePage = ({
                 </div>
             </section>
 
+            {/* Products Section */}
+            <section
+                ref={productsRef}
+                className="min-h-screen bg-gradient-to-b from-indigo-600 to-blue-700 py-20 relative overflow-hidden"
+            >
+                {/* Parallax elements */}
+                <motion.div
+                    style={{
+                        y: useTransform(scrollY, [3200, 4000], [0, -100]),
+                        rotate: useTransform(scrollY, [3200, 4000], [0, 90]),
+                    }}
+                    className="absolute top-20 right-16 w-28 h-28 border border-white/20 rounded-xl"
+                />
+                <motion.div
+                    style={{
+                        y: useTransform(scrollY, [3200, 4000], [0, -80]),
+                    }}
+                    className="absolute bottom-40 left-20 w-24 h-24 bg-white/10 rounded-full"
+                />
+
+                <div className="container mx-auto px-6 relative z-10">
+                    <motion.div
+                        initial={{ opacity: 0, y: 50 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
+                        className="text-center mb-16"
+                    >
+                        <h2 className="text-5xl font-bold text-white mb-4">
+                            🛍️ Local Products
+                        </h2>
+                        <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: "10rem" }}
+                            transition={{ delay: 0.5, duration: 1 }}
+                            className="h-1 bg-gradient-to-r from-indigo-400 to-blue-400 mx-auto"
+                        />
+                    </motion.div>
+
+                    {/* Products Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {products?.slice(0, 6).map((product, index) => (
+                            <motion.div
+                                key={product.id}
+                                initial={{ opacity: 0, y: 100, scale: 0.8 }}
+                                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                                transition={{
+                                    duration: 0.8,
+                                    delay: index * 0.1,
+                                    type: "spring",
+                                    stiffness: 100,
+                                }}
+                                whileHover={{
+                                    y: -10,
+                                    scale: 1.03,
+                                    transition: { duration: 0.3 },
+                                }}
+                                className="group"
+                            >
+                                <div className="bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden border border-white/20 hover:border-white/40 transition-all duration-500">
+                                    <div className="relative h-56 overflow-hidden">
+                                        {product.primary_image_url ? (
+                                            <motion.img
+                                                src={product.primary_image_url}
+                                                alt={product.name}
+                                                className="w-full h-full object-cover"
+                                                whileHover={{ scale: 1.1 }}
+                                                transition={{ duration: 0.5 }}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-indigo-400 to-blue-500 flex items-center justify-center">
+                                                <motion.span
+                                                    className="text-4xl text-white"
+                                                    animate={{
+                                                        rotate: [0, 5, -5, 0],
+                                                        scale: [1, 1.1, 1],
+                                                    }}
+                                                    transition={{
+                                                        duration: 2,
+                                                        repeat: Infinity,
+                                                        delay: index * 0.2,
+                                                    }}
+                                                >
+                                                    🛍️
+                                                </motion.span>
+                                            </div>
+                                        )}
+
+                                        {/* Featured badge */}
+                                        {product.is_featured && (
+                                            <motion.div
+                                                initial={{
+                                                    scale: 0,
+                                                    rotate: -45,
+                                                }}
+                                                animate={{
+                                                    scale: 1,
+                                                    rotate: 0,
+                                                }}
+                                                className="absolute top-4 left-4 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-semibold"
+                                            >
+                                                ⭐ Featured
+                                            </motion.div>
+                                        )}
+
+                                        {/* Hover overlay */}
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            whileHover={{ opacity: 1 }}
+                                            className="absolute inset-0 bg-black/40 flex items-center justify-center"
+                                        >
+                                            <motion.div
+                                                initial={{
+                                                    scale: 0,
+                                                    rotate: -180,
+                                                }}
+                                                whileHover={{
+                                                    scale: 1,
+                                                    rotate: 0,
+                                                }}
+                                                transition={{ duration: 0.3 }}
+                                                className="bg-white/20 backdrop-blur-sm rounded-full p-4"
+                                            >
+                                                <span className="text-white text-xl">
+                                                    👁️
+                                                </span>
+                                            </motion.div>
+                                        </motion.div>
+                                    </div>
+
+                                    <div className="p-6">
+                                        <motion.h3
+                                            className="text-xl font-bold text-white mb-2 line-clamp-2 group-hover:text-indigo-200 transition-colors duration-300"
+                                            initial={{ y: 20 }}
+                                            whileInView={{ y: 0 }}
+                                            transition={{
+                                                delay: index * 0.1 + 0.2,
+                                            }}
+                                        >
+                                            {product.name}
+                                        </motion.h3>
+
+                                        <motion.p
+                                            className="text-white/70 text-sm line-clamp-2 mb-4"
+                                            initial={{ y: 20, opacity: 0 }}
+                                            whileInView={{ y: 0, opacity: 1 }}
+                                            transition={{
+                                                delay: index * 0.1 + 0.3,
+                                            }}
+                                        >
+                                            {product.short_description ||
+                                                product.description
+                                                    ?.replace(/<[^>]*>/g, "")
+                                                    .substring(0, 100)}
+                                        </motion.p>
+
+                                        <motion.div
+                                            initial={{ y: 20, opacity: 0 }}
+                                            whileInView={{ y: 0, opacity: 1 }}
+                                            transition={{
+                                                delay: index * 0.1 + 0.4,
+                                            }}
+                                            className="flex items-center justify-between"
+                                        >
+                                            <div className="text-indigo-200 font-semibold">
+                                                {product.display_price ||
+                                                    "Contact for price"}
+                                            </div>
+                                            <motion.button
+                                                whileHover={{
+                                                    scale: 1.1,
+                                                    rotate: 5,
+                                                }}
+                                                whileTap={{ scale: 0.95 }}
+                                                className="bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors duration-300"
+                                            >
+                                                View →
+                                            </motion.button>
+                                        </motion.div>
+
+                                        {/* Product info */}
+                                        <motion.div
+                                            initial={{ y: 20, opacity: 0 }}
+                                            whileInView={{ y: 0, opacity: 1 }}
+                                            transition={{
+                                                delay: index * 0.1 + 0.5,
+                                            }}
+                                            className="mt-4 space-y-1"
+                                        >
+                                            {product.place && (
+                                                <div className="flex items-center text-xs text-white/60">
+                                                    <span className="mr-1">
+                                                        🏪
+                                                    </span>
+                                                    {product.place.name}
+                                                </div>
+                                            )}
+                                            {product.category && (
+                                                <div className="flex items-center text-xs text-white/60">
+                                                    <span className="mr-1">
+                                                        🏷️
+                                                    </span>
+                                                    {product.category.name}
+                                                </div>
+                                            )}
+                                        </motion.div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    {/* Call to action */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1, duration: 0.8 }}
+                        className="text-center mt-12"
+                    >
+                        <motion.button
+                            whileHover={{ scale: 1.05, y: -3 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                        >
+                            View All Products →
+                        </motion.button>
+                    </motion.div>
+                </div>
+            </section>
+
             {/* Enhanced Articles Section - Ryze Designs Style */}
             <section
                 ref={articlesRef}
@@ -1158,22 +1365,22 @@ const VillageHomePage = ({
                 {/* Floating geometric art elements */}
                 <motion.div
                     style={{
-                        y: useTransform(scrollY, [3200, 4000], [0, -120]),
-                        rotate: useTransform(scrollY, [3200, 4000], [0, 90]),
+                        y: useTransform(scrollY, [4000, 4800], [0, -120]),
+                        rotate: useTransform(scrollY, [4000, 4800], [0, 90]),
                     }}
                     className="absolute top-32 left-16 w-24 h-24 border-2 border-white/30"
                 />
                 <motion.div
                     style={{
-                        y: useTransform(scrollY, [3200, 4000], [0, -80]),
-                        rotate: useTransform(scrollY, [3200, 4000], [0, -120]),
+                        y: useTransform(scrollY, [4000, 4800], [0, -80]),
+                        rotate: useTransform(scrollY, [4000, 4800], [0, -120]),
                     }}
                     className="absolute top-64 right-20 w-16 h-16 bg-white/20 rounded-full"
                 />
                 <motion.div
                     style={{
-                        y: useTransform(scrollY, [3200, 4000], [0, -60]),
-                        rotate: useTransform(scrollY, [3200, 4000], [0, 60]),
+                        y: useTransform(scrollY, [4000, 4800], [0, -60]),
+                        rotate: useTransform(scrollY, [4000, 4800], [0, 60]),
                     }}
                     className="absolute bottom-40 left-1/3 w-32 h-32 border border-white/25 rotate-45"
                 />
