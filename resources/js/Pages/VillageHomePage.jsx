@@ -83,18 +83,11 @@ const VillageHomePage = ({
         // ];
 
         const audioFiles = [
-            // Archive.org - Free music
-            "https://archive.org/download/test-audio/test-audio.mp3",
-
-            // Freesound.org samples (shorter clips)
-            "https://freesound.org/data/previews/316/316823_5123451-lq.mp3",
-
-            // Pixabay audio (royalty-free)
-            "https://pixabay.com/music/download/audio-file-sample.mp3",
-
-            // Test audio files from various sources
-            "https://www.soundjay.com/misc/sounds/misc-1.mp3",
-            "https://www.soundjay.com/misc/sounds/misc-2.mp3",
+            "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3",
+            "/audio/aggressive-phonk-phonk-2025-mix-239735.mp3",
+            "/audio/departure-cinematic-trailer-intro-music-139612.mp3",
+            "/audio/funny-tango-dramatic-music-for-vlog-video-1-minute-150834.mp3",
+            "/audio/whispers-of-the-trenches-ww-i-song-350973.mp3",
         ];
 
         // Initialize audio refs
