@@ -74,12 +74,27 @@ const VillageHomePage = ({
 
     // Enhanced audio management for each section
     useEffect(() => {
+        // const audioFiles = [
+        //     "/audio/village-hero.mp3", // Hero section
+        //     "/audio/village-tourism.mp3", // Tourism section
+        //     "/audio/village-business.mp3", // SME section
+        //     "/audio/village-stories.mp3", // Articles section
+        //     "/audio/village-nature.mp3", // Gallery section
+        // ];
+
         const audioFiles = [
-            "/audio/village-hero.mp3", // Hero section
-            "/audio/village-tourism.mp3", // Tourism section
-            "/audio/village-business.mp3", // SME section
-            "/audio/village-stories.mp3", // Articles section
-            "/audio/village-nature.mp3", // Gallery section
+            // Archive.org - Free music
+            "https://archive.org/download/test-audio/test-audio.mp3",
+
+            // Freesound.org samples (shorter clips)
+            "https://freesound.org/data/previews/316/316823_5123451-lq.mp3",
+
+            // Pixabay audio (royalty-free)
+            "https://pixabay.com/music/download/audio-file-sample.mp3",
+
+            // Test audio files from various sources
+            "https://www.soundjay.com/misc/sounds/misc-1.mp3",
+            "https://www.soundjay.com/misc/sounds/misc-2.mp3",
         ];
 
         // Initialize audio refs
