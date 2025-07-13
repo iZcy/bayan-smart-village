@@ -5,12 +5,15 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
     server: {
-        cors: true,
-        host: true,
-        port: 5173,
-        headers: {
-            "Access-Control-Allow-Origin": "*", // ✅ Enable CORS for dev
+        hmr: {
+            port: 5173,
+            host: "localhost",
         },
+        host: "localhost", // Use localhost instead of 0.0.0.0
+        port: 5173,
+        strictPort: true,
+        origin: "http://localhost:5173", // Explicitly set origin
+        cors: true,
     },
     plugins: [
         laravel({

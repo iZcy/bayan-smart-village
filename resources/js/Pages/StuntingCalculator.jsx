@@ -71,20 +71,20 @@ const StuntingCalculator = ({ whoData }) => {
         const newErrors = {};
 
         if (!formData.gender) {
-            newErrors.gender = "Please select a gender";
+            newErrors.gender = "Silakan pilih jenis kelamin";
         }
 
         if (!formData.height) {
-            newErrors.height = "Please enter height";
+            newErrors.height = "Silakan masukkan tinggi badan";
         } else if (
             parseFloat(formData.height) < 10 ||
             parseFloat(formData.height) > 200
         ) {
-            newErrors.height = "Height must be between 10-200 cm";
+            newErrors.height = "Tinggi badan harus antara 10-200 cm";
         }
 
         if (!formData.birth_date) {
-            newErrors.birth_date = "Please select birth date";
+            newErrors.birth_date = "Silakan pilih tanggal lahir";
         } else {
             const birthDate = new Date(formData.birth_date);
             const today = new Date();
@@ -95,10 +95,10 @@ const StuntingCalculator = ({ whoData }) => {
             );
 
             if (birthDate >= today) {
-                newErrors.birth_date = "Birth date must be in the past";
+                newErrors.birth_date = "Tanggal lahir harus di masa lalu";
             } else if (birthDate < fiveYearsAgo) {
                 newErrors.birth_date =
-                    "Calculator works for children under 5 years old";
+                    "Kalkulator ini untuk anak di bawah 5 tahun";
             }
         }
 
@@ -168,11 +168,11 @@ const StuntingCalculator = ({ whoData }) => {
                     });
                 }, 100);
             } else {
-                setErrors({ general: data.error || "An error occurred" });
+                setErrors({ general: data.error || "Terjadi kesalahan" });
             }
         } catch (error) {
             console.error("Fetch error:", error);
-            setErrors({ general: "Network error. Please try again." });
+            setErrors({ general: "Kesalahan jaringan. Silakan coba lagi." });
         } finally {
             setIsCalculating(false);
         }
@@ -200,7 +200,7 @@ const StuntingCalculator = ({ whoData }) => {
 
     return (
         <>
-            <Head title="Stunting Calculator - WHO Growth Standards" />
+            <Head title="Kalkulator Stunting - Standar Pertumbuhan WHO" />
 
             {/* Background Audio */}
             <audio ref={audioRef} loop>
@@ -279,7 +279,7 @@ const StuntingCalculator = ({ whoData }) => {
                             transition={{ duration: 1, delay: 0.5 }}
                             className="text-6xl md:text-8xl font-bold text-white mb-6"
                         >
-                            Stunting Calculator
+                            Kalkulator Stunting
                         </motion.h1>
                         <motion.p
                             initial={{ opacity: 0, y: 30 }}
@@ -287,7 +287,7 @@ const StuntingCalculator = ({ whoData }) => {
                             transition={{ duration: 1, delay: 1 }}
                             className="text-xl md:text-2xl text-gray-300 mb-8"
                         >
-                            WHO Growth Standards for Children Under 5 Years
+                            Standar Pertumbuhan WHO untuk Anak di Bawah 5 Tahun
                         </motion.p>
 
                         <motion.div
@@ -307,7 +307,7 @@ const StuntingCalculator = ({ whoData }) => {
                                 }}
                                 className="group inline-flex items-center px-8 py-4 bg-white/10 backdrop-blur-md text-white rounded-full hover:bg-white/20 transition-all duration-300"
                             >
-                                Start Assessment
+                                Mulai Penilaian
                                 <svg
                                     className="w-5 h-5 ml-2 group-hover:translate-y-1 transition-transform duration-300"
                                     fill="none"
@@ -347,11 +347,11 @@ const StuntingCalculator = ({ whoData }) => {
                             className="text-center mb-16"
                         >
                             <h2 className="text-5xl font-bold text-white mb-4">
-                                Growth Assessment Tool
+                                Alat Penilaian Pertumbuhan
                             </h2>
                             <p className="text-xl text-white/80 max-w-3xl mx-auto">
-                                Enter your child's information below to assess
-                                their growth status according to WHO standards
+                                Masukkan informasi anak Anda di bawah ini untuk
+                                menilai status pertumbuhan sesuai standar WHO
                             </p>
                         </motion.div>
 
@@ -379,18 +379,18 @@ const StuntingCalculator = ({ whoData }) => {
                                     {/* Gender Selection */}
                                     <div>
                                         <label className="block text-white font-semibold mb-3">
-                                            Child's Gender *
+                                            Jenis Kelamin Anak *
                                         </label>
                                         <div className="grid grid-cols-2 gap-4">
                                             {[
                                                 {
                                                     value: "boys",
-                                                    label: "Boy",
+                                                    label: "Laki-laki",
                                                     icon: "👦",
                                                 },
                                                 {
                                                     value: "girls",
-                                                    label: "Girl",
+                                                    label: "Perempuan",
                                                     icon: "👧",
                                                 },
                                             ].map((option) => (
@@ -442,7 +442,7 @@ const StuntingCalculator = ({ whoData }) => {
                                             htmlFor="height"
                                             className="block text-white font-semibold mb-3"
                                         >
-                                            Height (in centimeters) *
+                                            Tinggi Badan (dalam sentimeter) *
                                         </label>
                                         <div className="relative">
                                             <input
@@ -451,7 +451,7 @@ const StuntingCalculator = ({ whoData }) => {
                                                 name="height"
                                                 value={formData.height}
                                                 onChange={handleInputChange}
-                                                placeholder="e.g., 75.5"
+                                                placeholder="mis. 75.5"
                                                 step="0.1"
                                                 min="10"
                                                 max="200"
@@ -478,7 +478,7 @@ const StuntingCalculator = ({ whoData }) => {
                                             htmlFor="birth_date"
                                             className="block text-white font-semibold mb-3"
                                         >
-                                            Birth Date *
+                                            Tanggal Lahir *
                                         </label>
                                         <input
                                             type="date"
@@ -520,10 +520,10 @@ const StuntingCalculator = ({ whoData }) => {
                                             {isCalculating ? (
                                                 <div className="flex items-center justify-center">
                                                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                                                    Calculating...
+                                                    Menghitung...
                                                 </div>
                                             ) : (
-                                                "Calculate Growth Status"
+                                                "Hitung Status Pertumbuhan"
                                             )}
                                         </motion.button>
 
@@ -559,10 +559,10 @@ const StuntingCalculator = ({ whoData }) => {
                         >
                             <div className="text-center mb-12">
                                 <h2 className="text-4xl font-bold text-white mb-4">
-                                    Assessment Results
+                                    Hasil Penilaian
                                 </h2>
                                 <p className="text-xl text-gray-300">
-                                    Based on WHO Growth Standards
+                                    Berdasarkan Standar Pertumbuhan WHO
                                 </p>
                             </div>
 
@@ -582,7 +582,7 @@ const StuntingCalculator = ({ whoData }) => {
                                         {result.interpretation.title}
                                     </div>
                                     <h3 className="text-2xl font-bold text-white mb-2">
-                                        Height-for-Age Z-Score:{" "}
+                                        Skor Z Tinggi-menurut-Umur:{" "}
                                         {result.haz_score}
                                     </h3>
                                     <p className="text-gray-300">
@@ -596,7 +596,7 @@ const StuntingCalculator = ({ whoData }) => {
                                             {result.age_months}
                                         </div>
                                         <div className="text-gray-300">
-                                            Months Old
+                                            Bulan
                                         </div>
                                     </div>
                                     <div className="text-center p-4 bg-white/5 rounded-lg">
@@ -604,7 +604,7 @@ const StuntingCalculator = ({ whoData }) => {
                                             {result.height} cm
                                         </div>
                                         <div className="text-gray-300">
-                                            Current Height
+                                            Tinggi Saat Ini
                                         </div>
                                     </div>
                                     <div className="text-center p-4 bg-white/5 rounded-lg">
@@ -612,7 +612,7 @@ const StuntingCalculator = ({ whoData }) => {
                                             {result.median_height} cm
                                         </div>
                                         <div className="text-gray-300">
-                                            WHO Median
+                                            Median WHO
                                         </div>
                                     </div>
                                 </div>
@@ -621,7 +621,7 @@ const StuntingCalculator = ({ whoData }) => {
                                     className={`p-4 rounded-lg border-l-4 border-${result.interpretation.color}-500 bg-${result.interpretation.color}-500/10`}
                                 >
                                     <h4 className="font-semibold text-white mb-2">
-                                        Recommendation:
+                                        Rekomendasi:
                                     </h4>
                                     <p className="text-gray-300">
                                         {result.interpretation.recommendation}
@@ -637,8 +637,8 @@ const StuntingCalculator = ({ whoData }) => {
                                 className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
                             >
                                 <h4 className="text-lg font-semibold text-white mb-4">
-                                    WHO Growth Standards Reference (Age:{" "}
-                                    {result.age_months} months)
+                                    Referensi Standar Pertumbuhan WHO (Umur:{" "}
+                                    {result.age_months} bulan)
                                 </h4>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                     {Object.entries(result.standards).map(
@@ -680,7 +680,7 @@ const StuntingCalculator = ({ whoData }) => {
                                     }}
                                     className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-full font-semibold hover:shadow-xl transition-all duration-300"
                                 >
-                                    Calculate Another Assessment
+                                    Hitung Penilaian Lainnya
                                 </button>
                             </motion.div>
                         </motion.div>
@@ -698,7 +698,7 @@ const StuntingCalculator = ({ whoData }) => {
                         className="max-w-4xl mx-auto"
                     >
                         <h2 className="text-4xl font-bold text-white text-center mb-12">
-                            About This Calculator
+                            Tentang Kalkulator Ini
                         </h2>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -709,14 +709,13 @@ const StuntingCalculator = ({ whoData }) => {
                                 className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
                             >
                                 <h3 className="text-xl font-bold text-white mb-4">
-                                    📊 WHO Standards
+                                    📊 Standar WHO
                                 </h3>
                                 <p className="text-gray-300 leading-relaxed">
-                                    This calculator uses the World Health
-                                    Organization (WHO) Child Growth Standards,
-                                    which provide the best description of
-                                    physiological growth for children under 5
-                                    years old.
+                                    Kalkulator ini menggunakan Standar
+                                    Pertumbuhan Anak WHO yang memberikan
+                                    deskripsi terbaik tentang pertumbuhan
+                                    fisiologis untuk anak di bawah 5 tahun.
                                 </p>
                             </motion.div>
 
@@ -727,13 +726,13 @@ const StuntingCalculator = ({ whoData }) => {
                                 className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
                             >
                                 <h3 className="text-xl font-bold text-white mb-4">
-                                    📏 Height-for-Age Z-Score
+                                    📏 Skor Z Tinggi-menurut-Umur
                                 </h3>
                                 <p className="text-gray-300 leading-relaxed">
-                                    The Height-for-Age Z-score (HAZ) indicates
-                                    how many standard deviations a child's
-                                    height is from the median height of children
-                                    the same age and gender.
+                                    Skor Z Tinggi-menurut-Umur (HAZ) menunjukkan
+                                    berapa standar deviasi tinggi anak dari
+                                    median tinggi anak-anak seusia dan sejenis
+                                    kelamin.
                                 </p>
                             </motion.div>
 
@@ -744,13 +743,13 @@ const StuntingCalculator = ({ whoData }) => {
                                 className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
                             >
                                 <h3 className="text-xl font-bold text-white mb-4">
-                                    ⚠️ Important Note
+                                    ⚠️ Catatan Penting
                                 </h3>
                                 <p className="text-gray-300 leading-relaxed">
-                                    This tool is for screening purposes only.
-                                    Always consult with a healthcare
-                                    professional for proper medical advice and
-                                    diagnosis.
+                                    Alat ini hanya untuk tujuan skrining. Selalu
+                                    konsultasi dengan tenaga kesehatan
+                                    profesional untuk nasihat medis dan
+                                    diagnosis yang tepat.
                                 </p>
                             </motion.div>
 
@@ -761,12 +760,13 @@ const StuntingCalculator = ({ whoData }) => {
                                 className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
                             >
                                 <h3 className="text-xl font-bold text-white mb-4">
-                                    🎂 Age Calculation
+                                    🎂 Perhitungan Umur
                                 </h3>
                                 <p className="text-gray-300 leading-relaxed">
-                                    Age is calculated in months. If birth day is
-                                    after the 15th, it's counted as the next
-                                    month for more accurate assessment.
+                                    Umur dihitung dalam bulan. Jika tanggal
+                                    lahir setelah tanggal 15, akan dihitung
+                                    sebagai bulan berikutnya untuk penilaian
+                                    yang lebih akurat.
                                 </p>
                             </motion.div>
                         </div>
