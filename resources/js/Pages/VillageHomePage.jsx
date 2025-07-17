@@ -17,9 +17,72 @@ const VillageHomePage = ({
     gallery = [],
     products = [],
 }) => {
-    console.log(products);
     const tourismPlaces = places.tourism ?? [];
     const smePlaces = places.sme ?? [];
+    // Add these state variables at the top with your other useState declarations
+    const [isTourismInteracting, setIsTourismInteracting] = useState(false);
+    const [isSMEInteracting, setIsSMEInteracting] = useState(false);
+    const [isUserInteracting, setIsUserInteracting] = useState(false); // New global interaction state
+    const [interactionTimeout, setInteractionTimeout] = useState(null); // Timeout for interaction detection
+
+    // Add this function to handle user interaction detection
+    const handleUserInteraction = () => {
+        setIsUserInteracting(true);
+
+        // Clear existing timeout
+        if (interactionTimeout) {
+            clearTimeout(interactionTimeout);
+        }
+
+        // Set new timeout to reset interaction state after 5 seconds of inactivity
+        const timeout = setTimeout(() => {
+            setIsUserInteracting(false);
+        }, 5000);
+
+        setInteractionTimeout(timeout);
+    };
+
+    // Audio configuration array for flexible management
+    const audioConfig = [
+        {
+            id: "all",
+            src: "/audio/sasakbacksong.mp3",
+            volume: 0.25,
+            loop: true,
+            fadeIn: true,
+            fadeOut: true,
+        },
+    ];
+
+    // Enhanced audio management with fade effects
+    const audioManager = useRef(new Map());
+    const fadeTimeouts = useRef(new Map());
+
+    // Initialize audio manager
+    useEffect(() => {
+        audioConfig.forEach((config, index) => {
+            const audio = new Audio(config.src);
+            audio.volume = 0; // Start with 0 volume for fade in
+            audio.loop = config.loop;
+            audio.preload = "auto";
+
+            audioManager.current.set(index, {
+                audio: audio,
+                config: config,
+                targetVolume: config.volume,
+                isPlaying: false,
+            });
+        });
+
+        return () => {
+            // Cleanup
+            audioManager.current.forEach((audioData) => {
+                audioData.audio.pause();
+                audioData.audio.currentTime = 0;
+            });
+            fadeTimeouts.current.forEach((timeout) => clearTimeout(timeout));
+        };
+    }, []);
 
     const [currentSection, setCurrentSection] = useState(0);
     const [selectedTourismPlace, setSelectedTourismPlace] = useState(0);
@@ -32,8 +95,6 @@ const VillageHomePage = ({
 
     // Parallax transforms
     const heroY = useTransform(scrollY, [0, 800], [0, -200]);
-    const treesY = useTransform(scrollY, [0, 800], [0, -100]);
-    const mountainsY = useTransform(scrollY, [0, 800], [0, -300]);
 
     // Section refs for intersection observer
     const [heroRef, heroInView] = useInView({ threshold: 0.3 });
@@ -46,29 +107,65 @@ const VillageHomePage = ({
         rootMargin: "0px 0px -10% 0px", // Trigger earlier
     });
 
-    // Auto-scroll tourism places
+    // Update the auto-scroll tourism places effect
     useEffect(() => {
+        if (isUserInteracting || isTourismInteracting) {
+            return; // Don't auto-scroll if user is interacting
+        }
+
         const interval = setInterval(() => {
             if (tourismPlaces.length > 0) {
                 setSelectedTourismPlace(
                     (prev) => (prev + 1) % tourismPlaces.length
                 );
             }
-        }, 4000);
+        }, 5000);
         return () => clearInterval(interval);
-    }, [tourismPlaces.length]);
+    }, [tourismPlaces.length, isUserInteracting, isTourismInteracting]);
 
-    // Auto-scroll SME places
+    // Update the auto-scroll SME places effect
     useEffect(() => {
+        if (isUserInteracting || isSMEInteracting) {
+            return; // Don't auto-scroll if user is interacting
+        }
+
         const interval = setInterval(() => {
             if (smePlaces.length > 0) {
                 setSelectedSME((prev) => (prev + 1) % smePlaces.length);
             }
-        }, 3500);
+        }, 5000);
         return () => clearInterval(interval);
-    }, [smePlaces.length]);
+    }, [smePlaces.length, isUserInteracting, isSMEInteracting]);
 
     const [scrollBasedSection, setScrollBasedSection] = useState(0);
+
+    // Add event listeners for various user interactions
+    useEffect(() => {
+        const events = [
+            "mousedown",
+            "mousemove",
+            "wheel",
+            "scroll",
+            "touchstart",
+            "touchmove",
+            "keydown",
+        ];
+
+        events.forEach((event) => {
+            document.addEventListener(event, handleUserInteraction, {
+                passive: true,
+            });
+        });
+
+        return () => {
+            events.forEach((event) => {
+                document.removeEventListener(event, handleUserInteraction);
+            });
+            if (interactionTimeout) {
+                clearTimeout(interactionTimeout);
+            }
+        };
+    }, [interactionTimeout]);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -132,67 +229,142 @@ const VillageHomePage = ({
         currentSection,
     ]);
 
-    // Enhanced audio management for each section
-    useEffect(() => {
-        const audioFiles = [
-            "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3",
-            "/audio/aggressive-phonk-phonk-2025-mix-239735.mp3",
-            "/audio/departure-cinematic-trailer-intro-music-139612.mp3",
-            "/audio/funny-tango-dramatic-music-for-vlog-video-1-minute-150834.mp3",
-            "/audio/whispers-of-the-trenches-ww-i-song-350973.mp3",
-            "/audio/sport-news-formula-1-vibes-265165.mp3",
-        ];
+    // Enhanced audio switching with fade effects
+    // useEffect(() => {
+    //     if (!isPlaying) {
+    //         // Fade out all audio when music is turned off
+    //         audioManager.current.forEach((audioData, index) => {
+    //             if (audioData.isPlaying) {
+    //                 fadeOut(index);
+    //             }
+    //         });
+    //         return;
+    //     }
 
-        // Initialize audio refs
-        audioRefs.current = audioFiles.map((src) => {
-            const audio = new Audio(src);
-            audio.volume = 0.3;
-            audio.loop = true;
-            return audio;
-        });
+    //     // Switch to current section's audio
+    //     audioManager.current.forEach((audioData, index) => {
+    //         if (index === currentSection) {
+    //             if (!audioData.isPlaying) {
+    //                 fadeIn(index);
+    //             }
+    //         } else {
+    //             if (audioData.isPlaying) {
+    //                 fadeOut(index);
+    //             }
+    //         }
+    //     });
+    // }, [currentSection, isPlaying]);
 
-        return () => {
-            audioRefs.current.forEach((audio) => {
-                audio.pause();
-                audio.currentTime = 0;
-            });
-        };
-    }, []);
+    // Fade in function
+    const fadeIn = (sectionIndex) => {
+        const audioData = audioManager.current.get(sectionIndex);
+        if (!audioData) return;
 
-    // Switch music based on current section
+        const { audio, config } = audioData;
+
+        // Clear any existing fade timeout
+        if (fadeTimeouts.current.has(sectionIndex)) {
+            clearTimeout(fadeTimeouts.current.get(sectionIndex));
+        }
+
+        audio.currentTime = 0;
+        audio.volume = 0;
+        audioData.isPlaying = true;
+
+        audio.play().catch(console.log);
+
+        if (config.fadeIn) {
+            const fadeStep = audioData.targetVolume / 20; // 20 steps for smooth fade
+            const fadeInterval = 100; // 100ms per step
+
+            const fade = () => {
+                if (audio.volume < audioData.targetVolume - fadeStep) {
+                    audio.volume = Math.min(
+                        audio.volume + fadeStep,
+                        audioData.targetVolume
+                    );
+                    const timeout = setTimeout(fade, fadeInterval);
+                    fadeTimeouts.current.set(sectionIndex, timeout);
+                } else {
+                    audio.volume = audioData.targetVolume;
+                }
+            };
+            fade();
+        } else {
+            audio.volume = audioData.targetVolume;
+        }
+    };
+
+    // Fade out function
+    const fadeOut = (sectionIndex) => {
+        const audioData = audioManager.current.get(sectionIndex);
+        if (!audioData) return;
+
+        const { audio, config } = audioData;
+
+        // Clear any existing fade timeout
+        if (fadeTimeouts.current.has(sectionIndex)) {
+            clearTimeout(fadeTimeouts.current.get(sectionIndex));
+        }
+
+        if (config.fadeOut && audio.volume > 0) {
+            const fadeStep = audio.volume / 20; // 20 steps for smooth fade
+            const fadeInterval = 50; // 50ms per step for faster fade out
+
+            const fade = () => {
+                if (audio.volume > fadeStep) {
+                    audio.volume = Math.max(audio.volume - fadeStep, 0);
+                    const timeout = setTimeout(fade, fadeInterval);
+                    fadeTimeouts.current.set(sectionIndex, timeout);
+                } else {
+                    audio.volume = 0;
+                    audio.pause();
+                    audioData.isPlaying = false;
+                }
+            };
+            fade();
+        } else {
+            audio.volume = 0;
+            audio.pause();
+            audioData.isPlaying = false;
+        }
+    };
+
     useEffect(() => {
         if (!isPlaying) {
-            // Stop all audio when music is turned off
-            audioRefs.current.forEach((audio) => {
-                audio.pause();
-            });
+            // Fade out the single audio when music is turned off
+            const audioData = audioManager.current.get(0);
+            if (audioData && audioData.isPlaying) {
+                fadeOut(0);
+            }
             return;
         }
 
-        // Play the audio for the current section and pause others
-        audioRefs.current.forEach((audio, index) => {
-            if (index === currentSection) {
-                audio.play().catch(console.log);
-            } else {
-                audio.pause();
-            }
-        });
-    }, [currentSection, isPlaying]);
+        // Play the single audio if not already playing
+        const audioData = audioManager.current.get(0);
+        if (audioData && !audioData.isPlaying) {
+            fadeIn(0);
+        }
+    }, [isPlaying, fadeIn, fadeOut]); // Remove currentSection from dependencies
 
-    // Fixed toggle music function
+    // Enhanced toggle music function
     const toggleMusic = () => {
         setIsPlaying((prev) => {
             const newState = !prev;
 
             if (!newState) {
-                // If turning off, pause all audio
-                audioRefs.current.forEach((audio) => {
-                    audio.pause();
+                // Fade out all audio when turning off
+                audioManager.current.forEach((audioData, index) => {
+                    if (audioData.isPlaying) {
+                        fadeOut(index);
+                    }
                 });
             } else {
-                // If turning on, play the current section's audio
-                if (audioRefs.current[currentSection]) {
-                    audioRefs.current[currentSection].play().catch(console.log);
+                // Fade in current section's audio when turning on
+                const currentAudioData =
+                    audioManager.current.get(currentSection);
+                if (currentAudioData && !currentAudioData.isPlaying) {
+                    fadeIn(currentSection);
                 }
             }
 
@@ -204,167 +376,62 @@ const VillageHomePage = ({
         <MainLayout title={`Welcome to ${village?.name}`}>
             <Head title={`${village?.name} - Smart Village`} />
 
+            {/* Video Background */}
+            <div className="fixed inset-0 z-0">
+                <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="w-full h-full object-cover"
+                >
+                    <source src="/video/videobackground.mp4" type="video/mp4" />
+                </video>
+                {/* Base overlay */}
+                <div className="absolute inset-0 bg-black/20" />
+            </div>
+
+            {/* SMOOTH COLOR OVERLAY - This creates the seamless transitions */}
+            <motion.div
+                className="fixed inset-0 z-5 pointer-events-none"
+                style={{
+                    background: useTransform(
+                        scrollY,
+                        [0, 800, 1600, 2400, 3200, 4000, 4800],
+                        [
+                            "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.2))", // Hero
+                            "linear-gradient(to bottom, rgba(34,197,94,0.4), rgba(34,197,94,0.6))", // Tourism - green
+                            "linear-gradient(to bottom, rgba(245,158,11,0.4), rgba(234,88,12,0.6))", // SME - amber to orange
+                            "linear-gradient(to bottom, rgba(79,70,229,0.4), rgba(29,78,216,0.6))", // Products - indigo to blue
+                            "linear-gradient(to bottom, rgba(37,99,235,0.4), rgba(126,34,206,0.6))", // Articles - blue to purple
+                            "linear-gradient(to bottom, rgba(126,34,206,0.4), rgba(219,39,119,0.6))", // Gallery - purple to pink
+                            "linear-gradient(to bottom, rgba(219,39,119,0.3), rgba(0,0,0,0.4))", // End fade
+                        ]
+                    ),
+                }}
+            />
+
             {/* Music Control */}
             <motion.button
                 onClick={toggleMusic}
-                className="fixed top-20 right-6 z-50 bg-black/20 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/30 transition-colors"
+                className="fixed top-20 right-6 z-[60] bg-black/20 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/30 transition-colors"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
             >
                 {isPlaying ? "🔊" : "🔇"}
             </motion.button>
 
-            {/* Hero Section */}
+            {/* Hero Section - CLEANED UP */}
             <section
                 ref={heroRef}
-                className="relative h-screen overflow-hidden"
+                className="relative h-screen overflow-hidden z-10"
             >
-                {/* Animated Sky Background */}
-                <motion.div
-                    style={{ y: mountainsY }}
-                    className="absolute inset-0"
-                >
-                    <div className="absolute inset-0 bg-gradient-to-b from-blue-300 via-blue-400 to-green-300">
-                        {/* Floating clouds */}
-                        <motion.div
-                            animate={{ x: [-100, window.innerWidth + 100] }}
-                            transition={{
-                                duration: 30,
-                                repeat: Infinity,
-                                ease: "linear",
-                            }}
-                            className="absolute top-20 w-32 h-16 bg-white/20 rounded-full blur-sm"
-                        />
-                        <motion.div
-                            animate={{ x: [-150, window.innerWidth + 150] }}
-                            transition={{
-                                duration: 45,
-                                repeat: Infinity,
-                                ease: "linear",
-                                delay: 10,
-                            }}
-                            className="absolute top-32 w-24 h-12 bg-white/15 rounded-full blur-sm"
-                        />
-                    </div>
-                </motion.div>
-
-                {/* Enhanced Mountain Layers */}
-                <motion.div
-                    style={{ y: mountainsY }}
-                    className="absolute inset-0 opacity-40"
-                >
-                    <svg viewBox="0 0 1200 600" className="w-full h-full">
-                        {/* Back mountains */}
-                        <motion.path
-                            initial={{ pathLength: 0 }}
-                            animate={{ pathLength: 1 }}
-                            transition={{ duration: 3, delay: 0.5 }}
-                            d="M0,600 L0,280 Q200,180 400,220 Q600,160 800,200 Q1000,140 1200,180 L1200,600 Z"
-                            fill="rgba(45, 80, 22, 0.8)"
-                        />
-                        {/* Middle mountains */}
-                        <motion.path
-                            initial={{ pathLength: 0 }}
-                            animate={{ pathLength: 1 }}
-                            transition={{ duration: 3, delay: 1 }}
-                            d="M0,600 L0,350 Q300,280 600,300 Q900,250 1200,280 L1200,600 Z"
-                            fill="rgba(61, 107, 31, 0.9)"
-                        />
-                        {/* Front mountains */}
-                        <motion.path
-                            initial={{ pathLength: 0 }}
-                            animate={{ pathLength: 1 }}
-                            transition={{ duration: 3, delay: 1.5 }}
-                            d="M0,600 L0,400 Q400,350 800,380 T1200,360 L1200,600 Z"
-                            fill="rgba(77, 124, 47, 1)"
-                        />
-                    </svg>
-                </motion.div>
-
-                {/* Trees - Left */}
-                <motion.div
-                    style={{ y: treesY }}
-                    className="absolute left-0 bottom-0 w-1/4 h-full"
-                >
-                    <svg viewBox="0 0 300 600" className="w-full h-full">
-                        <rect
-                            x="140"
-                            y="450"
-                            width="20"
-                            height="150"
-                            fill="#4a5d23"
-                        />
-                        <circle cx="150" cy="420" r="80" fill="#5a7c30" />
-                        <circle cx="120" cy="380" r="60" fill="#6a8c40" />
-                        <circle cx="180" cy="390" r="65" fill="#5a7c30" />
-
-                        <rect
-                            x="80"
-                            y="480"
-                            width="15"
-                            height="120"
-                            fill="#4a5d23"
-                        />
-                        <circle cx="87" cy="460" r="50" fill="#6a8c40" />
-                        <circle cx="70" cy="430" r="35" fill="#7a9c50" />
-
-                        <rect
-                            x="220"
-                            y="470"
-                            width="18"
-                            height="130"
-                            fill="#4a5d23"
-                        />
-                        <circle cx="229" cy="450" r="60" fill="#5a7c30" />
-                        <circle cx="210" cy="420" r="40" fill="#6a8c40" />
-                        <circle cx="250" cy="430" r="45" fill="#7a9c50" />
-                    </svg>
-                </motion.div>
-
-                {/* Trees - Right */}
-                <motion.div
-                    style={{ y: treesY }}
-                    className="absolute right-0 bottom-0 w-1/4 h-full"
-                >
-                    <svg viewBox="0 0 300 600" className="w-full h-full">
-                        <rect
-                            x="140"
-                            y="460"
-                            width="18"
-                            height="140"
-                            fill="#4a5d23"
-                        />
-                        <circle cx="149" cy="440" r="70" fill="#5a7c30" />
-                        <circle cx="125" cy="410" r="50" fill="#6a8c40" />
-                        <circle cx="170" cy="420" r="55" fill="#7a9c50" />
-
-                        <rect
-                            x="50"
-                            y="490"
-                            width="16"
-                            height="110"
-                            fill="#4a5d23"
-                        />
-                        <circle cx="58" cy="475" r="45" fill="#6a8c40" />
-                        <circle cx="40" cy="450" r="30" fill="#7a9c50" />
-
-                        <rect
-                            x="240"
-                            y="480"
-                            width="20"
-                            height="120"
-                            fill="#4a5d23"
-                        />
-                        <circle cx="250" cy="460" r="65" fill="#5a7c30" />
-                        <circle cx="225" cy="435" r="45" fill="#6a8c40" />
-                        <circle cx="270" cy="445" r="40" fill="#7a9c50" />
-                    </svg>
-                </motion.div>
+                <div className="absolute inset-0 backdrop-blur-[1px]" />
 
                 {/* Hero Content */}
                 <motion.div
                     style={{ y: heroY }}
-                    className="absolute inset-0 flex items-center justify-center text-center z-10"
+                    className="absolute inset-0 flex items-center justify-center text-center z-20"
                 >
                     <div className="max-w-4xl px-6">
                         <motion.h1
@@ -421,29 +488,37 @@ const VillageHomePage = ({
                 </motion.div>
             </section>
 
-            {/* Tourism Section */}
+            {/* Tourism Section - UPDATED */}
             <section
                 ref={tourismRef}
-                className="min-h-screen bg-gradient-to-b from-green-500 to-green-700 relative overflow-hidden py-20"
+                className="min-h-screen relative overflow-hidden py-20 z-10"
+                onMouseEnter={() => {
+                    setIsTourismInteracting(true);
+                    handleUserInteraction();
+                }}
+                onMouseLeave={() => setIsTourismInteracting(false)}
+                onTouchStart={handleUserInteraction}
+                onWheel={handleUserInteraction}
             >
-                {/* Parallax elements */}
-                <motion.div
-                    style={{ y: useTransform(scrollY, [800, 1600], [0, -200]) }}
-                    className="absolute inset-0 opacity-10"
-                >
-                    <div className="absolute top-20 left-10 w-20 h-20 bg-white/20 rounded-full" />
-                    <div className="absolute bottom-40 right-20 w-32 h-32 bg-white/15 rounded-full" />
-                </motion.div>
+                <div className="absolute inset-0 backdrop-blur-sm" />
 
                 <div className="container mx-auto px-6 h-full relative z-10">
-                    <motion.h2
+                    <motion.div
                         initial={{ opacity: 0, y: 50 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
-                        className="text-5xl font-bold text-white text-center mb-16"
+                        className="text-center mb-16"
                     >
-                        🏞️ Tourism Destinations
-                    </motion.h2>
+                        <h2 className="text-5xl font-bold text-white mb-4">
+                            Tourism Destinations
+                        </h2>
+                        <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: "10rem" }}
+                            transition={{ delay: 0.5, duration: 1 }}
+                            className="h-1 bg-gradient-to-r from-indigo-400 to-blue-400 mx-auto"
+                        />
+                    </motion.div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
                         {/* Interactive Map - Left */}
@@ -452,47 +527,128 @@ const VillageHomePage = ({
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8 }}
                             className="bg-white/10 backdrop-blur-md rounded-2xl p-6 flex items-center justify-center"
+                            onMouseDown={handleUserInteraction}
+                            onTouchStart={handleUserInteraction}
+                            onWheel={handleUserInteraction}
                         >
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={selectedTourismPlace}
                                     initial={{ scale: 0.8, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    exit={{ scale: 0.8, opacity: 0 }}
-                                    transition={{ duration: 0.5 }}
-                                    className="w-full h-80 bg-gradient-to-br from-green-400/30 to-blue-400/30 rounded-xl flex items-center justify-center relative overflow-hidden"
+                                    animate={{
+                                        scale: 1,
+                                        opacity: 1,
+                                        transition:
+                                            isTourismInteracting ||
+                                            isUserInteracting
+                                                ? { duration: 0 }
+                                                : { duration: 0.5 },
+                                    }}
+                                    exit={{
+                                        scale: 0.8,
+                                        opacity: 0,
+                                        transition:
+                                            isTourismInteracting ||
+                                            isUserInteracting
+                                                ? { duration: 0 }
+                                                : { duration: 0.5 },
+                                    }}
+                                    className="w-full h-80 bg-gradient-to-br from-green-400/30 to-blue-400/30 rounded-xl relative overflow-hidden"
+                                    onMouseDown={handleUserInteraction}
+                                    onTouchStart={handleUserInteraction}
+                                    onWheel={handleUserInteraction}
                                 >
-                                    {/* Animated map elements */}
-                                    <motion.div
-                                        animate={{ rotate: 360 }}
-                                        transition={{
-                                            duration: 20,
-                                            repeat: Infinity,
-                                            ease: "linear",
-                                        }}
-                                        className="absolute top-4 right-4 w-8 h-8 border-2 border-white/50 rounded-full"
-                                    />
+                                    {/* Real Map Component - No API Key Required */}
+                                    {tourismPlaces[selectedTourismPlace]
+                                        ?.latitude &&
+                                    tourismPlaces[selectedTourismPlace]
+                                        ?.longitude ? (
+                                        <div className="w-full h-full relative">
+                                            {/* Google Maps embed - ACTIVE */}
+                                            <iframe
+                                                src={`https://maps.google.com/maps?q=${tourismPlaces[selectedTourismPlace].latitude},${tourismPlaces[selectedTourismPlace].longitude}&z=15&output=embed`}
+                                                width="100%"
+                                                height="100%"
+                                                style={{ border: 0 }}
+                                                className="rounded-xl"
+                                                onLoad={(e) => {
+                                                    try {
+                                                        const iframe = e.target;
+                                                        iframe.onmousedown =
+                                                            handleUserInteraction;
+                                                        iframe.ontouchstart =
+                                                            handleUserInteraction;
+                                                    } catch (error) {
+                                                        console.log(
+                                                            "Cannot add iframe interaction listeners due to CORS"
+                                                        );
+                                                    }
+                                                }}
+                                            />
 
-                                    <div className="text-center text-white">
-                                        <motion.div
-                                            animate={{ y: [0, -10, 0] }}
-                                            transition={{
-                                                duration: 2,
-                                                repeat: Infinity,
-                                            }}
-                                            className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4"
-                                        >
-                                            📍
-                                        </motion.div>
-                                        <h3 className="text-xl font-semibold mb-2">
-                                            {tourismPlaces[selectedTourismPlace]
-                                                ?.name ||
-                                                "Beautiful Destination"}
-                                        </h3>
-                                        <p className="text-sm opacity-75">
-                                            Interactive location view
-                                        </p>
-                                    </div>
+                                            {/* Overlay with place info */}
+                                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 rounded-b-xl">
+                                                <h3 className="text-white font-semibold text-lg">
+                                                    {tourismPlaces[
+                                                        selectedTourismPlace
+                                                    ]?.name ||
+                                                        "Beautiful Destination"}
+                                                </h3>
+                                                <p className="text-white/80 text-sm">
+                                                    📍{" "}
+                                                    {tourismPlaces[
+                                                        selectedTourismPlace
+                                                    ]?.address ||
+                                                        "Village Location"}
+                                                </p>
+                                                <a
+                                                    href={`https://www.google.com/maps/search/?api=1&query=${tourismPlaces[selectedTourismPlace].latitude},${tourismPlaces[selectedTourismPlace].longitude}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-xs hover:bg-white/30 transition-colors"
+                                                    onClick={
+                                                        handleUserInteraction
+                                                    }
+                                                >
+                                                    Open in Maps →
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        // Fallback for places without coordinates
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <motion.div
+                                                animate={{ rotate: 360 }}
+                                                transition={{
+                                                    duration: 20,
+                                                    repeat: Infinity,
+                                                    ease: "linear",
+                                                }}
+                                                className="absolute top-4 right-4 w-8 h-8 border-2 border-white/50 rounded-full"
+                                            />
+                                            <div className="text-center text-white">
+                                                <motion.div
+                                                    animate={{ y: [0, -10, 0] }}
+                                                    transition={{
+                                                        duration: 2,
+                                                        repeat: Infinity,
+                                                    }}
+                                                    className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4"
+                                                >
+                                                    📍
+                                                </motion.div>
+                                                <h3 className="text-xl font-semibold mb-2">
+                                                    {tourismPlaces[
+                                                        selectedTourismPlace
+                                                    ]?.name ||
+                                                        "Beautiful Destination"}
+                                                </h3>
+                                                <p className="text-sm opacity-75">
+                                                    Interactive location view
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </motion.div>
                             </AnimatePresence>
                         </motion.div>
@@ -502,32 +658,73 @@ const VillageHomePage = ({
                             initial={{ opacity: 0, y: 50 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 0.2 }}
-                            className="flex flex-col justify-center"
+                            className="flex flex-col justify-center max-h-96"
+                            onScroll={handleUserInteraction}
+                            onWheel={handleUserInteraction}
+                            onTouchStart={handleUserInteraction}
+                            onTouchMove={handleUserInteraction}
                         >
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={selectedTourismPlace}
                                     initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    transition={{ duration: 0.5 }}
-                                    className="text-white"
+                                    animate={{
+                                        opacity: 1,
+                                        x: 0,
+                                        transition:
+                                            isTourismInteracting ||
+                                            isUserInteracting
+                                                ? { duration: 0 }
+                                                : { duration: 0.5 },
+                                    }}
+                                    exit={{
+                                        opacity: 0,
+                                        x: -20,
+                                        transition:
+                                            isTourismInteracting ||
+                                            isUserInteracting
+                                                ? { duration: 0 }
+                                                : { duration: 0.5 },
+                                    }}
+                                    className="text-white h-full overflow-y-auto"
+                                    onScroll={handleUserInteraction}
+                                    onWheel={handleUserInteraction}
+                                    onMouseDown={handleUserInteraction}
+                                    onTouchStart={handleUserInteraction}
                                 >
                                     <h3 className="text-3xl font-bold mb-4">
                                         {tourismPlaces[selectedTourismPlace]
                                             ?.name || "Beautiful Destination"}
                                     </h3>
-                                    <p className="text-lg opacity-90 mb-6 leading-relaxed">
-                                        {tourismPlaces[selectedTourismPlace]
-                                            ?.description ||
-                                            "Explore the natural beauty and cultural richness of this amazing destination."}
-                                    </p>
+                                    <div
+                                        className="text-lg opacity-90 mb-6 leading-relaxed max-h-32 overflow-y-auto"
+                                        onScroll={handleUserInteraction}
+                                        onWheel={handleUserInteraction}
+                                    >
+                                        <p className="line-clamp-4">
+                                            {tourismPlaces[selectedTourismPlace]
+                                                ?.description
+                                                ? tourismPlaces[
+                                                      selectedTourismPlace
+                                                  ].description.length > 200
+                                                    ? tourismPlaces[
+                                                          selectedTourismPlace
+                                                      ].description.substring(
+                                                          0,
+                                                          200
+                                                      ) + "..."
+                                                    : tourismPlaces[
+                                                          selectedTourismPlace
+                                                      ].description
+                                                : "Explore the natural beauty and cultural richness of this amazing destination."}
+                                        </p>
+                                    </div>
                                     <div className="space-y-2">
                                         <div className="flex items-center">
                                             <span className="text-green-200">
                                                 📍
                                             </span>
-                                            <span className="ml-2">
+                                            <span className="ml-2 text-sm">
                                                 {tourismPlaces[
                                                     selectedTourismPlace
                                                 ]?.address ||
@@ -540,7 +737,7 @@ const VillageHomePage = ({
                                                 <span className="text-green-200">
                                                     📞
                                                 </span>
-                                                <span className="ml-2">
+                                                <span className="ml-2 text-sm">
                                                     {
                                                         tourismPlaces[
                                                             selectedTourismPlace
@@ -549,6 +746,29 @@ const VillageHomePage = ({
                                                 </span>
                                             </div>
                                         )}
+                                        {tourismPlaces[selectedTourismPlace]
+                                            ?.latitude &&
+                                            tourismPlaces[selectedTourismPlace]
+                                                ?.longitude && (
+                                                <div className="flex items-center">
+                                                    <span className="text-green-200">
+                                                        🗺️
+                                                    </span>
+                                                    <span className="ml-2 text-sm">
+                                                        {
+                                                            tourismPlaces[
+                                                                selectedTourismPlace
+                                                            ].latitude
+                                                        }
+                                                        ,{" "}
+                                                        {
+                                                            tourismPlaces[
+                                                                selectedTourismPlace
+                                                            ].longitude
+                                                        }
+                                                    </span>
+                                                </div>
+                                            )}
                                     </div>
                                 </motion.div>
                             </AnimatePresence>
@@ -559,26 +779,38 @@ const VillageHomePage = ({
                             initial={{ opacity: 0, x: 50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, delay: 0.4 }}
-                            className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20"
+                            className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 pr-2"
+                            onScroll={handleUserInteraction}
+                            onWheel={handleUserInteraction}
+                            onTouchStart={handleUserInteraction}
+                            onTouchMove={handleUserInteraction}
                         >
                             {tourismPlaces.slice(0, 6).map((place, index) => (
                                 <motion.div
                                     key={place.id}
-                                    onClick={() =>
-                                        setSelectedTourismPlace(index)
-                                    }
+                                    onClick={() => {
+                                        setSelectedTourismPlace(index);
+                                        handleUserInteraction();
+                                    }}
                                     layoutId={`tourism-${place.id}`}
-                                    whileHover={{ scale: 1.02, x: 10 }}
+                                    whileHover={{
+                                        scale: 1.02,
+                                        boxShadow:
+                                            "0 10px 30px rgba(255,255,255,0.1)",
+                                    }}
                                     whileTap={{ scale: 0.98 }}
                                     className={`p-4 rounded-xl cursor-pointer transition-all duration-300 ${
                                         selectedTourismPlace === index
                                             ? "bg-white/20 backdrop-blur-md border border-white/30 shadow-lg"
                                             : "bg-white/10 backdrop-blur-sm hover:bg-white/15"
                                     }`}
+                                    style={{ overflow: "visible" }}
+                                    onMouseDown={handleUserInteraction}
+                                    onTouchStart={handleUserInteraction}
                                 >
                                     <div className="flex items-center space-x-4">
                                         <motion.div
-                                            className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center relative overflow-hidden"
+                                            className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center relative overflow-hidden flex-shrink-0"
                                             whileHover={{ rotate: 5 }}
                                         >
                                             {place.image_url ? (
@@ -600,11 +832,11 @@ const VillageHomePage = ({
                                             )}
                                         </motion.div>
 
-                                        <div className="flex-1 text-white">
-                                            <h4 className="font-semibold text-lg">
+                                        <div className="flex-1 text-white min-w-0">
+                                            <h4 className="font-semibold text-lg truncate">
                                                 {place.name}
                                             </h4>
-                                            <p className="text-sm opacity-75 line-clamp-2">
+                                            <p className="text-sm opacity-75 truncate">
                                                 {place.category?.name}
                                             </p>
                                         </div>
@@ -622,7 +854,7 @@ const VillageHomePage = ({
                                                         ? 1
                                                         : 0.3,
                                             }}
-                                            className="w-3 h-3 rounded-full bg-white"
+                                            className="w-3 h-3 rounded-full bg-white flex-shrink-0"
                                         />
                                     </div>
                                 </motion.div>
@@ -632,32 +864,37 @@ const VillageHomePage = ({
                 </div>
             </section>
 
-            {/* Enhanced SME Section - Reversed Layout */}
+            {/* SME Section - UPDATED */}
             <section
                 ref={smeRef}
-                className="min-h-screen bg-gradient-to-b from-amber-500 to-orange-600 relative overflow-hidden py-20"
+                className="min-h-screen relative overflow-hidden py-20 z-10"
+                onMouseEnter={() => {
+                    setIsSMEInteracting(true);
+                    handleUserInteraction();
+                }}
+                onMouseLeave={() => setIsSMEInteracting(false)}
+                onTouchStart={handleUserInteraction}
+                onWheel={handleUserInteraction}
             >
-                {/* Parallax business elements */}
-                <motion.div
-                    style={{
-                        y: useTransform(scrollY, [1600, 2400], [0, -150]),
-                    }}
-                    className="absolute inset-0 opacity-10"
-                >
-                    <div className="absolute top-32 right-16 w-24 h-24 border-2 border-white/30 rotate-45" />
-                    <div className="absolute bottom-20 left-20 w-16 h-16 bg-white/20 rounded-full" />
-                    <div className="absolute top-1/2 left-1/3 w-32 h-32 border border-white/20 rounded-lg rotate-12" />
-                </motion.div>
+                <div className="absolute inset-0 backdrop-blur-sm" />
 
                 <div className="container mx-auto px-6 h-full relative z-10">
-                    <motion.h2
+                    <motion.div
                         initial={{ opacity: 0, y: 50 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
-                        className="text-5xl font-bold text-white text-center mb-16"
+                        className="text-center mb-16"
                     >
-                        🏪 Local Businesses
-                    </motion.h2>
+                        <h2 className="text-5xl font-bold text-white mb-4">
+                            Local Businesses
+                        </h2>
+                        <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: "10rem" }}
+                            transition={{ delay: 0.5, duration: 1 }}
+                            className="h-1 bg-gradient-to-r from-indigo-400 to-blue-400 mx-auto"
+                        />
+                    </motion.div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
                         {/* Enhanced SME Places List - LEFT */}
@@ -665,20 +902,34 @@ const VillageHomePage = ({
                             initial={{ opacity: 0, x: -50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8 }}
-                            className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20"
+                            className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 pr-2"
+                            onScroll={handleUserInteraction}
+                            onWheel={handleUserInteraction}
+                            onTouchStart={handleUserInteraction}
+                            onTouchMove={handleUserInteraction}
                         >
                             {smePlaces.slice(0, 6).map((place, index) => (
                                 <motion.div
                                     key={place.id}
-                                    onClick={() => setSelectedSME(index)}
+                                    onClick={() => {
+                                        setSelectedSME(index);
+                                        handleUserInteraction();
+                                    }}
                                     layoutId={`sme-${place.id}`}
-                                    whileHover={{ scale: 1.02, x: -10 }}
+                                    whileHover={{
+                                        scale: 1.02,
+                                        boxShadow:
+                                            "0 10px 30px rgba(255,255,255,0.1)",
+                                    }}
                                     whileTap={{ scale: 0.98 }}
                                     className={`p-4 rounded-xl cursor-pointer transition-all duration-300 ${
                                         selectedSME === index
                                             ? "bg-white/20 backdrop-blur-md border border-white/30 shadow-lg"
                                             : "bg-white/10 backdrop-blur-sm hover:bg-white/15"
                                     }`}
+                                    style={{ overflow: "visible" }}
+                                    onMouseDown={handleUserInteraction}
+                                    onTouchStart={handleUserInteraction}
                                 >
                                     <div className="flex items-center space-x-4">
                                         <motion.div
@@ -692,20 +943,20 @@ const VillageHomePage = ({
                                                         ? 1
                                                         : 0.3,
                                             }}
-                                            className="w-3 h-3 rounded-full bg-white"
+                                            className="w-3 h-3 rounded-full bg-white flex-shrink-0"
                                         />
 
-                                        <div className="flex-1 text-white">
-                                            <h4 className="font-semibold text-lg">
+                                        <div className="flex-1 text-white min-w-0">
+                                            <h4 className="font-semibold text-lg truncate">
                                                 {place.name}
                                             </h4>
-                                            <p className="text-sm opacity-75 line-clamp-2">
+                                            <p className="text-sm opacity-75 truncate">
                                                 {place.category?.name}
                                             </p>
                                         </div>
 
                                         <motion.div
-                                            className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center relative overflow-hidden"
+                                            className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center relative overflow-hidden flex-shrink-0"
                                             whileHover={{ rotate: -5 }}
                                         >
                                             {place.image_url ? (
@@ -731,12 +982,16 @@ const VillageHomePage = ({
                             ))}
                         </motion.div>
 
-                        {/* Description - CENTER (same as before but enhanced) */}
+                        {/* Description - CENTER */}
                         <motion.div
                             initial={{ opacity: 0, y: 50 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 0.2 }}
-                            className="flex flex-col justify-center"
+                            className="flex flex-col justify-center max-h-96"
+                            onScroll={handleUserInteraction}
+                            onWheel={handleUserInteraction}
+                            onTouchStart={handleUserInteraction}
+                            onTouchMove={handleUserInteraction}
                         >
                             <AnimatePresence mode="wait">
                                 <motion.div
@@ -746,13 +1001,37 @@ const VillageHomePage = ({
                                         x: -20,
                                         rotateY: 45,
                                     }}
-                                    animate={{ opacity: 1, x: 0, rotateY: 0 }}
-                                    exit={{ opacity: 0, x: 20, rotateY: -45 }}
-                                    transition={{
-                                        duration: 0.6,
-                                        type: "spring",
+                                    animate={{
+                                        opacity: 1,
+                                        x: 0,
+                                        rotateY: 0,
+                                        transition:
+                                            isSMEInteracting ||
+                                            isUserInteracting
+                                                ? { duration: 0 }
+                                                : {
+                                                      duration: 0.6,
+                                                      type: "spring",
+                                                  },
                                     }}
-                                    className="text-white bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10"
+                                    exit={{
+                                        opacity: 0,
+                                        x: 20,
+                                        rotateY: -45,
+                                        transition:
+                                            isSMEInteracting ||
+                                            isUserInteracting
+                                                ? { duration: 0 }
+                                                : {
+                                                      duration: 0.6,
+                                                      type: "spring",
+                                                  },
+                                    }}
+                                    className="text-white bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10 h-full overflow-y-auto"
+                                    onScroll={handleUserInteraction}
+                                    onWheel={handleUserInteraction}
+                                    onMouseDown={handleUserInteraction}
+                                    onTouchStart={handleUserInteraction}
                                 >
                                     <motion.h3
                                         className="text-3xl font-bold mb-4"
@@ -764,15 +1043,29 @@ const VillageHomePage = ({
                                             "Local Business"}
                                     </motion.h3>
 
-                                    <motion.p
-                                        className="text-lg opacity-90 mb-6 leading-relaxed"
+                                    <motion.div
+                                        className="text-lg opacity-90 mb-6 leading-relaxed max-h-32 overflow-y-auto"
                                         initial={{ y: 20 }}
                                         animate={{ y: 0 }}
                                         transition={{ delay: 0.3 }}
+                                        onScroll={handleUserInteraction}
+                                        onWheel={handleUserInteraction}
                                     >
-                                        {smePlaces[selectedSME]?.description ||
-                                            "Supporting local economy through quality products and services."}
-                                    </motion.p>
+                                        <p className="line-clamp-4">
+                                            {smePlaces[selectedSME]?.description
+                                                ? smePlaces[selectedSME]
+                                                      .description.length > 200
+                                                    ? smePlaces[
+                                                          selectedSME
+                                                      ].description.substring(
+                                                          0,
+                                                          200
+                                                      ) + "..."
+                                                    : smePlaces[selectedSME]
+                                                          .description
+                                                : "Supporting local economy through quality products and services."}
+                                        </p>
+                                    </motion.div>
 
                                     <motion.div
                                         className="space-y-3"
@@ -806,10 +1099,34 @@ const VillageHomePage = ({
                                             </div>
                                         )}
 
+                                        {smePlaces[selectedSME]?.latitude &&
+                                            smePlaces[selectedSME]
+                                                ?.longitude && (
+                                                <div className="flex items-center p-3 bg-orange-500/20 rounded-lg">
+                                                    <span className="text-orange-200 text-xl mr-3">
+                                                        🗺️
+                                                    </span>
+                                                    <span className="text-sm">
+                                                        {
+                                                            smePlaces[
+                                                                selectedSME
+                                                            ].latitude
+                                                        }
+                                                        ,{" "}
+                                                        {
+                                                            smePlaces[
+                                                                selectedSME
+                                                            ].longitude
+                                                        }
+                                                    </span>
+                                                </div>
+                                            )}
+
                                         <motion.button
                                             whileHover={{ scale: 1.05, y: -2 }}
                                             whileTap={{ scale: 0.95 }}
                                             className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                                            onClick={handleUserInteraction}
                                         >
                                             Visit Business →
                                         </motion.button>
@@ -824,6 +1141,9 @@ const VillageHomePage = ({
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, delay: 0.4 }}
                             className="bg-white/10 backdrop-blur-md rounded-2xl p-6 flex items-center justify-center"
+                            onMouseDown={handleUserInteraction}
+                            onTouchStart={handleUserInteraction}
+                            onWheel={handleUserInteraction}
                         >
                             <AnimatePresence mode="wait">
                                 <motion.div
@@ -837,77 +1157,148 @@ const VillageHomePage = ({
                                         scale: 1,
                                         opacity: 1,
                                         rotateY: 0,
+                                        transition:
+                                            isSMEInteracting ||
+                                            isUserInteracting
+                                                ? { duration: 0 }
+                                                : {
+                                                      duration: 0.6,
+                                                      type: "spring",
+                                                  },
                                     }}
                                     exit={{
                                         scale: 0.8,
                                         opacity: 0,
                                         rotateY: 45,
+                                        transition:
+                                            isSMEInteracting ||
+                                            isUserInteracting
+                                                ? { duration: 0 }
+                                                : {
+                                                      duration: 0.6,
+                                                      type: "spring",
+                                                  },
                                     }}
-                                    transition={{
-                                        duration: 0.6,
-                                        type: "spring",
-                                    }}
-                                    className="w-full h-80 bg-gradient-to-br from-orange-400/30 to-red-400/30 rounded-xl flex items-center justify-center relative overflow-hidden"
+                                    className="w-full h-80 bg-gradient-to-br from-orange-400/30 to-red-400/30 rounded-xl relative overflow-hidden"
+                                    onMouseDown={handleUserInteraction}
+                                    onTouchStart={handleUserInteraction}
+                                    onWheel={handleUserInteraction}
                                 >
-                                    {/* Animated business elements */}
-                                    <motion.div
-                                        animate={{
-                                            rotate: [0, 10, -10, 0],
-                                            scale: [1, 1.1, 1],
-                                        }}
-                                        transition={{
-                                            duration: 4,
-                                            repeat: Infinity,
-                                        }}
-                                        className="absolute top-6 left-6 w-6 h-6 bg-white/30 rounded-sm"
-                                    />
+                                    {/* Real Map Component - No API Key Required */}
+                                    {smePlaces[selectedSME]?.latitude &&
+                                    smePlaces[selectedSME]?.longitude ? (
+                                        <div className="w-full h-full relative">
+                                            {/* Google Maps embed - ACTIVE */}
+                                            <iframe
+                                                src={`https://maps.google.com/maps?q=${smePlaces[selectedSME].latitude},${smePlaces[selectedSME].longitude}&z=15&output=embed`}
+                                                width="100%"
+                                                height="100%"
+                                                style={{ border: 0 }}
+                                                className="rounded-xl"
+                                                onLoad={(e) => {
+                                                    try {
+                                                        const iframe = e.target;
+                                                        iframe.onmousedown =
+                                                            handleUserInteraction;
+                                                        iframe.ontouchstart =
+                                                            handleUserInteraction;
+                                                    } catch (error) {
+                                                        console.log(
+                                                            "Cannot add iframe interaction listeners due to CORS"
+                                                        );
+                                                    }
+                                                }}
+                                            />
 
-                                    <motion.div
-                                        animate={{
-                                            y: [0, -20, 0],
-                                            opacity: [0.5, 1, 0.5],
-                                        }}
-                                        transition={{
-                                            duration: 3,
-                                            repeat: Infinity,
-                                            delay: 1,
-                                        }}
-                                        className="absolute bottom-6 right-6 w-8 h-8 border-2 border-white/40 rounded-full"
-                                    />
+                                            {/* Overlay with place info */}
+                                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 rounded-b-xl">
+                                                <h3 className="text-white font-semibold text-lg">
+                                                    {smePlaces[selectedSME]
+                                                        ?.name ||
+                                                        "Business Location"}
+                                                </h3>
+                                                <p className="text-white/80 text-sm">
+                                                    📍{" "}
+                                                    {smePlaces[selectedSME]
+                                                        ?.address ||
+                                                        "Village Location"}
+                                                </p>
+                                                <a
+                                                    href={`https://www.google.com/maps/search/?api=1&query=${smePlaces[selectedSME].latitude},${smePlaces[selectedSME].longitude}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-xs hover:bg-white/30 transition-colors"
+                                                    onClick={
+                                                        handleUserInteraction
+                                                    }
+                                                >
+                                                    Open in Maps →
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        // Fallback for places without coordinates
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <motion.div
+                                                animate={{
+                                                    rotate: [0, 10, -10, 0],
+                                                    scale: [1, 1.1, 1],
+                                                }}
+                                                transition={{
+                                                    duration: 4,
+                                                    repeat: Infinity,
+                                                }}
+                                                className="absolute top-6 left-6 w-6 h-6 bg-white/30 rounded-sm"
+                                            />
 
-                                    <div className="text-center text-white">
-                                        <motion.div
-                                            animate={{
-                                                rotateY: [0, 360],
-                                                scale: [1, 1.2, 1],
-                                            }}
-                                            transition={{
-                                                duration: 3,
-                                                repeat: Infinity,
-                                            }}
-                                            className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center mx-auto mb-4"
-                                        >
-                                            🏪
-                                        </motion.div>
-                                        <h3 className="text-xl font-semibold mb-2">
-                                            {smePlaces[selectedSME]?.name ||
-                                                "Business Location"}
-                                        </h3>
-                                        <p className="text-sm opacity-75">
-                                            Interactive business view
-                                        </p>
+                                            <motion.div
+                                                animate={{
+                                                    y: [0, -20, 0],
+                                                    opacity: [0.5, 1, 0.5],
+                                                }}
+                                                transition={{
+                                                    duration: 3,
+                                                    repeat: Infinity,
+                                                    delay: 1,
+                                                }}
+                                                className="absolute bottom-6 right-6 w-8 h-8 border-2 border-white/40 rounded-full"
+                                            />
 
-                                        {/* Business category indicator */}
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: "60%" }}
-                                            transition={{
-                                                delay: 0.5,
-                                                duration: 1,
-                                            }}
-                                            className="h-1 bg-gradient-to-r from-orange-300 to-red-300 mx-auto mt-4 rounded-full"
-                                        />
-                                    </div>
+                                            <div className="text-center text-white">
+                                                <motion.div
+                                                    animate={{
+                                                        rotateY: [0, 360],
+                                                        scale: [1, 1.2, 1],
+                                                    }}
+                                                    transition={{
+                                                        duration: 3,
+                                                        repeat: Infinity,
+                                                    }}
+                                                    className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center mx-auto mb-4"
+                                                >
+                                                    🏪
+                                                </motion.div>
+                                                <h3 className="text-xl font-semibold mb-2">
+                                                    {smePlaces[selectedSME]
+                                                        ?.name ||
+                                                        "Business Location"}
+                                                </h3>
+                                                <p className="text-sm opacity-75">
+                                                    Interactive business view
+                                                </p>
+
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: "60%" }}
+                                                    transition={{
+                                                        delay: 0.5,
+                                                        duration: 1,
+                                                    }}
+                                                    className="h-1 bg-gradient-to-r from-orange-300 to-red-300 mx-auto mt-4 rounded-full"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </motion.div>
                             </AnimatePresence>
                         </motion.div>
@@ -915,27 +1306,15 @@ const VillageHomePage = ({
                 </div>
             </section>
 
-            {/* Products Section */}
+            {/* Products Section - CLEANED UP */}
             <section
                 ref={productsRef}
-                className="min-h-screen bg-gradient-to-b from-indigo-600 to-blue-700 py-20 relative overflow-hidden"
+                className="min-h-screen relative overflow-hidden py-20 z-10"
             >
-                {/* Parallax elements */}
-                <motion.div
-                    style={{
-                        y: useTransform(scrollY, [3200, 4000], [0, -100]),
-                        rotate: useTransform(scrollY, [3200, 4000], [0, 90]),
-                    }}
-                    className="absolute top-20 right-16 w-28 h-28 border border-white/20 rounded-xl"
-                />
-                <motion.div
-                    style={{
-                        y: useTransform(scrollY, [3200, 4000], [0, -80]),
-                    }}
-                    className="absolute bottom-40 left-20 w-24 h-24 bg-white/10 rounded-full"
-                />
+                <div className="absolute inset-0 backdrop-blur-sm" />
 
                 <div className="container mx-auto px-6 relative z-10">
+                    {/* Your existing products content here - just remove the style prop and transitions */}
                     <motion.div
                         initial={{ opacity: 0, y: 50 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -943,7 +1322,7 @@ const VillageHomePage = ({
                         className="text-center mb-16"
                     >
                         <h2 className="text-5xl font-bold text-white mb-4">
-                            🛍️ Local Products
+                            Local Products
                         </h2>
                         <motion.div
                             initial={{ width: 0 }}
@@ -952,7 +1331,6 @@ const VillageHomePage = ({
                             className="h-1 bg-gradient-to-r from-indigo-400 to-blue-400 mx-auto"
                         />
                     </motion.div>
-
                     {/* Products Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {products?.slice(0, 6).map((product, index) => (
@@ -1144,28 +1522,15 @@ const VillageHomePage = ({
                 </div>
             </section>
 
-            {/* Enhanced Articles Section - Ryze Designs Style */}
+            {/* Articles Section - CLEANED UP */}
             <section
                 ref={articlesRef}
-                className="min-h-screen bg-gradient-to-b from-blue-600 to-purple-700 py-20 relative overflow-hidden"
+                className="min-h-screen relative overflow-hidden py-20 z-10"
             >
-                {/* Floating geometric elements */}
-                <motion.div
-                    style={{
-                        y: useTransform(scrollY, [2400, 3200], [0, -100]),
-                        rotate: useTransform(scrollY, [2400, 3200], [0, 180]),
-                    }}
-                    className="absolute top-20 right-20 w-32 h-32 border border-white/20 rounded-lg"
-                />
-                <motion.div
-                    style={{
-                        y: useTransform(scrollY, [2400, 3200], [0, -80]),
-                        rotate: useTransform(scrollY, [2400, 3200], [0, -90]),
-                    }}
-                    className="absolute bottom-40 left-10 w-20 h-20 bg-white/10 rounded-full"
-                />
+                <div className="absolute inset-0 backdrop-blur-sm" />
 
                 <div className="container mx-auto px-6 relative z-10">
+                    {/* Your existing articles content here - just remove the style prop and transitions */}
                     <motion.div
                         initial={{ opacity: 0, y: 50 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -1173,7 +1538,7 @@ const VillageHomePage = ({
                         className="text-center mb-16"
                     >
                         <h2 className="text-5xl font-bold text-white mb-4">
-                            📖 Village Stories
+                            Village Stories
                         </h2>
                         <motion.div
                             initial={{ width: 0 }}
@@ -1357,35 +1722,15 @@ const VillageHomePage = ({
                 </div>
             </section>
 
-            {/* Enhanced Gallery Section - Artistic Ryze Designs Style */}
+            {/* Gallery Section - CLEANED UP */}
             <section
                 ref={galleryRef}
-                className="min-h-screen bg-gradient-to-b from-purple-700 to-pink-600 py-20 relative overflow-hidden"
+                className="min-h-screen relative overflow-hidden py-20 z-10"
             >
-                {/* Floating geometric art elements */}
-                <motion.div
-                    style={{
-                        y: useTransform(scrollY, [4000, 4800], [0, -120]),
-                        rotate: useTransform(scrollY, [4000, 4800], [0, 90]),
-                    }}
-                    className="absolute top-32 left-16 w-24 h-24 border-2 border-white/30"
-                />
-                <motion.div
-                    style={{
-                        y: useTransform(scrollY, [4000, 4800], [0, -80]),
-                        rotate: useTransform(scrollY, [4000, 4800], [0, -120]),
-                    }}
-                    className="absolute top-64 right-20 w-16 h-16 bg-white/20 rounded-full"
-                />
-                <motion.div
-                    style={{
-                        y: useTransform(scrollY, [4000, 4800], [0, -60]),
-                        rotate: useTransform(scrollY, [4000, 4800], [0, 60]),
-                    }}
-                    className="absolute bottom-40 left-1/3 w-32 h-32 border border-white/25 rotate-45"
-                />
+                <div className="absolute inset-0 backdrop-blur-sm" />
 
                 <div className="container mx-auto px-6 relative z-10">
+                    {/* Your existing gallery content here - just remove the style prop and transitions */}
                     <motion.div
                         initial={{ opacity: 0, y: 50 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -1393,7 +1738,7 @@ const VillageHomePage = ({
                         className="text-center mb-16"
                     >
                         <h2 className="text-5xl font-bold text-white mb-4">
-                            📸 Village Gallery
+                            Village Gallery
                         </h2>
                         <motion.p
                             initial={{ opacity: 0 }}
@@ -1410,7 +1755,6 @@ const VillageHomePage = ({
                             className="h-1 bg-gradient-to-r from-pink-400 to-purple-400 mx-auto"
                         />
                     </motion.div>
-
                     {/* Artistic Grid Layout - Ryze Designs Inspired */}
                     <div className="grid grid-cols-12 gap-4 max-w-7xl mx-auto">
                         {gallery?.slice(0, 12).map((image, index) => {
