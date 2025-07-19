@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Migration: svnv_000010_create_offer_tags_table.php
+// Migration: svnv_000011_create_offer_tags_table.php
 return new class extends Migration
 {
     public function up()

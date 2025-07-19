@@ -4,39 +4,38 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Migration: svnv_000008_create_external_links_table.php
+// Migration: svnv_000008_create_articles_table.php
 return new class extends Migration
 {
     public function up()
     {
-        Schema::create('external_links', function (Blueprint $table) {
+        Schema::create('articles', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('village_id')->nullable();
             $table->uuid('community_id')->nullable();
             $table->uuid('sme_id')->nullable();
-            $table->string('label');
-            $table->text('url');
-            $table->string('icon')->nullable();
+            $table->uuid('place_id')->nullable();
+            $table->string('title');
             $table->string('slug');
-            $table->integer('sort_order')->default(0);
-            $table->text('description')->nullable();
-            $table->integer('click_count')->default(0);
-            $table->boolean('is_active')->default(true);
-            $table->timestamp('expires_at')->nullable();
+            $table->longText('content');
+            $table->string('cover_image_url')->nullable();
+            $table->boolean('is_featured')->default(false);
+            $table->boolean('is_published')->default(true);
+            $table->timestamp('published_at')->nullable();
             $table->timestamps();
 
             $table->foreign('village_id')->references('id')->on('villages')->onDelete('cascade');
             $table->foreign('community_id')->references('id')->on('communities')->onDelete('cascade');
             $table->foreign('sme_id')->references('id')->on('smes')->onDelete('cascade');
-            $table->unique(['village_id', 'slug']);
-            $table->unique(['community_id', 'slug']);
-            $table->index(['community_id', 'is_active']);
-            $table->index(['sme_id', 'is_active']);
+            $table->foreign('place_id')->references('id')->on('places')->onDelete('cascade');
+            $table->index(['community_id', 'slug']);
+            $table->index(['sme_id', 'is_published']);
+            $table->index(['village_id', 'is_published']);
         });
     }
 
     public function down()
     {
-        Schema::dropIfExists('external_links');
+        Schema::dropIfExists('articles');
     }
 };
