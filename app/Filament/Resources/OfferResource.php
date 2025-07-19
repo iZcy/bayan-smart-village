@@ -15,6 +15,9 @@ use Illuminate\Support\Str;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use App\Filament\Resources\OfferResource\Pages;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class OfferResource extends Resource
 {
@@ -33,12 +36,25 @@ class OfferResource extends Resource
                             ->relationship('sme', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = User::find(Auth::id());
+                                return $user->getAccessibleSmes()->pluck('name', 'id');
+                            }),
                         Forms\Components\Select::make('category_id')
                             ->relationship('category', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = User::find(Auth::id());
+                                if ($user->isSuperAdmin()) {
+                                    return Category::pluck('name', 'id');
+                                }
+
+                                $villageIds = $user->getAccessibleVillages()->pluck('id');
+                                return Category::whereIn('village_id', $villageIds)->pluck('name', 'id');
+                            }),
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255)
@@ -174,7 +190,11 @@ class OfferResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('sme')
-                    ->relationship('sme', 'name'),
+                    ->relationship('sme', 'name')
+                    ->options(function () {
+                        $user = User::find(Auth::id());
+                        return $user->getAccessibleSmes()->pluck('name', 'id');
+                    }),
                 Tables\Filters\SelectFilter::make('category')
                     ->relationship('category', 'name'),
                 Tables\Filters\SelectFilter::make('availability')
@@ -257,6 +277,12 @@ class OfferResource extends Resource
             ]);
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        $user = User::find(Auth::id());
+        return $user->getAccessibleOffers();
+    }
+
     public static function getPages(): array
     {
         return [
@@ -269,6 +295,7 @@ class OfferResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        $user = User::find(Auth::id());
+        return $user->getAccessibleOffers()->count();
     }
 }

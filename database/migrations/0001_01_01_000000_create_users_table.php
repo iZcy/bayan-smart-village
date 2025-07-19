@@ -11,29 +11,47 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->timestamps();
+        // Modify the existing users table
+        Schema::table('users', function (Blueprint $table) {
+            // Change id to UUID
+            $table->dropColumn('id');
         });
 
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
+        Schema::table('users', function (Blueprint $table) {
+            $table->uuid('id')->primary()->first();
+
+            // Add role and scope fields
+            $table->enum('role', ['super_admin', 'village_admin', 'community_admin', 'sme_admin'])
+                ->default('sme_admin')
+                ->after('password');
+
+            // Scope relationships - nullable because super admin has no scope
+            $table->uuid('village_id')->nullable()->after('role');
+            $table->uuid('community_id')->nullable()->after('village_id');
+            $table->uuid('sme_id')->nullable()->after('community_id');
+
+            // Active status
+            $table->boolean('is_active')->default(true)->after('sme_id');
+
+            // Foreign key constraints
+            $table->foreign('village_id')->references('id')->on('villages')->onDelete('cascade');
+            $table->foreign('community_id')->references('id')->on('communities')->onDelete('cascade');
+            $table->foreign('sme_id')->references('id')->on('smes')->onDelete('cascade');
+
+            // Indexes for performance
+            $table->index(['role', 'is_active']);
+            $table->index(['village_id', 'role']);
+            $table->index(['community_id', 'role']);
+            $table->index(['sme_id', 'role']);
         });
 
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
+        // Update sessions table to use UUID for user_id
+        Schema::table('sessions', function (Blueprint $table) {
+            $table->dropColumn('user_id');
+        });
+
+        Schema::table('sessions', function (Blueprint $table) {
+            $table->uuid('user_id')->nullable()->index()->after('id');
         });
     }
 
@@ -42,8 +60,36 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['village_id']);
+            $table->dropForeign(['community_id']);
+            $table->dropForeign(['sme_id']);
+
+            $table->dropColumn([
+                'role',
+                'village_id',
+                'community_id',
+                'sme_id',
+                'is_active'
+            ]);
+        });
+
+        // Revert users table to auto-increment id
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('id');
+        });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->id()->first();
+        });
+
+        // Revert sessions table
+        Schema::table('sessions', function (Blueprint $table) {
+            $table->dropColumn('user_id');
+        });
+
+        Schema::table('sessions', function (Blueprint $table) {
+            $table->foreignId('user_id')->nullable()->index()->after('id');
+        });
     }
 };

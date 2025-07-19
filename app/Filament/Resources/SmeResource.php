@@ -1,10 +1,11 @@
 <?php
 
-// Resource: SmeResource.php
+// Updated app/Filament/Resources/SmeResource.php
 namespace App\Filament\Resources;
 
 use App\Models\Sme;
 use Filament\Forms;
+use App\Models\User;
 use Filament\Tables;
 use Filament\Infolists;
 use Filament\Forms\Form;
@@ -14,6 +15,8 @@ use Illuminate\Support\Str;
 use App\Models\SmeTourismPlace;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\SmeResource\Pages;
 
 class SmeResource extends Resource
@@ -33,11 +36,24 @@ class SmeResource extends Resource
                             ->relationship('community', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = User::find(Auth::id());
+                                return $user->getAccessibleCommunities()->pluck('name', 'id');
+                            }),
                         Forms\Components\Select::make('place_id')
                             ->relationship('place', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = User::find(Auth::id());
+                                if ($user->isSuperAdmin()) {
+                                    return \App\Models\Place::pluck('name', 'id');
+                                }
+
+                                $villageIds = $user->getAccessibleVillages()->pluck('id');
+                                return \App\Models\Place::whereIn('village_id', $villageIds)->pluck('name', 'id');
+                            }),
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255)
@@ -68,7 +84,8 @@ class SmeResource extends Resource
                             ->keyLabel('Day')
                             ->valueLabel('Hours'),
                         Forms\Components\Toggle::make('is_verified')
-                            ->default(false),
+                            ->default(false)
+                            ->visible(fn() => !User::find(Auth::id())->isSmeAdmin()), // SME admins can't verify themselves
                         Forms\Components\Toggle::make('is_active')
                             ->default(true),
                     ])->columns(2),
@@ -111,7 +128,11 @@ class SmeResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('community')
-                    ->relationship('community', 'name'),
+                    ->relationship('community', 'name')
+                    ->options(function () {
+                        $user = User::find(Auth::id());
+                        return $user->getAccessibleCommunities()->pluck('name', 'id');
+                    }),
                 Tables\Filters\SelectFilter::make('type')
                     ->options([
                         'service' => 'Service',
@@ -161,6 +182,12 @@ class SmeResource extends Resource
             ]);
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        $user = User::find(Auth::id());
+        return $user->getAccessibleSmes();
+    }
+
     public static function getPages(): array
     {
         return [
@@ -173,6 +200,7 @@ class SmeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        $user = User::find(Auth::id());
+        return $user->getAccessibleSmes()->count();
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-// Resource: CommunityResource.php
+// Updated app/Filament/Resources/CommunityResource.php
 namespace App\Filament\Resources;
 
 use Filament\Forms;
@@ -14,6 +14,9 @@ use Illuminate\Support\Str;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use App\Filament\Resources\CommunityResource\Pages;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class CommunityResource extends Resource
 {
@@ -32,7 +35,12 @@ class CommunityResource extends Resource
                             ->relationship('village', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = User::find(Auth::id());
+                                return $user->getAccessibleVillages()->pluck('name', 'id');
+                            })
+                            ->disabled(fn() => !User::find(Auth::id())->isSuperAdmin()), // Only super admin can change village
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255)
@@ -73,7 +81,8 @@ class CommunityResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('village.name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: User::find(Auth::id())?->isVillageAdmin()),
                 Tables\Columns\TextColumn::make('smes_count')
                     ->counts('smes')
                     ->label('SMEs'),
@@ -92,7 +101,12 @@ class CommunityResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('village')
-                    ->relationship('village', 'name'),
+                    ->relationship('village', 'name')
+                    ->options(function () {
+                        $user = User::find(Auth::id());
+                        return $user->getAccessibleVillages()->pluck('name', 'id');
+                    })
+                    ->visible(fn() => !User::find(Auth::id())->isVillageAdmin()), // Hide for village admins since they only see their village
                 Tables\Filters\TernaryFilter::make('is_active'),
             ])
             ->actions([
@@ -131,7 +145,23 @@ class CommunityResource extends Resource
                         Infolists\Components\IconEntry::make('is_active')
                             ->boolean(),
                     ])->columns(2),
+
+                Infolists\Components\Section::make('Statistics')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('smes_count')
+                            ->label('Total SMEs'),
+                        Infolists\Components\TextEntry::make('articles_count')
+                            ->label('Total Articles'),
+                        Infolists\Components\TextEntry::make('external_links_count')
+                            ->label('Total External Links'),
+                    ])->columns(3),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = User::find(Auth::id());
+        return $user->getAccessibleCommunities();
     }
 
     public static function getPages(): array
@@ -146,6 +176,7 @@ class CommunityResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        $user = User::find(Auth::id());
+        return $user->getAccessibleCommunities()->count();
     }
 }
