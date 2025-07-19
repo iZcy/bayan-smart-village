@@ -14,6 +14,8 @@ class PlaceFactory extends Factory
 {
     protected $model = Place::class;
 
+    private static $usedSlugs = [];
+
     public function definition(): array
     {
         $placeTypes = [
@@ -31,15 +33,48 @@ class PlaceFactory extends Factory
             'Rumah Adat',
             'Masjid Bersejarah',
             'Gereja Tua',
-            'Monumen'
+            'Monumen',
+            'Bendungan',
+            'Hutan Wisata',
+            'Bukit',
+            'Lembah',
+            'Sungai',
+            'Mata Air',
+            'Kebun Raya'
         ];
 
-        $name = $this->faker->randomElement($placeTypes) . ' ' . $this->faker->words(2, true);
+        $placeNames = [
+            'Indah',
+            'Cantik',
+            'Asri',
+            'Permai',
+            'Sejuk',
+            'Teduh',
+            'Damai',
+            'Tenang',
+            'Eksotis',
+            'Menawan',
+            'Spektakuler',
+            'Megah',
+            'Anggun',
+            'Elok',
+            'Syahdu'
+        ];
+
+        $type = $this->faker->randomElement($placeTypes);
+        $adjective = $this->faker->randomElement($placeNames);
+        $location = $this->faker->city();
+
+        $name = $type . ' ' . $adjective . ' ' . $location;
+
+        // Default village ID (will be overridden by forVillage method)
+        $villageId = Village::factory()->create()->id;
+        $slug = $this->generateUniqueSlug($villageId, $name);
 
         return [
-            'village_id' => Village::factory(),
+            'village_id' => $villageId,
             'name' => $name,
-            'slug' => Str::slug($name),
+            'slug' => $slug,
             'description' => $this->faker->paragraphs(3, true),
             'address' => $this->faker->address(),
             'latitude' => $this->faker->latitude(-10, -6),
@@ -80,13 +115,44 @@ class PlaceFactory extends Factory
     }
 
     /**
+     * Generate unique slug for village.
+     */
+    private function generateUniqueSlug(string $villageId, string $name): string
+    {
+        $baseSlug = Str::slug($name);
+        $slug = $baseSlug;
+        $counter = 1;
+
+        // Initialize village key if not exists
+        if (!isset(self::$usedSlugs[$villageId])) {
+            self::$usedSlugs[$villageId] = [];
+        }
+
+        // Keep trying until we get a unique slug
+        while (in_array($slug, self::$usedSlugs[$villageId])) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        // Mark slug as used for this village
+        self::$usedSlugs[$villageId][] = $slug;
+
+        return $slug;
+    }
+
+    /**
      * Indicate that the place belongs to a specific village.
      */
     public function forVillage(Village $village): static
     {
-        return $this->state(fn(array $attributes) => [
-            'village_id' => $village->id,
-        ]);
+        return $this->state(function (array $attributes) use ($village) {
+            $slug = $this->generateUniqueSlug($village->id, $attributes['name']);
+
+            return [
+                'village_id' => $village->id,
+                'slug' => $slug,
+            ];
+        });
     }
 
     /**
@@ -94,23 +160,31 @@ class PlaceFactory extends Factory
      */
     public function tourism(): static
     {
-        $tourismNames = [
+        $tourismTypes = [
             'Pantai Indah',
             'Air Terjun Cantik',
             'Bukit Sunrise',
             'Danau Tenang',
             'Goa Misterius',
             'Hutan Bambu',
-            'Pemandian Air Panas'
+            'Pemandian Air Panas',
+            'Taman Wisata'
         ];
 
-        return $this->state(fn(array $attributes) => [
-            'name' => $this->faker->randomElement($tourismNames) . ' ' . $this->faker->city(),
-            'custom_fields' => array_merge($attributes['custom_fields'] ?? [], [
-                'type' => 'tourism',
-                'difficulty_level' => $this->faker->randomElement(['Mudah', 'Sedang', 'Sulit']),
-            ]),
-        ]);
+        return $this->state(function (array $attributes) use ($tourismTypes) {
+            $name = $this->faker->randomElement($tourismTypes) . ' ' . $this->faker->city();
+            $villageId = $attributes['village_id'] ?? Village::factory()->create()->id;
+            $slug = $this->generateUniqueSlug($villageId, $name);
+
+            return [
+                'name' => $name,
+                'slug' => $slug,
+                'custom_fields' => array_merge($attributes['custom_fields'] ?? [], [
+                    'type' => 'tourism',
+                    'difficulty_level' => $this->faker->randomElement(['Mudah', 'Sedang', 'Sulit']),
+                ]),
+            ];
+        });
     }
 
     /**
@@ -118,23 +192,31 @@ class PlaceFactory extends Factory
      */
     public function historical(): static
     {
-        $historicalNames = [
+        $historicalTypes = [
             'Candi Kuno',
             'Benteng Bersejarah',
             'Rumah Adat',
             'Makam Keramat',
             'Monumen Pahlawan',
             'Museum Daerah',
-            'Istana Raja'
+            'Istana Raja',
+            'Situs Bersejarah'
         ];
 
-        return $this->state(fn(array $attributes) => [
-            'name' => $this->faker->randomElement($historicalNames) . ' ' . $this->faker->city(),
-            'custom_fields' => array_merge($attributes['custom_fields'] ?? [], [
-                'type' => 'historical',
-                'built_year' => $this->faker->year('-100 years'),
-            ]),
-        ]);
+        return $this->state(function (array $attributes) use ($historicalTypes) {
+            $name = $this->faker->randomElement($historicalTypes) . ' ' . $this->faker->city();
+            $villageId = $attributes['village_id'] ?? Village::factory()->create()->id;
+            $slug = $this->generateUniqueSlug($villageId, $name);
+
+            return [
+                'name' => $name,
+                'slug' => $slug,
+                'custom_fields' => array_merge($attributes['custom_fields'] ?? [], [
+                    'type' => 'historical',
+                    'built_year' => $this->faker->year('-100 years'),
+                ]),
+            ];
+        });
     }
 
     /**
@@ -142,22 +224,38 @@ class PlaceFactory extends Factory
      */
     public function religious(): static
     {
-        $religiousNames = [
+        $religiousTypes = [
             'Masjid Agung',
             'Gereja Tua',
             'Pura Suci',
             'Vihara Damai',
             'Klenteng Bersejarah',
             'Makam Wali',
-            'Pesantren Kuno'
+            'Pesantren Kuno',
+            'Surau Bersejarah'
         ];
 
-        return $this->state(fn(array $attributes) => [
-            'name' => $this->faker->randomElement($religiousNames) . ' ' . $this->faker->city(),
-            'custom_fields' => array_merge($attributes['custom_fields'] ?? [], [
-                'type' => 'religious',
-                'religion' => $this->faker->randomElement(['Islam', 'Kristen', 'Hindu', 'Buddha']),
-            ]),
-        ]);
+        return $this->state(function (array $attributes) use ($religiousTypes) {
+            $name = $this->faker->randomElement($religiousTypes) . ' ' . $this->faker->city();
+            $villageId = $attributes['village_id'] ?? Village::factory()->create()->id;
+            $slug = $this->generateUniqueSlug($villageId, $name);
+
+            return [
+                'name' => $name,
+                'slug' => $slug,
+                'custom_fields' => array_merge($attributes['custom_fields'] ?? [], [
+                    'type' => 'religious',
+                    'religion' => $this->faker->randomElement(['Islam', 'Kristen', 'Hindu', 'Buddha']),
+                ]),
+            ];
+        });
+    }
+
+    /**
+     * Reset used slugs tracker (useful for testing).
+     */
+    public static function resetUsedSlugs(): void
+    {
+        self::$usedSlugs = [];
     }
 }

@@ -15,6 +15,8 @@ class OfferFactory extends Factory
 {
     protected $model = Offer::class;
 
+    private static $usedSlugs = [];
+
     public function definition(): array
     {
         $productNames = [
@@ -32,7 +34,12 @@ class OfferFactory extends Factory
             'Kerajinan Bambu Unik',
             'Songket Palembang Asli',
             'Anyaman Rotan Cantik',
-            'Selendang Sutra'
+            'Selendang Sutra',
+            'Patung Kayu Suar',
+            'Gelang Perak Handmade',
+            'Topi Pandan Klasik',
+            'Sandal Kulit Asli',
+            'Miniatur Becak Bambu'
         ];
 
         $serviceNames = [
@@ -47,21 +54,30 @@ class OfferFactory extends Factory
             'Sewa Motor Harian',
             'Ojek Wisata Antar Jemput',
             'Jasa Laundry Kilat',
-            'Warung Makan Gudeg'
+            'Warung Makan Gudeg',
+            'Paket Tour Keliling Desa',
+            'Kursus Memasak Tradisional',
+            'Jasa Pijat Refleksi',
+            'Rental Sepeda Gunung'
         ];
 
         $type = $this->faker->randomElement(['product', 'service']);
         $names = $type === 'product' ? $productNames : $serviceNames;
-        $name = $this->faker->randomElement($names);
+
+        // Default SME ID (will be overridden by forSme method)
+        $smeId = Sme::factory()->create()->id;
+
+        $name = $this->getUniqueNameForSme($smeId, $names);
+        $slug = $this->generateUniqueSlug($smeId, $name);
 
         $price = $this->faker->optional(0.8)->randomFloat(0, 5000, 500000);
         $priceUnit = $price ? $this->faker->randomElement(['per item', 'per kg', 'per hari', 'per paket', 'per jam']) : null;
 
         return [
-            'sme_id' => Sme::factory(),
+            'sme_id' => $smeId,
             'category_id' => Category::factory(),
             'name' => $name,
-            'slug' => Str::slug($name),
+            'slug' => $slug,
             'description' => $this->faker->paragraphs(3, true),
             'short_description' => $this->faker->sentence(12),
             'price' => $price,
@@ -158,13 +174,96 @@ class OfferFactory extends Factory
     }
 
     /**
+     * Get a unique offer name for a specific SME.
+     */
+    private function getUniqueNameForSme(string $smeId, array $names): string
+    {
+        // Initialize SME key if not exists
+        if (!isset(self::$usedSlugs[$smeId])) {
+            self::$usedSlugs[$smeId] = [];
+        }
+
+        // Get available names for this SME
+        $usedNames = array_map(function ($slug) {
+            return str_replace('-', ' ', ucwords($slug, ' -'));
+        }, self::$usedSlugs[$smeId]);
+
+        $availableNames = array_diff($names, $usedNames);
+
+        // If no available names, add random suffix
+        if (empty($availableNames)) {
+            $baseName = $this->faker->randomElement($names);
+            $suffix = $this->faker->randomElement(['Spesial', 'Eksklusif', 'Premium', 'Deluxe', 'Classic', 'Modern', 'Traditional']);
+            return $baseName . ' ' . $suffix;
+        }
+
+        // Pick a random available name
+        return $this->faker->randomElement($availableNames);
+    }
+
+    /**
+     * Generate unique slug for SME.
+     */
+    private function generateUniqueSlug(string $smeId, string $name): string
+    {
+        $baseSlug = Str::slug($name);
+        $slug = $baseSlug;
+        $counter = 1;
+
+        // Initialize SME key if not exists
+        if (!isset(self::$usedSlugs[$smeId])) {
+            self::$usedSlugs[$smeId] = [];
+        }
+
+        // Keep trying until we get a unique slug
+        while (in_array($slug, self::$usedSlugs[$smeId])) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        // Mark slug as used for this SME
+        self::$usedSlugs[$smeId][] = $slug;
+
+        return $slug;
+    }
+
+    /**
      * Indicate that the offer belongs to a specific SME.
      */
     public function forSme(Sme $sme): static
     {
-        return $this->state(fn(array $attributes) => [
-            'sme_id' => $sme->id,
-        ]);
+        return $this->state(function (array $attributes) use ($sme) {
+            $productNames = [
+                'Tas Anyaman Pandan Premium',
+                'Batik Tulis Motif Klasik',
+                'Keramik Hias Bunga',
+                'Madu Asli Hutan',
+                'Kopi Robusta Sangrai',
+                'Dodol Durian Manis',
+                'Keripik Pisang Renyah',
+                'Tenun Ikat Tradisional',
+                'Ukiran Kayu Jati'
+            ];
+
+            $serviceNames = [
+                'Paket Wisata Desa 1 Hari',
+                'Jasa Pemandu Wisata Lokal',
+                'Homestay Nyaman Keluarga',
+                'Pijat Tradisional Relaksasi',
+                'Kursus Membatik Pemula',
+                'Catering Nasi Kotak'
+            ];
+
+            $names = $sme->type === 'product' ? $productNames : $serviceNames;
+            $name = $this->getUniqueNameForSme($sme->id, $names);
+            $slug = $this->generateUniqueSlug($sme->id, $name);
+
+            return [
+                'sme_id' => $sme->id,
+                'name' => $name,
+                'slug' => $slug,
+            ];
+        });
     }
 
     /**
@@ -272,5 +371,13 @@ class OfferFactory extends Factory
         return $this->state(fn(array $attributes) => [
             'view_count' => $this->faker->numberBetween(500, 5000),
         ]);
+    }
+
+    /**
+     * Reset used slugs tracker (useful for testing).
+     */
+    public static function resetUsedSlugs(): void
+    {
+        self::$usedSlugs = [];
     }
 }

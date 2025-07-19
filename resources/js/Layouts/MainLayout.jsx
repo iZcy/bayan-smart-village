@@ -1,3 +1,4 @@
+// resources/js/Layouts/MainLayout.jsx
 import React, { useEffect, useState } from "react";
 import { Head, Link, usePage } from "@inertiajs/react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,7 +15,7 @@ export default function MainLayout({ children, title = "", description = "" }) {
         const handleScroll = () => {
             const currentScrollY = window.scrollY;
             setScrollY(currentScrollY);
-            setIsScrolled(currentScrollY > 50); // New scroll state
+            setIsScrolled(currentScrollY > 50);
         };
 
         window.addEventListener("scroll", handleScroll, { passive: true });
@@ -40,6 +41,14 @@ export default function MainLayout({ children, title = "", description = "" }) {
     };
 
     const navigation = getNavigationItems();
+
+    // Helper function to check if current path matches href
+    const isCurrentPath = (href) => {
+        if (href === "/") {
+            return window.location.pathname === "/";
+        }
+        return window.location.pathname.startsWith(href);
+    };
 
     return (
         <>
@@ -84,13 +93,13 @@ export default function MainLayout({ children, title = "", description = "" }) {
                             <motion.div
                                 whileHover={{ rotate: 360, scale: 1.1 }}
                                 transition={{ duration: 0.6 }}
-                                className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center"
+                                className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center overflow-hidden"
                             >
                                 {village?.image_url ? (
                                     <img
                                         src={village.image_url}
                                         alt={village.name}
-                                        className="w-full h-full rounded-full object-cover"
+                                        className="w-full h-full object-cover"
                                     />
                                 ) : (
                                     <span className="text-white text-sm">
@@ -116,43 +125,56 @@ export default function MainLayout({ children, title = "", description = "" }) {
 
                         {/* Desktop Navigation with Enhanced Styling */}
                         <div className="hidden md:flex items-center space-x-1">
-                            {navigation.map((item, index) => (
-                                <motion.div
-                                    key={item.name}
-                                    initial={{ opacity: 0, y: -20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.1 + 0.3 }}
-                                >
-                                    <Link
-                                        href={item.href}
-                                        className="relative px-4 py-2 rounded-lg text-white/80 hover:text-white transition-all duration-300 group flex items-center space-x-2"
+                            {navigation.map((item, index) => {
+                                const isCurrent = isCurrentPath(item.href);
+                                return (
+                                    <motion.div
+                                        key={item.name}
+                                        initial={{ opacity: 0, y: -20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{
+                                            delay: index * 0.1 + 0.3,
+                                        }}
                                     >
-                                        <span className="text-sm">
-                                            {item.icon}
-                                        </span>
-                                        <span>{item.name}</span>
+                                        <Link
+                                            href={item.href}
+                                            className={`relative px-4 py-2 rounded-lg transition-all duration-300 group flex items-center space-x-2 ${
+                                                isCurrent
+                                                    ? "text-green-400 bg-white/10"
+                                                    : "text-white/80 hover:text-white"
+                                            }`}
+                                        >
+                                            <span className="text-sm">
+                                                {item.icon}
+                                            </span>
+                                            <span>{item.name}</span>
 
-                                        {/* Hover background */}
-                                        <motion.div
-                                            className="absolute inset-0 bg-white/10 rounded-lg"
-                                            initial={{ scale: 0, opacity: 0 }}
-                                            whileHover={{
-                                                scale: 1,
-                                                opacity: 1,
-                                            }}
-                                            transition={{ duration: 0.2 }}
-                                        />
+                                            {/* Hover background */}
+                                            <motion.div
+                                                className="absolute inset-0 bg-white/10 rounded-lg"
+                                                initial={{
+                                                    scale: 0,
+                                                    opacity: 0,
+                                                }}
+                                                whileHover={{
+                                                    scale: 1,
+                                                    opacity: isCurrent ? 0 : 1,
+                                                }}
+                                                transition={{ duration: 0.2 }}
+                                            />
 
-                                        {/* Active indicator */}
-                                        <motion.div
-                                            className="absolute bottom-0 left-1/2 w-1 h-1 bg-green-400 rounded-full"
-                                            initial={{ scale: 0, x: "-50%" }}
-                                            whileHover={{ scale: 1 }}
-                                            transition={{ duration: 0.2 }}
-                                        />
-                                    </Link>
-                                </motion.div>
-                            ))}
+                                            {/* Active indicator */}
+                                            {isCurrent && (
+                                                <motion.div
+                                                    layoutId="active-nav"
+                                                    className="absolute bottom-0 left-1/2 w-1 h-1 bg-green-400 rounded-full"
+                                                    style={{ x: "-50%" }}
+                                                />
+                                            )}
+                                        </Link>
+                                    </motion.div>
+                                );
+                            })}
 
                             {/* Village Info Button */}
                             <motion.button
@@ -206,29 +228,45 @@ export default function MainLayout({ children, title = "", description = "" }) {
                                 className="md:hidden mt-6 bg-black/90 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden"
                             >
                                 <div className="p-4 space-y-2">
-                                    {navigation.map((item, index) => (
-                                        <motion.div
-                                            key={item.name}
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: index * 0.1 }}
-                                        >
-                                            <Link
-                                                href={item.href}
-                                                className="flex items-center space-x-3 px-4 py-3 text-white hover:text-green-400 hover:bg-white/10 rounded-lg transition-all duration-300"
-                                                onClick={() =>
-                                                    setIsMenuOpen(false)
-                                                }
+                                    {navigation.map((item, index) => {
+                                        const isCurrent = isCurrentPath(
+                                            item.href
+                                        );
+                                        return (
+                                            <motion.div
+                                                key={item.name}
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{
+                                                    delay: index * 0.1,
+                                                }}
                                             >
-                                                <span className="text-lg">
-                                                    {item.icon}
-                                                </span>
-                                                <span className="font-medium">
-                                                    {item.name}
-                                                </span>
-                                            </Link>
-                                        </motion.div>
-                                    ))}
+                                                <Link
+                                                    href={item.href}
+                                                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                                                        isCurrent
+                                                            ? "text-green-400 bg-white/20"
+                                                            : "text-white hover:text-green-400 hover:bg-white/10"
+                                                    }`}
+                                                    onClick={() =>
+                                                        setIsMenuOpen(false)
+                                                    }
+                                                >
+                                                    <span className="text-lg">
+                                                        {item.icon}
+                                                    </span>
+                                                    <span className="font-medium">
+                                                        {item.name}
+                                                    </span>
+                                                    {isCurrent && (
+                                                        <span className="ml-auto text-xs">
+                                                            •
+                                                        </span>
+                                                    )}
+                                                </Link>
+                                            </motion.div>
+                                        );
+                                    })}
 
                                     {/* Mobile Village Info */}
                                     <motion.div
@@ -299,12 +337,12 @@ export default function MainLayout({ children, title = "", description = "" }) {
                             transition={{ duration: 0.8 }}
                         >
                             <div className="flex items-center space-x-3 mb-6">
-                                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center overflow-hidden">
                                     {village?.image_url ? (
                                         <img
                                             src={village.image_url}
                                             alt={village.name}
-                                            className="w-full h-full rounded-full object-cover"
+                                            className="w-full h-full object-cover"
                                         />
                                     ) : (
                                         <span className="text-white">🏘️</span>
@@ -327,7 +365,9 @@ export default function MainLayout({ children, title = "", description = "" }) {
                                         whileHover={{ x: 5 }}
                                     >
                                         <span>📞</span>
-                                        <span>{village.phone_number}</span>
+                                        <a href={`tel:${village.phone_number}`}>
+                                            {village.phone_number}
+                                        </a>
                                     </motion.div>
                                 )}
                                 {village?.email && (
@@ -336,7 +376,9 @@ export default function MainLayout({ children, title = "", description = "" }) {
                                         whileHover={{ x: 5 }}
                                     >
                                         <span>✉️</span>
-                                        <span>{village.email}</span>
+                                        <a href={`mailto:${village.email}`}>
+                                            {village.email}
+                                        </a>
                                     </motion.div>
                                 )}
                                 {village?.address && (
@@ -448,27 +490,6 @@ export default function MainLayout({ children, title = "", description = "" }) {
                             {village?.name || "Smart Village"}.
                             <span className="ml-1">
                                 Made with ❤️ for our community
-                            </span>
-                            <span className="mx-2">•</span>
-                            <span className="text-gray-500">
-                                Powered by{" "}
-                                <a
-                                    href="https://claude.ai"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-400 hover:text-blue-300 transition-colors hover:underline"
-                                >
-                                    Claude
-                                </a>
-                                {" & "}
-                                <a
-                                    href="https://chatgpt.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-green-400 hover:text-green-300 transition-colors hover:underline"
-                                >
-                                    ChatGPT
-                                </a>
                             </span>
                         </p>
 

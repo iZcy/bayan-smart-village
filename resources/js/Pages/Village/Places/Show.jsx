@@ -1,17 +1,19 @@
+// resources/js/Pages/Village/Places/Show.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { Head, Link } from "@inertiajs/react";
 import {
     motion,
     useScroll,
     useTransform,
-    useSpring,
     AnimatePresence,
 } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import MainLayout from "../../Layouts/MainLayout";
+import MainLayout from "@/Layouts/MainLayout";
+import { BaseCard } from "@/Components/Cards/BaseCard";
 
-export default function PlaceShowPage({ village, place, relatedPlaces }) {
+export default function PlaceShowPage({ village, place }) {
     const containerRef = useRef(null);
+    const audioRef = useRef(null);
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start start", "end start"],
@@ -22,44 +24,23 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
     const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
     const titleY = useTransform(scrollYProgress, [0, 0.3], ["0%", "-50%"]);
 
-    // Geometric elements from Enroute Health inspiration
-    const [geometryElements, setGeometryElements] = useState([]);
     const [activeSection, setActiveSection] = useState("overview");
-
-    useEffect(() => {
-        // Generate random geometric elements
-        const elements = Array.from({ length: 8 }, (_, i) => ({
-            id: i,
-            x: Math.random() * 100,
-            y: Math.random() * 100,
-            size: Math.random() * 60 + 20,
-            rotation: Math.random() * 360,
-            delay: Math.random() * 2,
-            type: ["circle", "triangle", "square"][
-                Math.floor(Math.random() * 3)
-            ],
-        }));
-        setGeometryElements(elements);
-    }, []);
 
     const [heroRef, heroInView] = useInView({ threshold: 0.3 });
     const [infoRef, infoInView] = useInView({ threshold: 0.3 });
     const [galleryRef, galleryInView] = useInView({ threshold: 0.3 });
-    const [relatedRef, relatedInView] = useInView({ threshold: 0.3 });
 
     const sections = [
         { id: "overview", label: "Overview", ref: heroRef },
         { id: "information", label: "Information", ref: infoRef },
         { id: "gallery", label: "Gallery", ref: galleryRef },
-        { id: "related", label: "Related Places", ref: relatedRef },
     ];
 
     // Audio management
-    const audioRef = useRef(null);
     useEffect(() => {
         if (typeof window !== "undefined" && audioRef.current) {
             audioRef.current.volume = 0.3;
-            audioRef.current.play().catch(() => {}); // Auto-play with error handling
+            audioRef.current.play().catch(() => {});
         }
         return () => {
             if (audioRef.current) {
@@ -67,6 +48,13 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
             }
         };
     }, []);
+
+    // Update active section based on scroll
+    useEffect(() => {
+        if (galleryInView) setActiveSection("gallery");
+        else if (infoInView) setActiveSection("information");
+        else if (heroInView) setActiveSection("overview");
+    }, [heroInView, infoInView, galleryInView]);
 
     return (
         <MainLayout title={place.name} description={place.description}>
@@ -90,95 +78,51 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
                     }}
                 >
                     {!place.image_url && (
-                        <>
-                            {/* Place-specific geometric patterns */}
-                            <svg
-                                className="absolute inset-0 w-full h-full"
-                                viewBox="0 0 1200 600"
-                            >
-                                {/* Tourism vs SME different patterns */}
-                                {place.category?.type === "tourism" ? (
-                                    <>
-                                        {/* Nature-inspired patterns for tourism */}
-                                        <motion.path
-                                            initial={{ pathLength: 0 }}
-                                            animate={{ pathLength: 1 }}
-                                            transition={{
-                                                duration: 4,
-                                                delay: 1,
-                                            }}
-                                            d="M0,600 L0,200 Q200,150 400,180 Q600,120 800,160 Q1000,100 1200,140 L1200,600 Z"
-                                            fill="rgba(34, 197, 94, 0.2)"
-                                        />
-                                        <motion.circle
-                                            cx="300"
-                                            cy="150"
-                                            r="50"
-                                            fill="rgba(59, 130, 246, 0.2)"
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            transition={{
-                                                delay: 2,
-                                                duration: 1.5,
-                                            }}
-                                        />
-                                    </>
-                                ) : (
-                                    <>
-                                        {/* Business-inspired patterns for SME */}
-                                        <motion.rect
-                                            x="200"
-                                            y="150"
-                                            width="100"
-                                            height="150"
-                                            fill="rgba(249, 115, 22, 0.2)"
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            transition={{
-                                                delay: 1.5,
-                                                duration: 2,
-                                            }}
-                                        />
-                                        <motion.polygon
-                                            points="800,100 900,200 700,200"
-                                            fill="rgba(168, 85, 247, 0.2)"
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            transition={{
-                                                delay: 2,
-                                                duration: 1.5,
-                                            }}
-                                        />
-                                    </>
-                                )}
-                            </svg>
-
-                            {/* Category-specific floating elements */}
-                            {[...Array(5)].map((_, i) => (
-                                <motion.div
-                                    key={i}
-                                    className="absolute text-white/20 text-3xl"
-                                    style={{
-                                        left: `${15 + Math.random() * 70}%`,
-                                        top: `${15 + Math.random() * 50}%`,
-                                    }}
-                                    animate={{
-                                        y: [0, -20, 0],
-                                        rotate: [0, 10, -10, 0],
-                                        opacity: [0.2, 0.4, 0.2],
-                                    }}
-                                    transition={{
-                                        duration: 3 + Math.random() * 2,
-                                        repeat: Infinity,
-                                        delay: Math.random() * 3,
-                                    }}
-                                >
-                                    {place.category?.type === "tourism"
-                                        ? ["🏞️", "🌲", "🏔️", "🌊", "🦋"][i]
-                                        : ["🏪", "🛠️", "📈", "💼", "🏭"][i]}
-                                </motion.div>
-                            ))}
-                        </>
+                        <svg
+                            className="absolute inset-0 w-full h-full"
+                            viewBox="0 0 1200 600"
+                        >
+                            {place.category?.type === "tourism" ? (
+                                <>
+                                    <motion.path
+                                        initial={{ pathLength: 0 }}
+                                        animate={{ pathLength: 1 }}
+                                        transition={{ duration: 4, delay: 1 }}
+                                        d="M0,600 L0,200 Q200,150 400,180 Q600,120 800,160 Q1000,100 1200,140 L1200,600 Z"
+                                        fill="rgba(34, 197, 94, 0.2)"
+                                    />
+                                    <motion.circle
+                                        cx="300"
+                                        cy="150"
+                                        r="50"
+                                        fill="rgba(59, 130, 246, 0.2)"
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ delay: 2, duration: 1.5 }}
+                                    />
+                                </>
+                            ) : (
+                                <>
+                                    <motion.rect
+                                        x="200"
+                                        y="150"
+                                        width="100"
+                                        height="150"
+                                        fill="rgba(249, 115, 22, 0.2)"
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ delay: 1.5, duration: 2 }}
+                                    />
+                                    <motion.polygon
+                                        points="800,100 900,200 700,200"
+                                        fill="rgba(168, 85, 247, 0.2)"
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ delay: 2, duration: 1.5 }}
+                                    />
+                                </>
+                            )}
+                        </svg>
                     )}
                 </div>
 
@@ -193,9 +137,11 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
                                     : "border-white/50 hover:border-white"
                             }`}
                             onClick={() => {
-                                section.ref.current?.scrollIntoView({
-                                    behavior: "smooth",
-                                });
+                                document
+                                    .getElementById(section.id)
+                                    ?.scrollIntoView({
+                                        behavior: "smooth",
+                                    });
                                 setActiveSection(section.id);
                             }}
                             whileHover={{ scale: 1.2 }}
@@ -204,48 +150,15 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
                     ))}
                 </div>
 
-                {/* Firewatch-inspired Hero Section */}
+                {/* Hero Section */}
                 <motion.section
+                    id="overview"
                     ref={heroRef}
                     className="relative h-screen flex items-center justify-center overflow-hidden"
                     style={{ y: heroY, opacity: heroOpacity }}
                 >
-                    {/* Background Image with Parallax */}
-                    <div
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{
-                            backgroundImage: place.image_url
-                                ? `url(${place.image_url})`
-                                : "linear-gradient(45deg, #1a365d 0%, #2d5a87 50%, #4a90a4 100%)",
-                        }}
-                    />
-
                     {/* Dark overlay for readability */}
                     <div className="absolute inset-0 bg-black/50" />
-
-                    {/* Firewatch-style geometric overlay */}
-                    <div className="absolute inset-0">
-                        <svg
-                            className="w-full h-full"
-                            viewBox="0 0 100 100"
-                            preserveAspectRatio="none"
-                        >
-                            <motion.polygon
-                                points="0,0 0,60 30,80 0,100 100,100 100,0"
-                                fill="rgba(74, 144, 164, 0.1)"
-                                initial={{ pathLength: 0 }}
-                                animate={{ pathLength: 1 }}
-                                transition={{ duration: 2, delay: 0.5 }}
-                            />
-                            <motion.polygon
-                                points="70,0 100,0 100,40 85,60"
-                                fill="rgba(45, 90, 135, 0.15)"
-                                initial={{ pathLength: 0 }}
-                                animate={{ pathLength: 1 }}
-                                transition={{ duration: 2, delay: 1 }}
-                            />
-                        </svg>
-                    </div>
 
                     {/* Hero Content */}
                     <motion.div
@@ -300,14 +213,14 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.8, delay: 0.7 }}
                             >
-                                <span className="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 rounded-full text-sm font-semibold">
-                                    {place.category?.name}
-                                </span>
-                                {place.village && (
-                                    <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm">
-                                        📍 {place.village.name}
+                                {place.category && (
+                                    <span className="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 rounded-full text-sm font-semibold">
+                                        {place.category.name}
                                     </span>
                                 )}
+                                <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm">
+                                    📍 {village.name}
+                                </span>
                             </motion.div>
 
                             <motion.p
@@ -335,6 +248,7 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
 
                 {/* Information Section */}
                 <motion.section
+                    id="information"
                     ref={infoRef}
                     className="relative py-20 bg-gradient-to-br from-gray-900 via-black to-gray-800"
                     initial={{ opacity: 0 }}
@@ -349,9 +263,7 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
                                 hidden: { opacity: 0 },
                                 visible: {
                                     opacity: 1,
-                                    transition: {
-                                        staggerChildren: 0.2,
-                                    },
+                                    transition: { staggerChildren: 0.2 },
                                 },
                             }}
                             initial="hidden"
@@ -431,6 +343,14 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
                                                     {place.latitude},{" "}
                                                     {place.longitude}
                                                 </p>
+                                                <a
+                                                    href={`https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-block mt-2 px-3 py-1 bg-purple-500/20 rounded-full text-xs hover:bg-purple-500/30 transition-colors"
+                                                >
+                                                    Open in Maps →
+                                                </a>
                                             </div>
                                         </div>
                                     )}
@@ -494,6 +414,7 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
                 {/* Gallery Section */}
                 {place.images && place.images.length > 0 && (
                     <motion.section
+                        id="gallery"
                         ref={galleryRef}
                         className="relative py-20 bg-black"
                         initial={{ opacity: 0 }}
@@ -548,10 +469,9 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
                     </motion.section>
                 )}
 
-                {/* Related Places Section */}
-                {relatedPlaces && relatedPlaces.length > 0 && (
+                {/* SMEs Section */}
+                {place.smes && place.smes.length > 0 && (
                     <motion.section
-                        ref={relatedRef}
                         className="relative py-20 bg-gradient-to-t from-gray-900 to-black"
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
@@ -566,13 +486,94 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
                                 transition={{ duration: 1 }}
                                 viewport={{ once: true }}
                             >
-                                Related Places
+                                Businesses Here
                             </motion.h2>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-                                {relatedPlaces.map((relatedPlace, index) => (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                                {place.smes.map((sme, index) => (
                                     <motion.div
-                                        key={relatedPlace.id}
+                                        key={sme.id}
+                                        initial={{ opacity: 0, y: 50 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        transition={{
+                                            duration: 0.6,
+                                            delay: index * 0.1,
+                                        }}
+                                        viewport={{ once: true }}
+                                    >
+                                        <BaseCard
+                                            className="bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-green-400/50 transition-all duration-300"
+                                            hoverEffects={true}
+                                        >
+                                            <div className="relative h-48 overflow-hidden">
+                                                {sme.logo_url ? (
+                                                    <img
+                                                        src={sme.logo_url}
+                                                        alt={sme.name}
+                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                                                        <span className="text-4xl text-white">
+                                                            🏪
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                                            </div>
+                                            <div className="p-6">
+                                                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-green-400 transition-colors">
+                                                    {sme.name}
+                                                </h3>
+                                                <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                                                    {sme.description}
+                                                </p>
+                                                {sme.contact_phone && (
+                                                    <div className="flex items-center text-sm text-gray-400 mb-2">
+                                                        <span className="mr-2">
+                                                            📞
+                                                        </span>
+                                                        <span>
+                                                            {sme.contact_phone}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <span className="inline-block px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">
+                                                    {sme.type || "Business"}
+                                                </span>
+                                            </div>
+                                        </BaseCard>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.section>
+                )}
+
+                {/* Articles Section */}
+                {place.articles && place.articles.length > 0 && (
+                    <motion.section
+                        className="relative py-20 bg-gradient-to-t from-gray-900 to-black"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        transition={{ duration: 1 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className="container mx-auto px-6">
+                            <motion.h2
+                                className="text-4xl md:text-6xl font-bold text-center mb-16 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent"
+                                initial={{ opacity: 0, y: 50 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 1 }}
+                                viewport={{ once: true }}
+                            >
+                                Related Stories
+                            </motion.h2>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                                {place.articles.map((article, index) => (
+                                    <motion.div
+                                        key={article.id}
                                         initial={{ opacity: 0, y: 50 }}
                                         whileInView={{ opacity: 1, y: 0 }}
                                         transition={{
@@ -582,45 +583,95 @@ export default function PlaceShowPage({ village, place, relatedPlaces }) {
                                         viewport={{ once: true }}
                                     >
                                         <Link
-                                            href={`/places/${relatedPlace.slug}`}
-                                            className="block group"
+                                            href={`/articles/${article.slug}`}
                                         >
-                                            <motion.div
-                                                className="bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-green-400/50 transition-all duration-300"
-                                                whileHover={{ y: -5 }}
+                                            <BaseCard
+                                                className="bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-blue-400/50 transition-all duration-300"
+                                                hoverEffects={true}
                                             >
                                                 <div className="relative h-48 overflow-hidden">
-                                                    <img
-                                                        src={
-                                                            relatedPlace.image_url ||
-                                                            "/images/place-placeholder.jpg"
-                                                        }
-                                                        alt={relatedPlace.name}
-                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                                    />
+                                                    {article.cover_image_url ? (
+                                                        <img
+                                                            src={
+                                                                article.cover_image_url
+                                                            }
+                                                            alt={article.title}
+                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+                                                            <span className="text-4xl text-white">
+                                                                📖
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                                                 </div>
                                                 <div className="p-6">
-                                                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-green-400 transition-colors">
-                                                        {relatedPlace.name}
+                                                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors line-clamp-2">
+                                                        {article.title}
                                                     </h3>
-                                                    <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-                                                        {
-                                                            relatedPlace.description
-                                                        }
+                                                    <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                                                        {article.content
+                                                            ?.replace(
+                                                                /<[^>]*>/g,
+                                                                ""
+                                                            )
+                                                            .substring(0, 120)}
+                                                        ...
                                                     </p>
-                                                    <span className="inline-block px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">
-                                                        {
-                                                            relatedPlace
-                                                                .category?.name
-                                                        }
-                                                    </span>
+                                                    <div className="text-xs text-gray-500">
+                                                        {new Date(
+                                                            article.published_at ||
+                                                                article.created_at
+                                                        ).toLocaleDateString()}
+                                                    </div>
                                                 </div>
-                                            </motion.div>
+                                            </BaseCard>
                                         </Link>
                                     </motion.div>
                                 ))}
                             </div>
+                        </div>
+                    </motion.section>
+                )}
+
+                {/* Map Section */}
+                {place.latitude && place.longitude && (
+                    <motion.section
+                        className="relative py-20 bg-black"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        transition={{ duration: 1 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className="container mx-auto px-6">
+                            <motion.h2
+                                className="text-4xl md:text-6xl font-bold text-center mb-16 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent"
+                                initial={{ opacity: 0, y: 50 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 1 }}
+                                viewport={{ once: true }}
+                            >
+                                Location
+                            </motion.h2>
+
+                            <motion.div
+                                className="max-w-4xl mx-auto rounded-2xl overflow-hidden border border-white/20"
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.8 }}
+                                viewport={{ once: true }}
+                            >
+                                <iframe
+                                    src={`https://maps.google.com/maps?q=${place.latitude},${place.longitude}&z=15&output=embed`}
+                                    width="100%"
+                                    height="400"
+                                    style={{ border: 0 }}
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                />
+                            </motion.div>
                         </div>
                     </motion.section>
                 )}

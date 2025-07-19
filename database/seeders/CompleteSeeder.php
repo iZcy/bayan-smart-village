@@ -25,6 +25,17 @@ class CompleteSeeder extends Seeder
     {
         $this->command->info('Starting complete database seeding...');
 
+        // Reset ALL factory trackers to prevent unique constraint violations
+        \Database\Factories\VillageFactory::resetUsedSlugs();
+        \Database\Factories\CommunityFactory::resetUsedSlugs();
+        \Database\Factories\PlaceFactory::resetUsedSlugs();
+        \Database\Factories\CategoryFactory::resetUsedCategories();
+        \Database\Factories\SmeFactory::resetUsedSlugs();
+        \Database\Factories\OfferFactory::resetUsedSlugs();
+        \Database\Factories\ExternalLinkFactory::resetUsedSlugs();
+        \Database\Factories\OfferTagFactory::resetUsedTags();
+        \Database\Factories\ArticleFactory::resetUsedSlugs();
+
         // 1. Seed Villages first
         $this->command->info('Seeding villages...');
         $villages = $this->seedVillages();
@@ -186,21 +197,37 @@ class CompleteSeeder extends Seeder
         $categories = collect();
 
         foreach ($villages as $village) {
-            // Create product categories
-            $productCategories = Category::factory()
-                ->count(rand(3, 5))
-                ->forVillage($village)
-                ->product()
-                ->create();
+            $this->command->info("Creating categories for village: {$village->name}");
 
-            // Create service categories
-            $serviceCategories = Category::factory()
-                ->count(rand(2, 4))
-                ->forVillage($village)
-                ->service()
-                ->create();
+            // Create product categories (ensure unique names per village)
+            $productCount = rand(3, 5);
+            for ($i = 0; $i < $productCount; $i++) {
+                try {
+                    $category = Category::factory()
+                        ->forVillage($village)
+                        ->product()
+                        ->create();
+                    $categories->push($category);
+                } catch (\Exception $e) {
+                    // Skip if duplicate (shouldn't happen with improved factory)
+                    $this->command->warn("Skipped duplicate product category for {$village->name}");
+                }
+            }
 
-            $categories = $categories->merge($productCategories)->merge($serviceCategories);
+            // Create service categories (ensure unique names per village)
+            $serviceCount = rand(2, 4);
+            for ($i = 0; $i < $serviceCount; $i++) {
+                try {
+                    $category = Category::factory()
+                        ->forVillage($village)
+                        ->service()
+                        ->create();
+                    $categories->push($category);
+                } catch (\Exception $e) {
+                    // Skip if duplicate (shouldn't happen with improved factory)
+                    $this->command->warn("Skipped duplicate service category for {$village->name}");
+                }
+            }
         }
 
         return $categories;
@@ -287,6 +314,7 @@ class CompleteSeeder extends Seeder
             // Get categories for the same village as the SME
             $smeCategories = $categories->where('village_id', $sme->community->village_id);
             if ($smeCategories->isEmpty()) {
+                $this->command->warn("No categories found for village {$sme->community->village->name}. Skipping SME {$sme->name}");
                 continue; // Skip if no categories available
             }
 
@@ -297,12 +325,14 @@ class CompleteSeeder extends Seeder
                     ->create();
 
                 // Attach random tags (1-4 tags per offer)
-                $randomTags = $tags->random(rand(1, 4));
-                $offer->tags()->attach($randomTags->pluck('id'));
+                if ($tags->isNotEmpty()) {
+                    $randomTags = $tags->random(rand(1, min(4, $tags->count())));
+                    $offer->tags()->attach($randomTags->pluck('id'));
 
-                // Update tag usage counts
-                foreach ($randomTags as $tag) {
-                    $tag->increment('usage_count');
+                    // Update tag usage counts
+                    foreach ($randomTags as $tag) {
+                        $tag->increment('usage_count');
+                    }
                 }
 
                 $offers->push($offer);

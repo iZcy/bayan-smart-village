@@ -13,6 +13,8 @@ class CategoryFactory extends Factory
 {
     protected $model = Category::class;
 
+    private static $usedCategories = [];
+
     public function definition(): array
     {
         $productCategories = [
@@ -26,6 +28,11 @@ class CategoryFactory extends Factory
             'Produk Perikanan' => 'heroicon-o-fish',
             'Olahan Susu' => 'heroicon-o-milk',
             'Rempah-rempah' => 'heroicon-o-fire',
+            'Batik & Tenun' => 'heroicon-o-sparkles',
+            'Anyaman & Rotan' => 'heroicon-o-squares-2x2',
+            'Ukiran Kayu' => 'heroicon-o-cube-transparent',
+            'Produk Bambu' => 'heroicon-o-building-office-2',
+            'Kopi & Teh' => 'heroicon-o-coffee-cup',
         ];
 
         $serviceCategories = [
@@ -39,20 +46,56 @@ class CategoryFactory extends Factory
             'Jasa Konstruksi' => 'heroicon-o-hammer',
             'Pendidikan & Pelatihan' => 'heroicon-o-academic-cap',
             'Jasa Keuangan' => 'heroicon-o-banknotes',
+            'Jasa Laundry' => 'heroicon-o-sparkles',
+            'Jasa Repair' => 'heroicon-o-wrench',
+            'Event Organizer' => 'heroicon-o-calendar-days',
+            'Konsultasi' => 'heroicon-o-chat-bubble-left-right',
+            'Jasa Cleaning' => 'heroicon-o-swatch',
         ];
 
         $type = $this->faker->randomElement(['product', 'service']);
         $categories = $type === 'product' ? $productCategories : $serviceCategories;
-        $name = $this->faker->randomElement(array_keys($categories));
+
+        // Get a unique name for this village
+        $villageId = $this->faker->randomElement(Village::pluck('id')->toArray() ?: [Village::factory()->create()->id]);
+        $name = $this->getUniqueNameForVillage($villageId, $categories);
         $icon = $categories[$name];
 
         return [
-            'village_id' => Village::factory(),
+            'village_id' => $villageId,
             'name' => $name,
             'type' => $type,
             'description' => $this->faker->sentence(),
             'icon' => $icon,
         ];
+    }
+
+    /**
+     * Get a unique category name for a specific village.
+     */
+    private function getUniqueNameForVillage(string $villageId, array $categories): string
+    {
+        // Initialize village key if not exists
+        if (!isset(self::$usedCategories[$villageId])) {
+            self::$usedCategories[$villageId] = [];
+        }
+
+        // Get available categories for this village
+        $availableCategories = array_diff(array_keys($categories), self::$usedCategories[$villageId]);
+
+        // If no available categories, reset and start over (shouldn't happen in normal use)
+        if (empty($availableCategories)) {
+            self::$usedCategories[$villageId] = [];
+            $availableCategories = array_keys($categories);
+        }
+
+        // Pick a random available category
+        $selectedName = $this->faker->randomElement($availableCategories);
+
+        // Mark it as used for this village
+        self::$usedCategories[$villageId][] = $selectedName;
+
+        return $selectedName;
     }
 
     /**
@@ -79,16 +122,25 @@ class CategoryFactory extends Factory
             'Keramik & Gerabah' => 'heroicon-o-beaker',
             'Produk Pertanian' => 'heroicon-o-leaf',
             'Produk Perikanan' => 'heroicon-o-fish',
+            'Batik & Tenun' => 'heroicon-o-sparkles',
+            'Anyaman & Rotan' => 'heroicon-o-squares-2x2',
+            'Ukiran Kayu' => 'heroicon-o-cube-transparent',
+            'Produk Bambu' => 'heroicon-o-building-office-2',
+            'Kopi & Teh' => 'heroicon-o-coffee-cup',
         ];
 
-        $name = $this->faker->randomElement(array_keys($productCategories));
-        $icon = $productCategories[$name];
+        return $this->state(function (array $attributes) use ($productCategories) {
+            $villageId = $attributes['village_id'] ?? Village::factory()->create()->id;
+            $name = $this->getUniqueNameForVillage($villageId, $productCategories);
+            $icon = $productCategories[$name];
 
-        return $this->state(fn(array $attributes) => [
-            'name' => $name,
-            'type' => 'product',
-            'icon' => $icon,
-        ]);
+            return [
+                'name' => $name,
+                'type' => 'product',
+                'icon' => $icon,
+                'village_id' => $villageId,
+            ];
+        });
     }
 
     /**
@@ -105,15 +157,32 @@ class CategoryFactory extends Factory
             'Spa & Wellness' => 'heroicon-o-heart',
             'Jasa Pertanian' => 'heroicon-o-wrench-screwdriver',
             'Pendidikan & Pelatihan' => 'heroicon-o-academic-cap',
+            'Jasa Laundry' => 'heroicon-o-sparkles',
+            'Jasa Repair' => 'heroicon-o-wrench',
+            'Event Organizer' => 'heroicon-o-calendar-days',
+            'Konsultasi' => 'heroicon-o-chat-bubble-left-right',
+            'Jasa Cleaning' => 'heroicon-o-swatch',
         ];
 
-        $name = $this->faker->randomElement(array_keys($serviceCategories));
-        $icon = $serviceCategories[$name];
+        return $this->state(function (array $attributes) use ($serviceCategories) {
+            $villageId = $attributes['village_id'] ?? Village::factory()->create()->id;
+            $name = $this->getUniqueNameForVillage($villageId, $serviceCategories);
+            $icon = $serviceCategories[$name];
 
-        return $this->state(fn(array $attributes) => [
-            'name' => $name,
-            'type' => 'service',
-            'icon' => $icon,
-        ]);
+            return [
+                'name' => $name,
+                'type' => 'service',
+                'icon' => $icon,
+                'village_id' => $villageId,
+            ];
+        });
+    }
+
+    /**
+     * Reset used categories tracker (useful for testing).
+     */
+    public static function resetUsedCategories(): void
+    {
+        self::$usedCategories = [];
     }
 }

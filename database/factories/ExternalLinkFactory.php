@@ -16,6 +16,8 @@ class ExternalLinkFactory extends Factory
 {
     protected $model = ExternalLink::class;
 
+    private static $usedSlugs = [];
+
     public function definition(): array
     {
         $linkTypes = [
@@ -25,26 +27,33 @@ class ExternalLinkFactory extends Factory
                 'YouTube Channel' => 'https://youtube.com/c/' . $this->faker->userName(),
                 'TikTok Official' => 'https://tiktok.com/@' . $this->faker->userName(),
                 'WhatsApp Business' => 'https://wa.me/' . $this->faker->numerify('62###########'),
+                'Twitter Account' => 'https://twitter.com/' . $this->faker->userName(),
+                'LinkedIn Page' => 'https://linkedin.com/company/' . $this->faker->userName(),
             ],
             'marketplace' => [
                 'Toko Tokopedia' => 'https://tokopedia.com/shop/' . $this->faker->userName(),
                 'Shopee Store' => 'https://shopee.co.id/shop/' . $this->faker->userName(),
                 'Bukalapak Store' => 'https://bukalapak.com/u/' . $this->faker->userName(),
                 'TikTok Shop' => 'https://shop.tiktok.com/' . $this->faker->userName(),
+                'Lazada Store' => 'https://lazada.co.id/shop/' . $this->faker->userName(),
+                'Blibli Store' => 'https://blibli.com/merchant/' . $this->faker->userName(),
             ],
             'booking' => [
                 'Booking Homestay' => 'https://booking.com/hotel/' . $this->faker->slug(),
                 'Airbnb Listing' => 'https://airbnb.com/rooms/' . $this->faker->numerify('########'),
                 'Traveloka Hotel' => 'https://traveloka.com/hotel/' . $this->faker->slug(),
+                'Agoda Booking' => 'https://agoda.com/hotel/' . $this->faker->slug(),
             ],
             'maps' => [
                 'Lokasi di Google Maps' => 'https://maps.google.com/place/' . $this->faker->slug(),
                 'Alamat Lengkap' => 'https://goo.gl/maps/' . $this->faker->regexify('[A-Za-z0-9]{12}'),
+                'Waze Location' => 'https://waze.com/ul/' . $this->faker->regexify('[A-Za-z0-9]{10}'),
             ],
             'website' => [
                 'Website Resmi' => 'https://' . $this->faker->domainName(),
                 'Blog Resmi' => 'https://blog.' . $this->faker->domainName(),
                 'Portal Informasi' => 'https://info.' . $this->faker->domainName(),
+                'Online Catalog' => 'https://catalog.' . $this->faker->domainName(),
             ]
         ];
 
@@ -59,19 +68,30 @@ class ExternalLinkFactory extends Factory
             'YouTube Channel' => 'heroicon-o-play',
             'TikTok Official' => 'heroicon-o-musical-note',
             'WhatsApp Business' => 'heroicon-o-chat-bubble-left-right',
+            'Twitter Account' => 'heroicon-o-at-symbol',
+            'LinkedIn Page' => 'heroicon-o-briefcase',
             'Toko Tokopedia' => 'heroicon-o-shopping-bag',
             'Shopee Store' => 'heroicon-o-shopping-cart',
             'Bukalapak Store' => 'heroicon-o-building-storefront',
             'TikTok Shop' => 'heroicon-o-gift',
+            'Lazada Store' => 'heroicon-o-truck',
+            'Blibli Store' => 'heroicon-o-cube',
             'Booking Homestay' => 'heroicon-o-home',
             'Airbnb Listing' => 'heroicon-o-building-office',
             'Traveloka Hotel' => 'heroicon-o-map-pin',
+            'Agoda Booking' => 'heroicon-o-calendar-days',
             'Lokasi di Google Maps' => 'heroicon-o-map',
             'Alamat Lengkap' => 'heroicon-o-map-pin',
+            'Waze Location' => 'heroicon-o-map-pin',
             'Website Resmi' => 'heroicon-o-globe-alt',
             'Blog Resmi' => 'heroicon-o-document-text',
             'Portal Informasi' => 'heroicon-o-information-circle',
+            'Online Catalog' => 'heroicon-o-book-open',
         ];
+
+        // Generate unique slug
+        $baseSlug = Str::slug($label . '-' . $this->faker->word());
+        $slug = $this->generateUniqueSlug('general', $baseSlug);
 
         return [
             'village_id' => $this->faker->optional(0.4)->randomElement(Village::pluck('id')->toArray() ?: [Village::factory()->create()->id]),
@@ -80,7 +100,7 @@ class ExternalLinkFactory extends Factory
             'label' => $label,
             'url' => $url,
             'icon' => $icons[$label] ?? 'heroicon-o-link',
-            'slug' => Str::slug($label . '-' . $this->faker->word()),
+            'slug' => $slug,
             'sort_order' => $this->faker->numberBetween(0, 100),
             'description' => $this->faker->optional(0.6)->sentence(),
             'click_count' => $this->faker->numberBetween(0, 500),
@@ -90,15 +110,46 @@ class ExternalLinkFactory extends Factory
     }
 
     /**
+     * Generate unique slug for the appropriate scope.
+     */
+    private function generateUniqueSlug(string $scope, string $baseSlug): string
+    {
+        $slug = $baseSlug;
+        $counter = 1;
+
+        // Initialize scope key if not exists
+        if (!isset(self::$usedSlugs[$scope])) {
+            self::$usedSlugs[$scope] = [];
+        }
+
+        // Keep trying until we get a unique slug
+        while (in_array($slug, self::$usedSlugs[$scope])) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        // Mark slug as used for this scope
+        self::$usedSlugs[$scope][] = $slug;
+
+        return $slug;
+    }
+
+    /**
      * Indicate that the link belongs to a specific village.
      */
     public function forVillage(Village $village): static
     {
-        return $this->state(fn(array $attributes) => [
-            'village_id' => $village->id,
-            'community_id' => null,
-            'sme_id' => null,
-        ]);
+        return $this->state(function (array $attributes) use ($village) {
+            $baseSlug = Str::slug($attributes['label'] . '-' . $this->faker->word());
+            $slug = $this->generateUniqueSlug('village-' . $village->id, $baseSlug);
+
+            return [
+                'village_id' => $village->id,
+                'community_id' => null,
+                'sme_id' => null,
+                'slug' => $slug,
+            ];
+        });
     }
 
     /**
@@ -106,11 +157,17 @@ class ExternalLinkFactory extends Factory
      */
     public function forCommunity(Community $community): static
     {
-        return $this->state(fn(array $attributes) => [
-            'village_id' => null,
-            'community_id' => $community->id,
-            'sme_id' => null,
-        ]);
+        return $this->state(function (array $attributes) use ($community) {
+            $baseSlug = Str::slug($attributes['label'] . '-' . $this->faker->word());
+            $slug = $this->generateUniqueSlug('community-' . $community->id, $baseSlug);
+
+            return [
+                'village_id' => null,
+                'community_id' => $community->id,
+                'sme_id' => null,
+                'slug' => $slug,
+            ];
+        });
     }
 
     /**
@@ -118,11 +175,17 @@ class ExternalLinkFactory extends Factory
      */
     public function forSme(Sme $sme): static
     {
-        return $this->state(fn(array $attributes) => [
-            'village_id' => null,
-            'community_id' => null,
-            'sme_id' => $sme->id,
-        ]);
+        return $this->state(function (array $attributes) use ($sme) {
+            $baseSlug = Str::slug($attributes['label'] . '-' . $this->faker->word());
+            $slug = $this->generateUniqueSlug('sme-' . $sme->id, $baseSlug);
+
+            return [
+                'village_id' => null,
+                'community_id' => null,
+                'sme_id' => $sme->id,
+                'slug' => $slug,
+            ];
+        });
     }
 
     /**
@@ -142,6 +205,10 @@ class ExternalLinkFactory extends Factory
             'WhatsApp Business' => [
                 'url' => 'https://wa.me/' . $this->faker->numerify('62###########'),
                 'icon' => 'heroicon-o-chat-bubble-left-right'
+            ],
+            'TikTok Official' => [
+                'url' => 'https://tiktok.com/@' . $this->faker->userName(),
+                'icon' => 'heroicon-o-musical-note'
             ],
         ];
 
@@ -168,6 +235,10 @@ class ExternalLinkFactory extends Factory
             'Shopee Store' => [
                 'url' => 'https://shopee.co.id/shop/' . $this->faker->userName(),
                 'icon' => 'heroicon-o-shopping-cart'
+            ],
+            'TikTok Shop' => [
+                'url' => 'https://shop.tiktok.com/' . $this->faker->userName(),
+                'icon' => 'heroicon-o-gift'
             ],
         ];
 
@@ -209,5 +280,13 @@ class ExternalLinkFactory extends Factory
         return $this->state(fn(array $attributes) => [
             'expires_at' => null,
         ]);
+    }
+
+    /**
+     * Reset used slugs tracker (useful for testing).
+     */
+    public static function resetUsedSlugs(): void
+    {
+        self::$usedSlugs = [];
     }
 }

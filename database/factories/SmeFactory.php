@@ -15,6 +15,8 @@ class SmeFactory extends Factory
 {
     protected $model = Sme::class;
 
+    private static $usedSlugs = [];
+
     public function definition(): array
     {
         $productBusinesses = [
@@ -29,7 +31,15 @@ class SmeFactory extends Factory
             'Keripik Singkong Gurih',
             'Anyaman Pandan Kreatif',
             'Ukiran Kayu Artistik',
-            'Songket Emas'
+            'Songket Emas',
+            'Rempah Tradisional',
+            'Gula Aren Murni',
+            'Teh Herbal Alami',
+            'Kain Tenun Ikat',
+            'Patung Kayu Jati',
+            'Tas Rajut Handmade',
+            'Aksesoris Perak',
+            'Minyak Kelapa Murni'
         ];
 
         $serviceBusinesses = [
@@ -44,18 +54,32 @@ class SmeFactory extends Factory
             'Salon Kecantikan Modern',
             'Catering Masakan Daerah',
             'Laundry Kilat Bersih',
-            'Kursus Bahasa Inggris'
+            'Kursus Bahasa Inggris',
+            'Jasa Pijat Refleksi',
+            'Tour Guide Profesional',
+            'Rental Motor Harian',
+            'Warung Kopi Tradisional',
+            'Jasa Dokumentasi Event',
+            'Kursus Mengemudi',
+            'Jasa Cleaning Service',
+            'Warung Soto Ayam'
         ];
 
         $type = $this->faker->randomElement(['product', 'service']);
         $businesses = $type === 'product' ? $productBusinesses : $serviceBusinesses;
-        $name = $this->faker->randomElement($businesses);
+
+        // Get community ID (will be overridden by state methods)
+        $communityId = Community::factory()->create()->id;
+
+        // Get unique name and slug for this community
+        $name = $this->getUniqueNameForCommunity($communityId, $businesses);
+        $slug = $this->generateUniqueSlug($communityId, $name);
 
         return [
-            'community_id' => Community::factory(),
-            'place_id' => $this->faker->optional(0.4)->randomElement(Place::pluck('id')->toArray() ?: [Place::factory()->create()->id]),
+            'community_id' => $communityId,
+            'place_id' => $this->faker->optional(0.4)->randomElement(Place::pluck('id')->toArray() ?: [null]),
             'name' => $name,
-            'slug' => Str::slug($name),
+            'slug' => $slug,
             'description' => $this->faker->paragraphs(2, true),
             'type' => $type,
             'owner_name' => $this->faker->name(),
@@ -77,13 +101,108 @@ class SmeFactory extends Factory
     }
 
     /**
+     * Get a unique business name for a specific community.
+     */
+    private function getUniqueNameForCommunity(string $communityId, array $businesses): string
+    {
+        // Initialize community key if not exists
+        if (!isset(self::$usedSlugs[$communityId])) {
+            self::$usedSlugs[$communityId] = [];
+        }
+
+        // Get available business names for this community
+        $usedNames = array_map(function ($slug) {
+            return str_replace('-', ' ', ucwords($slug, ' -'));
+        }, self::$usedSlugs[$communityId]);
+
+        $availableBusinesses = array_diff($businesses, $usedNames);
+
+        // If no available business names, add random suffix to existing ones
+        if (empty($availableBusinesses)) {
+            $baseName = $this->faker->randomElement($businesses);
+            $suffix = $this->faker->randomElement(['Sejahtera', 'Mandiri', 'Bersama', 'Makmur', 'Jaya', 'Sukses', 'Berkah', 'Sentosa']);
+            return $baseName . ' ' . $suffix;
+        }
+
+        // Pick a random available business name
+        return $this->faker->randomElement($availableBusinesses);
+    }
+
+    /**
+     * Generate unique slug for community.
+     */
+    private function generateUniqueSlug(string $communityId, string $name): string
+    {
+        $baseSlug = Str::slug($name);
+        $slug = $baseSlug;
+        $counter = 1;
+
+        // Initialize community key if not exists
+        if (!isset(self::$usedSlugs[$communityId])) {
+            self::$usedSlugs[$communityId] = [];
+        }
+
+        // Keep trying until we get a unique slug
+        while (in_array($slug, self::$usedSlugs[$communityId])) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        // Mark slug as used for this community
+        self::$usedSlugs[$communityId][] = $slug;
+
+        return $slug;
+    }
+
+    /**
      * Indicate that the SME belongs to a specific community.
      */
     public function forCommunity(Community $community): static
     {
-        return $this->state(fn(array $attributes) => [
-            'community_id' => $community->id,
-        ]);
+        return $this->state(function (array $attributes) use ($community) {
+            // Get unique name and slug for this specific community
+            $type = $attributes['type'] ?? 'product';
+
+            $productBusinesses = [
+                'Kerajinan Bambu Berkah',
+                'Tenun Indah Nusantara',
+                'Batik Tulis Asli',
+                'Keramik Cantik Desa',
+                'Madu Murni Pegunungan',
+                'Kopi Arabika Premium',
+                'Dodol Khas Daerah',
+                'Emping Melinjo Crispy',
+                'Keripik Singkong Gurih',
+                'Anyaman Pandan Kreatif',
+                'Ukiran Kayu Artistik',
+                'Songket Emas'
+            ];
+
+            $serviceBusinesses = [
+                'Wisata Desa Adventure',
+                'Homestay Keluarga Bahagia',
+                'Warung Nasi Gudeg Bu Sri',
+                'Ojek Wisata Friendly',
+                'Jasa Foto Prewedding',
+                'Spa Tradisional Sehat',
+                'Pelatihan Kerajinan Lokal',
+                'Bengkel Motor Jujur',
+                'Salon Kecantikan Modern',
+                'Catering Masakan Daerah',
+                'Laundry Kilat Bersih',
+                'Kursus Bahasa Inggris'
+            ];
+
+            $businesses = $type === 'product' ? $productBusinesses : $serviceBusinesses;
+            $name = $this->getUniqueNameForCommunity($community->id, $businesses);
+            $slug = $this->generateUniqueSlug($community->id, $name);
+
+            return [
+                'community_id' => $community->id,
+                'name' => $name,
+                'slug' => $slug,
+            ];
+        });
     }
 
     /**
@@ -101,20 +220,7 @@ class SmeFactory extends Factory
      */
     public function product(): static
     {
-        $productBusinesses = [
-            'Kerajinan Bambu Berkah',
-            'Tenun Indah Nusantara',
-            'Batik Tulis Asli',
-            'Keramik Cantik Desa',
-            'Madu Murni Pegunungan',
-            'Kopi Arabika Premium',
-            'Dodol Khas Daerah',
-            'Emping Melinjo Crispy',
-            'Keripik Singkong Gurih'
-        ];
-
         return $this->state(fn(array $attributes) => [
-            'name' => $this->faker->randomElement($productBusinesses),
             'type' => 'product',
         ]);
     }
@@ -124,20 +230,7 @@ class SmeFactory extends Factory
      */
     public function service(): static
     {
-        $serviceBusinesses = [
-            'Wisata Desa Adventure',
-            'Homestay Keluarga Bahagia',
-            'Warung Nasi Gudeg Bu Sri',
-            'Ojek Wisata Friendly',
-            'Jasa Foto Prewedding',
-            'Spa Tradisional Sehat',
-            'Pelatihan Kerajinan Lokal',
-            'Bengkel Motor Jujur',
-            'Salon Kecantikan Modern'
-        ];
-
         return $this->state(fn(array $attributes) => [
-            'name' => $this->faker->randomElement($serviceBusinesses),
             'type' => 'service',
         ]);
     }
@@ -180,5 +273,13 @@ class SmeFactory extends Factory
         return $this->state(fn(array $attributes) => [
             'is_active' => false,
         ]);
+    }
+
+    /**
+     * Reset used slugs tracker (useful for testing).
+     */
+    public static function resetUsedSlugs(): void
+    {
+        self::$usedSlugs = [];
     }
 }
