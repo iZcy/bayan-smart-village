@@ -1,45 +1,50 @@
 <?php
 
+// Model: Image.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Image extends Model
 {
-    use HasUuids, HasFactory;
+    use HasUuids;
 
     protected $fillable = [
         'village_id',
+        'community_id',
+        'sme_id',
         'place_id',
         'image_url',
-        'caption'
+        'caption',
+        'alt_text',
+        'sort_order',
+        'is_featured'
     ];
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::saving(function ($image) {
-            // Auto-assign village_id based on place_id if not set
-            if (!$image->village_id && $image->place_id) {
-                $place = SmeTourismPlace::find($image->place_id);
-                if ($place && $place->village_id) {
-                    $image->village_id = $place->village_id;
-                }
-            }
-        });
-    }
+    protected $casts = [
+        'sort_order' => 'integer',
+        'is_featured' => 'boolean',
+    ];
 
     public function village(): BelongsTo
     {
         return $this->belongsTo(Village::class);
     }
 
+    public function community(): BelongsTo
+    {
+        return $this->belongsTo(Community::class);
+    }
+
+    public function sme(): BelongsTo
+    {
+        return $this->belongsTo(Sme::class);
+    }
+
     public function place(): BelongsTo
     {
-        return $this->belongsTo(SmeTourismPlace::class, 'place_id');
+        return $this->belongsTo(Place::class, 'place_id');
     }
 }

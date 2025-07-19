@@ -1,53 +1,52 @@
 <?php
 
-// Model: Village.php
+// Model: Sme.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Village extends Model
+class Sme extends Model
 {
     use HasUuids;
 
     protected $fillable = [
+        'community_id',
+        'place_id',
         'name',
         'slug',
         'description',
-        'domain',
-        'latitude',
-        'longitude',
-        'phone_number',
-        'email',
-        'address',
-        'image_url',
-        'settings',
-        'is_active',
-        'established_at'
+        'type',
+        'owner_name',
+        'contact_phone',
+        'contact_email',
+        'logo_url',
+        'business_hours',
+        'is_verified',
+        'is_active'
     ];
 
     protected $casts = [
-        'settings' => 'array',
+        'business_hours' => 'array',
+        'is_verified' => 'boolean',
         'is_active' => 'boolean',
-        'established_at' => 'datetime',
-        'latitude' => 'decimal:8',
-        'longitude' => 'decimal:8',
     ];
 
-    public function communities(): HasMany
+    public function community(): BelongsTo
     {
-        return $this->hasMany(Community::class);
+        return $this->belongsTo(Community::class);
     }
 
-    public function places(): HasMany
+    public function place(): BelongsTo
     {
-        return $this->hasMany(Place::class);
+        return $this->belongsTo(Place::class, 'place_id');
     }
 
-    public function categories(): HasMany
+    public function offers(): HasMany
     {
-        return $this->hasMany(Category::class);
+        return $this->hasMany(Offer::class);
     }
 
     public function articles(): HasMany

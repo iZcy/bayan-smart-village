@@ -1,53 +1,42 @@
 <?php
 
-// Model: Village.php
+// Model: Community.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Village extends Model
+class Community extends Model
 {
     use HasUuids;
 
     protected $fillable = [
+        'village_id',
         'name',
         'slug',
         'description',
         'domain',
-        'latitude',
-        'longitude',
-        'phone_number',
-        'email',
-        'address',
-        'image_url',
-        'settings',
-        'is_active',
-        'established_at'
+        'logo_url',
+        'contact_person',
+        'contact_phone',
+        'contact_email',
+        'is_active'
     ];
 
     protected $casts = [
-        'settings' => 'array',
         'is_active' => 'boolean',
-        'established_at' => 'datetime',
-        'latitude' => 'decimal:8',
-        'longitude' => 'decimal:8',
     ];
 
-    public function communities(): HasMany
+    public function village(): BelongsTo
     {
-        return $this->hasMany(Community::class);
+        return $this->belongsTo(Village::class);
     }
 
-    public function places(): HasMany
+    public function smes(): HasMany
     {
-        return $this->hasMany(Place::class);
-    }
-
-    public function categories(): HasMany
-    {
-        return $this->hasMany(Category::class);
+        return $this->hasMany(Sme::class);
     }
 
     public function articles(): HasMany
