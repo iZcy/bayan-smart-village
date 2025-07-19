@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\ExternalLinkController;
-use App\Http\Controllers\ProductController;
+use App\Http\Controllers\OfferController;
 use App\Http\Controllers\StuntingCalculatorController;
 use App\Http\Controllers\VillagePageController;
 use App\Http\Middleware\ResolveVillageSubdomain;
@@ -20,32 +20,32 @@ Route::domain($baseDomain)->group(function () {
         Route::post('/calculate', [StuntingCalculatorController::class, 'calculate'])->name('calculate');
     });
 
-    // // Short link redirect for apex domain
-    // Route::get('/l/{slug}', [ExternalLinkController::class, 'redirect'])
-    //     ->name('short-link.redirect');
+    // Short link redirect for apex domain
+    Route::get('/l/{slug}', [ExternalLinkController::class, 'redirect'])
+        ->name('short-link.redirect');
 
-    // // API routes for programmatic access
-    // Route::prefix('api/links')->name('api.links.')->group(function () {
-    //     Route::get('/', [ExternalLinkController::class, 'index'])->name('index');
-    //     Route::post('/', [ExternalLinkController::class, 'store'])->name('store');
-    //     Route::get('/domain', [ExternalLinkController::class, 'domainLinks'])->name('domain');
-    //     Route::get('/{village}/{slug}/stats', [ExternalLinkController::class, 'stats'])->name('stats');
-    // });
+    // API routes for programmatic access
+    Route::prefix('api/links')->name('api.links.')->group(function () {
+        Route::get('/', [ExternalLinkController::class, 'index'])->name('index');
+        Route::post('/', [ExternalLinkController::class, 'store'])->name('store');
+        Route::get('/domain', [ExternalLinkController::class, 'domainLinks'])->name('domain');
+        Route::get('/{village}/{slug}/stats', [ExternalLinkController::class, 'stats'])->name('stats');
+    });
 
-    // // Public product routes
-    // Route::prefix('products')->name('products.')->group(function () {
-    //     Route::get('/', [ProductController::class, 'index'])->name('index');
-    //     Route::get('/featured', [ProductController::class, 'featured'])->name('featured');
-    //     Route::get('/categories', [ProductController::class, 'categories'])->name('categories');
-    //     Route::get('/tags', [ProductController::class, 'tags'])->name('tags');
-    //     Route::get('/search', [ProductController::class, 'search'])->name('search');
-    //     Route::get('/stats', [ProductController::class, 'stats'])->name('stats');
-    //     Route::get('/{slug}', [ProductController::class, 'show'])->name('show');
-    // });
+    // Public product routes
+    Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/', [OfferController::class, 'index'])->name('index');
+        Route::get('/featured', [OfferController::class, 'featured'])->name('featured');
+        Route::get('/categories', [OfferController::class, 'categories'])->name('categories');
+        Route::get('/tags', [OfferController::class, 'tags'])->name('tags');
+        Route::get('/search', [OfferController::class, 'search'])->name('search');
+        Route::get('/stats', [OfferController::class, 'stats'])->name('stats');
+        Route::get('/{slug}', [OfferController::class, 'show'])->name('show');
+    });
 
-    // // Product e-commerce link tracking
-    // Route::post('/products/{product}/links/{link}/click', [ProductController::class, 'trackLinkClick'])
-    //     ->name('products.link.click');
+    // Product e-commerce link tracking
+    Route::post('/products/{product}/links/{link}/click', [OfferController::class, 'trackLinkClick'])
+        ->name('products.link.click');
 
     // Fallback to Filament admin
     Route::fallback(function () {
@@ -55,154 +55,299 @@ Route::domain($baseDomain)->group(function () {
 
 // Routes for village subdomains (e.g., village-name.kecamatanbayan.id)
 Route::domain('{village}.' . $baseDomain)
-    // ->middleware([ResolveVillageSubdomain::class])
+    ->middleware([ResolveVillageSubdomain::class])
     ->group(function () {
-        // // Village homepage
-        // Route::get('/', [VillagePageController::class, 'home'])->name('village.home');
+        // Village homepage
+        Route::get('/', [VillagePageController::class, 'home'])->name('village.home');
 
-        // // Articles - Updated to use slugs
-        // Route::get('/articles', [VillagePageController::class, 'articles'])->name('village.articles');
-        // Route::get('/articles/{slug}', [VillagePageController::class, 'articleShow'])->name('village.articles.show');
+        // Articles
+        Route::prefix('articles')->name('village.articles.')->group(function () {
+            Route::get('/', [VillagePageController::class, 'articles'])->name('index');
+            Route::get('/{slug}', [VillagePageController::class, 'articleShow'])->name('show');
+        });
 
-        // // Products - Already using slugs
-        // Route::get('/products', [VillagePageController::class, 'products'])->name('village.products');
-        // Route::get('/products/{slug}', [VillagePageController::class, 'productShow'])->name('village.products.show');
+        // Products (Offers)
+        Route::prefix('products')->name('village.products.')->group(function () {
+            Route::get('/', [VillagePageController::class, 'products'])->name('index');
+            Route::get('/{slug}', [VillagePageController::class, 'productShow'])->name('show');
+        });
 
-        // // Places - Updated to use slugs
-        // Route::get('/places', [VillagePageController::class, 'places'])->name('village.places');
-        // Route::get('/places/{slug}', [VillagePageController::class, 'placeShow'])->name('village.places.show');
+        // Places
+        Route::prefix('places')->name('village.places.')->group(function () {
+            Route::get('/', [VillagePageController::class, 'places'])->name('index');
+            Route::get('/{slug}', [VillagePageController::class, 'placeShow'])->name('show');
+        });
 
-        // // Gallery
-        // Route::get('/gallery', [VillagePageController::class, 'gallery'])->name('village.gallery');
+        // Gallery
+        Route::get('/gallery', [VillagePageController::class, 'gallery'])->name('village.gallery');
 
-        // // Short link redirect for village subdomains
-        // Route::get('/l/{slug}', function (Request $request, $slug) {
-        //     Log::info('Route parameters debug', [
-        //         'slug_from_route' => $slug,
-        //         'path' => $request->path(),
-        //         'all_route_params' => $request->route()->parameters(),
-        //         'route_param_names' => array_keys($request->route()->parameters()),
-        //     ]);
+        // Short link redirect for village subdomains
+        Route::get('/l/{slug}', function (Request $request, $slug) {
+            Log::info('Village route parameters debug', [
+                'slug_from_route' => $slug,
+                'path' => $request->path(),
+                'all_route_params' => $request->route()->parameters(),
+                'route_param_names' => array_keys($request->route()->parameters()),
+                'village' => $request->attributes->get('village')?->name,
+            ]);
 
-        //     return app(ExternalLinkController::class)->redirect($request, $slug);
-        // })->name('village.short-link.redirect');
+            return app(ExternalLinkController::class)->redirect($request, $slug);
+        })->name('village.short-link.redirect');
 
-        // // Village-specific API
-        // Route::prefix('api')->name('village.api.')->group(function () {
-        //     Route::get('/links', [ExternalLinkController::class, 'domainLinks'])->name('links');
-        //     Route::get('/products', [ProductController::class, 'villageProducts'])->name('products');
-        //     Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
-        //     Route::post('/products/{product}/links/{link}/click', [ProductController::class, 'trackLinkClick'])->name('products.link.click');
+        // Village-specific API
+        Route::prefix('api')->name('village.api.')->group(function () {
+            // External links
+            Route::get('/links', [ExternalLinkController::class, 'domainLinks'])->name('links');
 
-        //     Route::get('/places', function (Request $request) {
-        //         $village = $request->attributes->get('village');
-        //         if (!$village) {
-        //             abort(404, 'Village not found');
-        //         }
+            // Products
+            Route::get('/products', [OfferController::class, 'villageProducts'])->name('products');
+            Route::get('/products/{slug}', [OfferController::class, 'show'])->name('products.show');
+            Route::post('/products/{product}/links/{link}/click', [OfferController::class, 'trackLinkClick'])
+                ->name('products.link.click');
 
-        //         $places = $village->places()->with('category')->get();
+            // Places
+            Route::get('/places', function (Request $request) {
+                $village = $request->attributes->get('village');
+                if (!$village) {
+                    abort(404, 'Village not found');
+                }
 
-        //         return response()->json([
-        //             'village' => $village->name,
-        //             'places' => $places->map(function ($place) {
-        //                 return [
-        //                     'id' => $place->id,
-        //                     'name' => $place->name,
-        //                     'slug' => $place->slug,
-        //                     'description' => $place->description,
-        //                     'category' => $place->category->name,
-        //                     'phone_number' => $place->phone_number,
-        //                     'image_url' => $place->image_url,
-        //                 ];
-        //             })
-        //         ]);
-        //     })->name('places');
+                $places = $village->places()->with(['images' => function ($query) {
+                    $query->where('is_featured', true)->take(1);
+                }])->get();
 
-        //     Route::get('/articles', function (Request $request) {
-        //         $village = $request->attributes->get('village');
-        //         if (!$village) {
-        //             abort(404, 'Village not found');
-        //         }
+                return response()->json([
+                    'village' => $village->name,
+                    'places' => $places->map(function ($place) {
+                        return [
+                            'id' => $place->id,
+                            'name' => $place->name,
+                            'slug' => $place->slug,
+                            'description' => $place->description,
+                            'address' => $place->address,
+                            'phone_number' => $place->phone_number,
+                            'image_url' => $place->image_url,
+                            'latitude' => $place->latitude,
+                            'longitude' => $place->longitude,
+                            'featured_image' => $place->images->first()?->image_url,
+                            'custom_fields' => $place->custom_fields,
+                        ];
+                    })
+                ]);
+            })->name('places');
 
-        //         $articles = $village->articles()->with('place')->latest()->get();
+            // Articles
+            Route::get('/articles', function (Request $request) {
+                $village = $request->attributes->get('village');
+                if (!$village) {
+                    abort(404, 'Village not found');
+                }
 
-        //         return response()->json([
-        //             'village' => $village->name,
-        //             'articles' => $articles->map(function ($article) {
-        //                 return [
-        //                     'id' => $article->id,
-        //                     'title' => $article->title,
-        //                     'slug' => $article->slug,
-        //                     'excerpt' => $article->excerpt,
-        //                     'cover_image_url' => $article->cover_image_url,
-        //                     'place' => $article->place ? [
-        //                         'id' => $article->place->id,
-        //                         'name' => $article->place->name,
-        //                         'slug' => $article->place->slug,
-        //                     ] : null,
-        //                     'reading_time' => $article->reading_time,
-        //                     'created_at' => $article->created_at,
-        //                 ];
-        //             })
-        //         ]);
-        //     })->name('articles');
+                $articles = $village->articles()
+                    ->where('is_published', true)
+                    ->with(['community', 'sme', 'place'])
+                    ->latest('published_at')
+                    ->get();
 
-        //     Route::get('/info', function (Request $request) {
-        //         $village = $request->attributes->get('village');
-        //         if (!$village) {
-        //             abort(404, 'Village not found');
-        //         }
+                return response()->json([
+                    'village' => $village->name,
+                    'articles' => $articles->map(function ($article) {
+                        return [
+                            'id' => $article->id,
+                            'title' => $article->title,
+                            'slug' => $article->slug,
+                            'content' => $article->content,
+                            'cover_image_url' => $article->cover_image_url,
+                            'is_featured' => $article->is_featured,
+                            'published_at' => $article->published_at,
+                            'community' => $article->community ? [
+                                'id' => $article->community->id,
+                                'name' => $article->community->name,
+                                'slug' => $article->community->slug,
+                            ] : null,
+                            'sme' => $article->sme ? [
+                                'id' => $article->sme->id,
+                                'name' => $article->sme->name,
+                                'slug' => $article->sme->slug,
+                            ] : null,
+                            'place' => $article->place ? [
+                                'id' => $article->place->id,
+                                'name' => $article->place->name,
+                                'slug' => $article->place->slug,
+                            ] : null,
+                            'created_at' => $article->created_at,
+                        ];
+                    })
+                ]);
+            })->name('articles');
 
-        //         return response()->json([
-        //             'village' => [
-        //                 'name' => $village->name,
-        //                 'slug' => $village->slug,
-        //                 'description' => $village->description,
-        //                 'domain' => $village->full_domain,
-        //                 'phone_number' => $village->phone_number,
-        //                 'email' => $village->email,
-        //                 'address' => $village->address,
-        //                 'settings' => $village->settings,
-        //                 'established_at' => $village->established_at,
-        //             ],
-        //             'statistics' => [
-        //                 'total_places' => $village->places()->count(),
-        //                 'total_links' => $village->externalLinks()->count(),
-        //                 'active_links' => $village->activeExternalLinks()->count(),
-        //                 'total_articles' => $village->articles()->count(),
-        //             ]
-        //         ]);
-        //     })->name('info');
-        // });
+            // Communities
+            Route::get('/communities', function (Request $request) {
+                $village = $request->attributes->get('village');
+                if (!$village) {
+                    abort(404, 'Village not found');
+                }
+
+                $communities = $village->communities()
+                    ->where('is_active', true)
+                    ->withCount(['smes' => function ($query) {
+                        $query->where('is_active', true);
+                    }])
+                    ->get();
+
+                return response()->json([
+                    'village' => $village->name,
+                    'communities' => $communities->map(function ($community) {
+                        return [
+                            'id' => $community->id,
+                            'name' => $community->name,
+                            'slug' => $community->slug,
+                            'description' => $community->description,
+                            'logo_url' => $community->logo_url,
+                            'contact_person' => $community->contact_person,
+                            'contact_phone' => $community->contact_phone,
+                            'contact_email' => $community->contact_email,
+                            'smes_count' => $community->smes_count,
+                        ];
+                    })
+                ]);
+            })->name('communities');
+
+            // SMEs
+            Route::get('/smes', function (Request $request) {
+                $village = $request->attributes->get('village');
+                if (!$village) {
+                    abort(404, 'Village not found');
+                }
+
+                $smes = \App\Models\Sme::whereHas('community', function ($query) use ($village) {
+                    $query->where('village_id', $village->id);
+                })
+                    ->where('is_active', true)
+                    ->with(['community', 'place'])
+                    ->withCount(['offers' => function ($query) {
+                        $query->where('is_active', true);
+                    }])
+                    ->get();
+
+                return response()->json([
+                    'village' => $village->name,
+                    'smes' => $smes->map(function ($sme) {
+                        return [
+                            'id' => $sme->id,
+                            'name' => $sme->name,
+                            'slug' => $sme->slug,
+                            'description' => $sme->description,
+                            'type' => $sme->type,
+                            'logo_url' => $sme->logo_url,
+                            'contact_phone' => $sme->contact_phone,
+                            'contact_email' => $sme->contact_email,
+                            'is_verified' => $sme->is_verified,
+                            'community' => [
+                                'id' => $sme->community->id,
+                                'name' => $sme->community->name,
+                                'slug' => $sme->community->slug,
+                            ],
+                            'place' => $sme->place ? [
+                                'id' => $sme->place->id,
+                                'name' => $sme->place->name,
+                                'slug' => $sme->place->slug,
+                            ] : null,
+                            'offers_count' => $sme->offers_count,
+                        ];
+                    })
+                ]);
+            })->name('smes');
+
+            // Village information
+            Route::get('/info', function (Request $request) {
+                $village = $request->attributes->get('village');
+                if (!$village) {
+                    abort(404, 'Village not found');
+                }
+
+                return response()->json([
+                    'village' => [
+                        'id' => $village->id,
+                        'name' => $village->name,
+                        'slug' => $village->slug,
+                        'description' => $village->description,
+                        'domain' => $village->domain,
+                        'phone_number' => $village->phone_number,
+                        'email' => $village->email,
+                        'address' => $village->address,
+                        'image_url' => $village->image_url,
+                        'latitude' => $village->latitude,
+                        'longitude' => $village->longitude,
+                        'settings' => $village->settings,
+                        'established_at' => $village->established_at,
+                    ],
+                    'statistics' => [
+                        'total_communities' => $village->communities()->where('is_active', true)->count(),
+                        'total_places' => $village->places()->count(),
+                        'total_smes' => \App\Models\Sme::whereHas('community', function ($query) use ($village) {
+                            $query->where('village_id', $village->id);
+                        })->where('is_active', true)->count(),
+                        'total_products' => \App\Models\Offer::whereHas('sme.community', function ($query) use ($village) {
+                            $query->where('village_id', $village->id);
+                        })->where('is_active', true)->count(),
+                        'total_links' => $village->externalLinks()->where('is_active', true)->count(),
+                        'total_articles' => $village->articles()->where('is_published', true)->count(),
+                        'total_images' => $village->images()->count(),
+                    ]
+                ]);
+            })->name('info');
+        });
     });
 
 // Handle custom domains dynamically
 try {
-    // $villagesWithCustomDomains = \App\Models\Village::whereNotNull('domain')->active()->get();
+    $villagesWithCustomDomains = \App\Models\Village::whereNotNull('domain')
+        ->where('is_active', true)
+        ->get();
 
-    // foreach ($villagesWithCustomDomains as $village) {
-    //     Route::domain($village->domain)
-    //         ->middleware([ResolveVillageSubdomain::class])
-    //         ->group(function () use ($village) {
-    //             // Custom domain routes - same as subdomain routes but with slugs
-    //             Route::get('/', [VillagePageController::class, 'home'])->name("custom.{$village->slug}.home");
-    //             Route::get('/articles', [VillagePageController::class, 'articles'])->name("custom.{$village->slug}.articles");
-    //             Route::get('/articles/{slug}', [VillagePageController::class, 'articleShow'])->name("custom.{$village->slug}.articles.show");
-    //             Route::get('/products', [VillagePageController::class, 'products'])->name("custom.{$village->slug}.products");
-    //             Route::get('/products/{slug}', [VillagePageController::class, 'productShow'])->name("custom.{$village->slug}.products.show");
-    //             Route::get('/places', [VillagePageController::class, 'places'])->name("custom.{$village->slug}.places");
-    //             Route::get('/places/{slug}', [VillagePageController::class, 'placeShow'])->name("custom.{$village->slug}.places.show");
-    //             Route::get('/gallery', [VillagePageController::class, 'gallery'])->name("custom.{$village->slug}.gallery");
+    foreach ($villagesWithCustomDomains as $village) {
+        Route::domain($village->domain)
+            ->middleware([ResolveVillageSubdomain::class])
+            ->group(function () use ($village) {
+                // Custom domain routes - same as subdomain routes
+                Route::get('/', [VillagePageController::class, 'home'])->name("custom.{$village->slug}.home");
 
-    //             // Short link redirect for custom domains
-    //             Route::get('/l/{slug}', [ExternalLinkController::class, 'redirect'])
-    //                 ->name("custom.{$village->slug}.short-link.redirect");
+                // Articles
+                Route::prefix('articles')->name("custom.{$village->slug}.articles.")->group(function () {
+                    Route::get('/', [VillagePageController::class, 'articles'])->name('index');
+                    Route::get('/{slug}', [VillagePageController::class, 'articleShow'])->name('show');
+                });
 
-    //             // API for custom domains
-    //             Route::get('/api/links', [ExternalLinkController::class, 'domainLinks'])
-    //                 ->name("custom.{$village->slug}.api.links");
-    //         });
-    // }
+                // Products
+                Route::prefix('products')->name("custom.{$village->slug}.products.")->group(function () {
+                    Route::get('/', [VillagePageController::class, 'products'])->name('index');
+                    Route::get('/{slug}', [VillagePageController::class, 'productShow'])->name('show');
+                });
+
+                // Places
+                Route::prefix('places')->name("custom.{$village->slug}.places.")->group(function () {
+                    Route::get('/', [VillagePageController::class, 'places'])->name('index');
+                    Route::get('/{slug}', [VillagePageController::class, 'placeShow'])->name('show');
+                });
+
+                Route::get('/gallery', [VillagePageController::class, 'gallery'])->name("custom.{$village->slug}.gallery");
+
+                // Short link redirect for custom domains
+                Route::get('/l/{slug}', [ExternalLinkController::class, 'redirect'])
+                    ->name("custom.{$village->slug}.short-link.redirect");
+
+                // API for custom domains
+                Route::prefix('api')->name("custom.{$village->slug}.api.")->group(function () {
+                    Route::get('/links', [ExternalLinkController::class, 'domainLinks'])->name('links');
+                    Route::get('/products', [OfferController::class, 'villageProducts'])->name('products');
+                    Route::get('/products/{slug}', [OfferController::class, 'show'])->name('products.show');
+                    Route::post('/products/{product}/links/{link}/click', [OfferController::class, 'trackLinkClick'])
+                        ->name('products.link.click');
+                });
+            });
+    }
 } catch (\Exception $e) {
     // Handle case where database is not yet migrated
+    Log::info('Database not ready for custom domain routes: ' . $e->getMessage());
 }
