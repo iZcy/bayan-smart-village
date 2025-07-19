@@ -270,36 +270,68 @@ class CompleteSeeder extends Seeder
 
     private function seedOfferTags()
     {
-        // Create common tags
+        // Create common tags with updateOrCreate to prevent duplicates
         $commonTags = [
-            'Handmade',
-            'Premium',
-            'Eco-Friendly',
-            'Tradisional',
-            'Lokal',
-            'Bambu',
-            'Kayu',
-            'Keramik',
-            'Batik',
-            'Tenun',
-            'Anyaman',
-            'Best Seller',
-            'Limited Edition',
-            'Organic',
-            'Tahan Lama'
+            'Handmade' => 25,
+            'Premium' => 18,
+            'Eco-Friendly' => 20,
+            'Tradisional' => 22,
+            'Lokal' => 30,
+            'Bambu' => 15,
+            'Kayu' => 12,
+            'Keramik' => 10,
+            'Batik' => 18,
+            'Tenun' => 16,
+            'Anyaman' => 14,
+            'Best Seller' => 30,
+            'Limited Edition' => 5,
+            'Organic' => 15,
+            'Tahan Lama' => 18,
+            'Unik' => 22,
+            'Souvenir' => 25,
+            'Hadiah' => 20,
+            'Dekorasi' => 16,
+            'Halal' => 15
         ];
 
         $tags = collect();
 
-        foreach ($commonTags as $tagName) {
-            $tags->push(OfferTag::factory()->create([
-                'name' => $tagName,
-                'usage_count' => rand(5, 50)
-            ]));
+        // Use updateOrCreate to prevent duplicates
+        foreach ($commonTags as $tagName => $usageCount) {
+            $tag = OfferTag::updateOrCreate(
+                ['name' => $tagName],
+                [
+                    'slug' => \Illuminate\Support\Str::slug($tagName),
+                    'usage_count' => $usageCount
+                ]
+            );
+            $tags->push($tag);
         }
 
-        // Create additional random tags
-        $tags = $tags->merge(OfferTag::factory()->count(15)->create());
+        // Create additional unique tags
+        $additionalTagNames = [
+            'Vintage',
+            'Modern',
+            'Klasik',
+            'Minimalis',
+            'Etnik',
+            'Ramah Lingkungan',
+            'Berkualitas Tinggi',
+            'Mudah Dibersihkan',
+            'Anti Air',
+            'Ringan'
+        ];
+
+        foreach ($additionalTagNames as $tagName) {
+            $tag = OfferTag::updateOrCreate(
+                ['name' => $tagName],
+                [
+                    'slug' => \Illuminate\Support\Str::slug($tagName),
+                    'usage_count' => rand(5, 15)
+                ]
+            );
+            $tags->push($tag);
+        }
 
         return $tags;
     }
