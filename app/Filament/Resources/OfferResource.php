@@ -1,19 +1,20 @@
 <?php
 
-// Resource: OfferResource.php
+// Updated app/Filament/Resources/OfferResource.php
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\OfferResource\Pages;
-use App\Models\Offer;
 use App\Models\Sme;
-use App\Models\Category;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
+use App\Models\Offer;
 use Filament\Infolists;
+use App\Models\Category;
+use Filament\Forms\Form;
+use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use Filament\Infolists\Infolist;
+use Filament\Resources\Resource;
+use App\Filament\Resources\OfferResource\Pages;
 
 class OfferResource extends Resource
 {
@@ -42,7 +43,7 @@ class OfferResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn($state, callable $set) => $set('slug', \Str::slug($state))),
+                            ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
                         Forms\Components\TextInput::make('slug')
                             ->required()
                             ->maxLength(255),
@@ -97,6 +98,23 @@ class OfferResource extends Resource
                         Forms\Components\TagsInput::make('certification'),
                     ])->columns(2),
 
+                Forms\Components\Section::make('Tags')
+                    ->schema([
+                        Forms\Components\Select::make('tags')
+                            ->relationship('tags', 'name')
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
+                                Forms\Components\TextInput::make('slug')
+                                    ->required(),
+                            ]),
+                    ]),
+
                 Forms\Components\Section::make('Settings')
                     ->schema([
                         Forms\Components\Toggle::make('is_featured')
@@ -138,6 +156,10 @@ class OfferResource extends Resource
                         'seasonal' => 'warning',
                         'on_demand' => 'info',
                     }),
+                Tables\Columns\TextColumn::make('tags.name')
+                    ->badge()
+                    ->separator(',')
+                    ->limit(2),
                 Tables\Columns\IconColumn::make('is_featured')
                     ->boolean(),
                 Tables\Columns\IconColumn::make('is_active')
@@ -162,6 +184,9 @@ class OfferResource extends Resource
                         'seasonal' => 'Seasonal',
                         'on_demand' => 'On Demand',
                     ]),
+                Tables\Filters\SelectFilter::make('tags')
+                    ->relationship('tags', 'name')
+                    ->multiple(),
                 Tables\Filters\TernaryFilter::make('is_featured'),
                 Tables\Filters\TernaryFilter::make('is_active'),
             ])
@@ -213,6 +238,21 @@ class OfferResource extends Resource
                             ->listWithLineBreaks(),
                         Infolists\Components\TextEntry::make('features')
                             ->listWithLineBreaks(),
+                    ])->columns(2),
+
+                Infolists\Components\Section::make('Tags')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('tags.name')
+                            ->badge()
+                            ->separator(','),
+                    ]),
+
+                Infolists\Components\Section::make('Related Content')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('ecommerceLinks_count')
+                            ->label('E-commerce Links'),
+                        Infolists\Components\TextEntry::make('images_count')
+                            ->label('Additional Images'),
                     ])->columns(2),
             ]);
     }

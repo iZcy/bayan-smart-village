@@ -27,7 +27,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('community_id')->references('id')->on('communities')->onDelete('cascade');
-            $table->foreign('place_id')->references('id')->on('sme_tourism_places')->onDelete('set null');
+            $table->foreign('place_id')->references('id')->on('places')->onDelete('set null');
             $table->unique(['community_id', 'slug']);
             $table->index(['community_id', 'type', 'is_active']);
             $table->index('place_id');

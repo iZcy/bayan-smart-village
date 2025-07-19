@@ -27,7 +27,7 @@ return new class extends Migration
             $table->foreign('village_id')->references('id')->on('villages')->onDelete('cascade');
             $table->foreign('community_id')->references('id')->on('communities')->onDelete('cascade');
             $table->foreign('sme_id')->references('id')->on('smes')->onDelete('cascade');
-            $table->foreign('place_id')->references('id')->on('sme_tourism_places')->onDelete('cascade');
+            $table->foreign('place_id')->references('id')->on('places')->onDelete('cascade');
             $table->index(['community_id', 'slug']);
             $table->index(['sme_id', 'is_published']);
             $table->index(['village_id', 'is_published']);

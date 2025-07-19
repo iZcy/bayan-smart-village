@@ -3,17 +3,18 @@
 // Resource: SmeResource.php
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\SmeResource\Pages;
 use App\Models\Sme;
-use App\Models\Community;
-use App\Models\SmeTourismPlace;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
 use Filament\Infolists;
+use Filament\Forms\Form;
+use App\Models\Community;
+use Filament\Tables\Table;
+use Illuminate\Support\Str;
+use App\Models\SmeTourismPlace;
 use Filament\Infolists\Infolist;
+use Filament\Resources\Resource;
+use App\Filament\Resources\SmeResource\Pages;
 
 class SmeResource extends Resource
 {
@@ -41,7 +42,7 @@ class SmeResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn($state, callable $set) => $set('slug', \Str::slug($state))),
+                            ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
                         Forms\Components\TextInput::make('slug')
                             ->required()
                             ->maxLength(255),
