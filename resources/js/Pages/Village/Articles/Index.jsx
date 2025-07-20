@@ -1,4 +1,4 @@
-// resources/js/Pages/Village/Articles/Index.jsx
+// resources/js/Pages/Articles/Index.jsx
 import React, { useState, useEffect } from "react";
 import { Head } from "@inertiajs/react";
 import { motion } from "framer-motion";
@@ -6,7 +6,7 @@ import MainLayout from "@/Layouts/MainLayout";
 import HeroSection from "@/Components/HeroSection";
 import FilterControls from "@/Components/FilterControls";
 import SectionHeader from "@/Components/SectionHeader";
-import { ArticleCard } from "@/Components/Cards/BaseCard";
+import { ArticleCard } from "@/Components/Cards/Index";
 import Pagination from "@/Components/Pagination";
 
 const ArticlesPage = ({ village, articles, filters }) => {
@@ -112,8 +112,7 @@ const ArticlesPage = ({ village, articles, filters }) => {
                 title="Village Stories"
                 subtitle={`Discover the rich history, culture, and daily life of ${village?.name}`}
                 backgroundGradient="from-slate-600 via-blue-500 to-purple-700"
-                parallax={true}
-                scrollY={{ useTransform: (scrollY) => scrollY }}
+                enableParallax={true}
             >
                 <FilterControls
                     searchTerm={searchTerm}

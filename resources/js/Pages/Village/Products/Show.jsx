@@ -5,7 +5,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import MainLayout from "@/Layouts/MainLayout";
 import HeroSection from "@/Components/HeroSection";
-import { ProductCard } from "@/Components/Cards/BaseCard";
+import { ProductCard } from "@/Components/Cards/Index";
 
 const ProductShowPage = ({ village, product, relatedProducts }) => {
     const { scrollY } = useScroll();

@@ -1,12 +1,12 @@
-// resources/js/Pages/Village/Products/Index.jsx
+// resources/js/Pages/Products/Index.jsx
 import React, { useState, useEffect } from "react";
 import { Head } from "@inertiajs/react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import MainLayout from "@/Layouts/MainLayout";
 import HeroSection from "@/Components/HeroSection";
 import FilterControls from "@/Components/FilterControls";
 import SectionHeader from "@/Components/SectionHeader";
-import { ProductCard } from "@/Components/Cards/BaseCard";
+import { ProductCard } from "@/Components/Cards/Index";
 import Pagination from "@/Components/Pagination";
 
 const ProductsPage = ({ village, products, categories, filters }) => {
@@ -16,7 +16,6 @@ const ProductsPage = ({ village, products, categories, filters }) => {
         filters.category || ""
     );
     const [sortBy, setSortBy] = useState(filters.sort || "featured");
-    const { scrollY } = useScroll();
 
     useEffect(() => {
         let filtered = products.data;
@@ -99,8 +98,7 @@ const ProductsPage = ({ village, products, categories, filters }) => {
                 title="Local Products"
                 subtitle={`Discover authentic products from ${village?.name}`}
                 backgroundGradient="from-emerald-600 via-green-500 to-green-700"
-                parallax={true}
-                scrollY={{ useTransform: useTransform }}
+                enableParallax={true}
             >
                 <FilterControls
                     searchTerm={searchTerm}

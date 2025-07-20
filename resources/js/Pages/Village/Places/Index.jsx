@@ -1,12 +1,12 @@
 // resources/js/Pages/Village/Places/Index.jsx
 import React, { useState, useEffect } from "react";
 import { Head } from "@inertiajs/react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import MainLayout from "@/Layouts/MainLayout";
 import HeroSection from "@/Components/HeroSection";
 import FilterControls from "@/Components/FilterControls";
 import SectionHeader from "@/Components/SectionHeader";
-import { PlaceCard } from "@/Components/Cards/BaseCard";
+import { PlaceCard } from "@/Components/Cards/Index";
 import Pagination from "@/Components/Pagination";
 
 const PlacesPage = ({ village, places, categories, filters }) => {
@@ -16,10 +16,6 @@ const PlacesPage = ({ village, places, categories, filters }) => {
         filters.category || ""
     );
     const [selectedType, setSelectedType] = useState(filters.type || "");
-    const { scrollY } = useScroll();
-
-    // Parallax effects
-    const heroY = useTransform(scrollY, [0, 500], [0, -150]);
 
     useEffect(() => {
         let filtered = places.data;
@@ -88,8 +84,7 @@ const PlacesPage = ({ village, places, categories, filters }) => {
                 title="Discover Places"
                 subtitle={`Explore amazing locations and businesses in ${village?.name}`}
                 backgroundGradient="from-teal-600 via-cyan-500 to-blue-700"
-                parallax={true}
-                scrollY={{ useTransform: useTransform }}
+                enableParallax={true}
             >
                 <FilterControls
                     searchTerm={searchTerm}

@@ -10,8 +10,7 @@ import {
 import { useInView } from "react-intersection-observer";
 import MainLayout from "@/Layouts/MainLayout";
 import HeroSection from "@/Components/HeroSection";
-import ArticleCard from "@/Components/Cards/ArticleCard";
-import ProductCard from "@/Components/Cards/ProductCard";
+import { ArticleCard, ProductCard } from "@/Components/Cards/Index";
 
 const Home = ({
     village,
@@ -174,8 +173,7 @@ const Home = ({
                         "Discover the beauty and culture of our traditional village"
                     }
                     backgroundGradient="from-transparent to-transparent"
-                    parallax={true}
-                    scrollY={scrollY}
+                    enableParallax={true}
                 >
                     <motion.button
                         initial={{ opacity: 0, scale: 0.5 }}

@@ -9,7 +9,7 @@ import {
 } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import MainLayout from "@/Layouts/MainLayout";
-import { BaseCard } from "@/Components/Cards/BaseCard";
+import { BaseCard } from "@/Components/Cards/Index";
 
 export default function PlaceShowPage({ village, place }) {
     const containerRef = useRef(null);

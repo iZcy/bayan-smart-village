@@ -1,6 +1,6 @@
 // resources/js/Components/HeroSection.jsx
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 const HeroSection = ({
     title,
@@ -10,39 +10,17 @@ const HeroSection = ({
     children,
     showScrollIndicator = true,
     parallax = false,
-    scrollY = null,
+    enableParallax = false, // New prop to control parallax
 }) => {
+    // Create scroll values inside the component when parallax is enabled
+    const { scrollY } = useScroll();
     const heroY =
-        parallax && scrollY ? scrollY.useTransform([0, 800], [0, -200]) : null;
+        parallax || enableParallax
+            ? useTransform(scrollY, [0, 800], [0, -200])
+            : null;
 
     return (
         <section className={`relative ${height} overflow-hidden`}>
-            {/* Background */}
-            <motion.div
-                style={parallax && heroY ? { y: heroY } : {}}
-                className={`absolute inset-0 bg-gradient-to-b ${backgroundGradient}`}
-            >
-                {/* Geometric overlay */}
-                <div className="absolute inset-0 opacity-20">
-                    <svg viewBox="0 0 1200 600" className="w-full h-full">
-                        <path
-                            d="M0,600 L0,250 Q200,200 400,230 T800,180 Q1000,160 1200,200 L1200,600 Z"
-                            fill="currentColor"
-                        />
-                        <path
-                            d="M0,600 L0,320 Q300,270 600,290 T1200,270 L1200,600 Z"
-                            fill="currentColor"
-                            fillOpacity="0.7"
-                        />
-                        <path
-                            d="M0,600 L0,400 Q500,350 1000,370 T1200,350 L1200,600 Z"
-                            fill="currentColor"
-                            fillOpacity="0.5"
-                        />
-                    </svg>
-                </div>
-            </motion.div>
-
             {/* Animated overlay */}
             <div className="absolute inset-0 bg-black/30" />
 
