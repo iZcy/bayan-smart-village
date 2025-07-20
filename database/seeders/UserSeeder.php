@@ -77,5 +77,14 @@ class UserSeeder extends Seeder
         if ($sampleVillage) {
             $this->command->info('Village Admin: village@' . str_replace(' ', '', strtolower($sampleVillage->name)) . '.com / password');
         }
+
+        $this->command->info('Community Admin: community@' . str_replace(' ', '', strtolower($sampleCommunity->name)) . '.com / password');
+
+        if ($sampleSme) {
+            $this->command->info('SME Admin: sme@' . str_replace(' ', '', strtolower($sampleSme->name)) . '.com / password');
+        }
+
+        $this->command->info('All users have been created with the password "password". Please change them after login.');
+        $this->command->info('You can create more users using the UserFactory or manually in the database.');
     }
 }
