@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Category;
 use App\Models\Village;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Category>
@@ -14,6 +15,7 @@ class CategoryFactory extends Factory
     protected $model = Category::class;
 
     private static $usedCategories = [];
+    private static $usedSlugs = [];
 
     public function definition(): array
     {
@@ -60,14 +62,37 @@ class CategoryFactory extends Factory
         $villageId = $this->faker->randomElement(Village::pluck('id')->toArray() ?: [Village::factory()->create()->id]);
         $name = $this->getUniqueNameForVillage($villageId, $categories);
         $icon = $categories[$name];
+        $slug = $this->generateUniqueSlug($name);
 
         return [
             'village_id' => $villageId,
             'name' => $name,
+            'slug' => $slug,
             'type' => $type,
             'description' => $this->faker->sentence(),
             'icon' => $icon,
         ];
+    }
+
+    /**
+     * Generate unique slug globally (since slug is unique in migration).
+     */
+    private function generateUniqueSlug(string $name): string
+    {
+        $baseSlug = Str::slug($name);
+        $slug = $baseSlug;
+        $counter = 1;
+
+        // Keep trying until we get a unique slug
+        while (in_array($slug, self::$usedSlugs)) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        // Mark slug as used globally
+        self::$usedSlugs[] = $slug;
+
+        return $slug;
     }
 
     /**
@@ -133,9 +158,11 @@ class CategoryFactory extends Factory
             $villageId = $attributes['village_id'] ?? Village::factory()->create()->id;
             $name = $this->getUniqueNameForVillage($villageId, $productCategories);
             $icon = $productCategories[$name];
+            $slug = $this->generateUniqueSlug($name);
 
             return [
                 'name' => $name,
+                'slug' => $slug,
                 'type' => 'product',
                 'icon' => $icon,
                 'village_id' => $villageId,
@@ -168,9 +195,11 @@ class CategoryFactory extends Factory
             $villageId = $attributes['village_id'] ?? Village::factory()->create()->id;
             $name = $this->getUniqueNameForVillage($villageId, $serviceCategories);
             $icon = $serviceCategories[$name];
+            $slug = $this->generateUniqueSlug($name);
 
             return [
                 'name' => $name,
+                'slug' => $slug,
                 'type' => 'service',
                 'icon' => $icon,
                 'village_id' => $villageId,
@@ -184,5 +213,6 @@ class CategoryFactory extends Factory
     public static function resetUsedCategories(): void
     {
         self::$usedCategories = [];
+        self::$usedSlugs = [];
     }
 }
