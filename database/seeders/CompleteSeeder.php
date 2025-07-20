@@ -553,7 +553,6 @@ class CompleteSeeder extends Seeder
             Image::factory()
                 ->count(rand(3, 6))
                 ->forPlace($place)
-                ->tourism()
                 ->create();
         }
 
@@ -563,7 +562,6 @@ class CompleteSeeder extends Seeder
             Image::factory()
                 ->count(rand(2, 5))
                 ->forSme($sme)
-                ->business()
                 ->create();
         }
 
@@ -573,7 +571,6 @@ class CompleteSeeder extends Seeder
             Image::factory()
                 ->count(rand(3, 6))
                 ->forCommunity($community)
-                ->culture()
                 ->create();
         }
     }

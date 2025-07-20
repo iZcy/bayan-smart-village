@@ -189,7 +189,7 @@ class MediaFactory extends Factory
                 '/video/traditional-craft.mp4',
                 '/video/nature-scenes.mp4',
             ]),
-            'thumbnail_url' => $this->faker->imageUrl(800, 450),
+            'thumbnail_url' => 'https://picsum.photos/800/450?random=' . $this->faker->numberBetween(1, 1000),
             'muted' => true,
         ]);
     }

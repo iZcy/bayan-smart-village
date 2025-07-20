@@ -23,7 +23,7 @@ class ImageFactory extends Factory
             'community_id' => $this->faker->optional(0.3)->randomElement(Community::pluck('id')->toArray() ?: [null]),
             'sme_id' => $this->faker->optional(0.3)->randomElement(Sme::pluck('id')->toArray() ?: [null]),
             'place_id' => $this->faker->optional(0.4)->randomElement(Place::pluck('id')->toArray() ?: [null]),
-            'image_url' => $this->faker->imageUrl(800, 600),
+            'image_url' => 'https://picsum.photos/800/600?random=' . $this->faker->numberBetween(1, 1000),
             'caption' => $this->faker->optional(0.7)->sentence(3),
             'alt_text' => $this->faker->optional(0.8)->sentence(2),
             'sort_order' => $this->faker->numberBetween(0, 100),

@@ -17,7 +17,7 @@ class OfferImageFactory extends Factory
     {
         return [
             'offer_id' => Offer::factory(),
-            'image_url' => $this->faker->imageUrl(600, 400),
+            'image_url' => 'https://picsum.photos/800/600?random=' . $this->faker->numberBetween(1, 1000),
             'alt_text' => $this->faker->optional(0.8)->sentence(3),
             'sort_order' => $this->faker->numberBetween(0, 20),
             'is_primary' => false, // Will be set to true for one image per offer in seeder
@@ -43,7 +43,7 @@ class OfferImageFactory extends Factory
             'is_primary' => true,
             'sort_order' => 0,
             'alt_text' => $this->faker->sentence(3),
-            'image_url' => $this->faker->imageUrl(800, 600),
+            'image_url' => 'https://picsum.photos/600/400?random=' . $this->faker->numberBetween(1, 1000),
         ]);
     }
 
