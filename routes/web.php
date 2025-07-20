@@ -4,6 +4,7 @@ use App\Http\Controllers\ExternalLinkController;
 use App\Http\Controllers\OfferController;
 use App\Http\Controllers\StuntingCalculatorController;
 use App\Http\Controllers\VillagePageController;
+use App\Http\Controllers\MediaController;
 use App\Http\Middleware\ResolveVillageSubdomain;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -23,6 +24,17 @@ Route::domain($baseDomain)->group(function () {
     // Short link redirect for apex domain
     Route::get('/l/{slug}', [ExternalLinkController::class, 'redirect'])
         ->name('short-link.redirect');
+
+    // Global Media API routes
+    Route::prefix('api/media')->name('api.media.')->group(function () {
+        Route::get('/{context}', [MediaController::class, 'getContextMedia'])->name('context');
+        Route::get('/{context}/featured', [MediaController::class, 'getFeaturedMedia'])->name('featured');
+        Route::get('/', [MediaController::class, 'index'])->name('index');
+        Route::post('/', [MediaController::class, 'store'])->name('store');
+        Route::put('/{media}', [MediaController::class, 'update'])->name('update');
+        Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
+        Route::get('/stats', [MediaController::class, 'stats'])->name('stats');
+    });
 
     // API routes for programmatic access
     Route::prefix('api/links')->name('api.links.')->group(function () {
@@ -87,6 +99,17 @@ Route::domain('{village}.' . $baseDomain)
 
         // Village-specific API
         Route::prefix('api')->name('village.api.')->group(function () {
+            // Media endpoints for villages
+            Route::prefix('media')->name('media.')->group(function () {
+                Route::get('/{context}', [MediaController::class, 'getContextMedia'])->name('context');
+                Route::get('/{context}/featured', [MediaController::class, 'getFeaturedMedia'])->name('featured');
+                Route::get('/', [MediaController::class, 'index'])->name('index');
+                Route::post('/', [MediaController::class, 'store'])->name('store');
+                Route::put('/{media}', [MediaController::class, 'update'])->name('update');
+                Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
+                Route::get('/stats', [MediaController::class, 'stats'])->name('stats');
+            });
+
             // External links
             Route::get('/links', [ExternalLinkController::class, 'domainLinks'])->name('links');
 
@@ -285,6 +308,7 @@ Route::domain('{village}.' . $baseDomain)
                         'total_links' => $village->externalLinks()->where('is_active', true)->count(),
                         'total_articles' => $village->articles()->where('is_published', true)->count(),
                         'total_images' => $village->images()->count(),
+                        'total_media' => \App\Models\Media::where('village_id', $village->id)->where('is_active', true)->count(),
                     ]
                 ]);
             })->name('info');
@@ -328,8 +352,19 @@ try {
                 Route::get('/l/{slug}', [ExternalLinkController::class, 'redirect'])
                     ->name("custom.{$village->slug}.short-link.redirect");
 
-                // API for custom domains
+                // API for custom domains (including media)
                 Route::prefix('api')->name("custom.{$village->slug}.api.")->group(function () {
+                    // Media endpoints
+                    Route::prefix('media')->name('media.')->group(function () {
+                        Route::get('/{context}', [MediaController::class, 'getContextMedia'])->name('context');
+                        Route::get('/{context}/featured', [MediaController::class, 'getFeaturedMedia'])->name('featured');
+                        Route::get('/', [MediaController::class, 'index'])->name('index');
+                        Route::post('/', [MediaController::class, 'store'])->name('store');
+                        Route::put('/{media}', [MediaController::class, 'update'])->name('update');
+                        Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
+                        Route::get('/stats', [MediaController::class, 'stats'])->name('stats');
+                    });
+
                     Route::get('/links', [ExternalLinkController::class, 'domainLinks'])->name('links');
                     Route::get('/products', [OfferController::class, 'villageProducts'])->name('products');
                     Route::get('/products/{slug}', [OfferController::class, 'show'])->name('products.show');

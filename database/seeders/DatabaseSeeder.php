@@ -25,8 +25,8 @@ class DatabaseSeeder extends Seeder
             $this->call([
                 VillageSeeder::class,
                 CommunitySeeder::class,
-                PlaceSeeder::class,
                 CategorySeeder::class,
+                PlaceSeeder::class,
                 SmeSeeder::class,
                 OfferTagSeeder::class,
                 OfferSeeder::class,

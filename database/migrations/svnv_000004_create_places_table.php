@@ -12,7 +12,7 @@ return new class extends Migration
         Schema::create('places', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('village_id');
-            $table->uuid('category_id')->nullable();
+            $table->uuid('category_id');
             $table->string('name');
             $table->string('slug');
             $table->text('description');
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('village_id')->references('id')->on('villages')->onDelete('cascade');
-            $table->foreign('category_id')->references('id')->on('categories')->onDelete('set null');
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
             $table->index('slug');
             $table->index('category_id');
             $table->unique(['village_id', 'slug']);

@@ -14,6 +14,7 @@ use App\Models\Image;
 use App\Models\OfferTag;
 use App\Models\OfferEcommerceLink;
 use App\Models\OfferImage;
+use App\Models\Media;
 use Illuminate\Database\Seeder;
 
 class CompleteSeeder extends Seeder
@@ -44,13 +45,13 @@ class CompleteSeeder extends Seeder
         $this->command->info('Seeding communities...');
         $communities = $this->seedCommunities($villages);
 
-        // 3. Seed Places for each village
-        $this->command->info('Seeding places...');
-        $places = $this->seedPlaces($villages);
-
-        // 4. Seed Categories for each village
+        // 3. Seed Categories for each village
         $this->command->info('Seeding categories...');
         $categories = $this->seedCategories($villages);
+
+        // 4. Seed Places for each village
+        $this->command->info('Seeding places...');
+        $places = $this->seedPlaces($villages);
 
         // 5. Seed SMEs for each community
         $this->command->info('Seeding SMEs...');
@@ -84,9 +85,15 @@ class CompleteSeeder extends Seeder
         $this->command->info('Seeding images...');
         $this->seedImages($villages, $communities, $smes, $places);
 
+        // 13. NEW: Seed Media
+        $this->command->info('Seeding media files...');
+        $this->seedMedia($villages, $communities, $smes, $places);
+
         $this->command->info('Complete database seeding finished successfully!');
         $this->displaySummary();
     }
+
+    // ... (previous seeding methods remain the same) ...
 
     private function seedVillages()
     {
@@ -571,6 +578,113 @@ class CompleteSeeder extends Seeder
         }
     }
 
+    // NEW: Seed Media function
+    private function seedMedia($villages, $communities, $smes, $places)
+    {
+        foreach ($villages as $village) {
+            $this->command->info("Creating media for {$village->name}");
+
+            // Create background videos and audio for each context
+            $contexts = ['home', 'places', 'products', 'articles', 'gallery'];
+
+            foreach ($contexts as $context) {
+                // Featured background video for each context
+                Media::factory()
+                    ->forVillage($village)
+                    ->forContext($context)
+                    ->video()
+                    ->background()
+                    ->create([
+                        'title' => ucfirst($context) . ' Background Video',
+                        'description' => "Background video for {$context} section in {$village->name}",
+                    ]);
+
+                // Featured ambient audio for each context
+                Media::factory()
+                    ->forVillage($village)
+                    ->forContext($context)
+                    ->audio()
+                    ->ambient()
+                    ->create([
+                        'title' => ucfirst($context) . ' Ambient Audio',
+                        'description' => "Ambient audio for {$context} section in {$village->name}",
+                    ]);
+
+                // Additional media for variety
+                if ($context === 'home') {
+                    // Extra home videos
+                    Media::factory()
+                        ->count(2)
+                        ->forVillage($village)
+                        ->forContext($context)
+                        ->video()
+                        ->create();
+
+                    // Extra home audio
+                    Media::factory()
+                        ->count(2)
+                        ->forVillage($village)
+                        ->forContext($context)
+                        ->audio()
+                        ->create();
+                } else {
+                    // One additional media per other context
+                    Media::factory()
+                        ->forVillage($village)
+                        ->forContext($context)
+                        ->create();
+                }
+            }
+
+            // Global media (available on all pages)
+            Media::factory()
+                ->count(3)
+                ->forVillage($village)
+                ->forContext('global')
+                ->create();
+        }
+
+        // Create some media for specific SMEs (product videos/audio)
+        $randomSmes = $smes->random(min(10, $smes->count()));
+        foreach ($randomSmes as $sme) {
+            if ($sme->type === 'product') {
+                Media::factory()
+                    ->forVillage($sme->community->village)
+                    ->forContext('products')
+                    ->state([
+                        'sme_id' => $sme->id,
+                        'title' => "Product showcase for {$sme->name}",
+                        'description' => "Media content showcasing products from {$sme->name}",
+                    ])
+                    ->create();
+            }
+        }
+
+        // Create some media for specific places
+        $randomPlaces = $places->random(min(8, $places->count()));
+        foreach ($randomPlaces as $place) {
+            Media::factory()
+                ->forVillage($place->village)
+                ->forContext('places')
+                ->state([
+                    'place_id' => $place->id,
+                    'title' => "Virtual tour of {$place->name}",
+                    'description' => "Media content showcasing {$place->name}",
+                ])
+                ->create();
+        }
+
+        // Create some media without village association (system-wide)
+        Media::factory()
+            ->count(5)
+            ->forContext('global')
+            ->create([
+                'village_id' => null,
+                'title' => 'System Global Media',
+                'description' => 'Media available across all villages and pages',
+            ]);
+    }
+
     private function displaySummary()
     {
         $this->command->info("\n=== SEEDING SUMMARY ===");
@@ -586,6 +700,14 @@ class CompleteSeeder extends Seeder
         $this->command->info("Articles: " . Article::count());
         $this->command->info("External Links: " . ExternalLink::count());
         $this->command->info("Images: " . Image::count());
+        $this->command->info("Media Files: " . Media::count());
+
+        // Media breakdown
+        $this->command->info("Media breakdown:");
+        $this->command->info("  - Videos: " . Media::where('type', 'video')->count());
+        $this->command->info("  - Audio: " . Media::where('type', 'audio')->count());
+        $this->command->info("  - Featured: " . Media::where('is_featured', true)->count());
+
         $this->command->info("======================\n");
     }
 }

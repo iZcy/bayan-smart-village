@@ -18,39 +18,14 @@ class ImageFactory extends Factory
 
     public function definition(): array
     {
-        $captions = [
-            'Pemandangan Alam',
-            'Sunrise di Bukit',
-            'Air Terjun Indah',
-            'Hamparan Sawah',
-            'Tarian Tradisional',
-            'Upacara Adat',
-            'Kerajinan Lokal',
-            'Festival Budaya',
-            'Kuliner Khas',
-            'Makanan Tradisional',
-            'Jajanan Lokal',
-            'Proses Memasak',
-            'Produk UMKM',
-            'Proses Produksi',
-            'Workshop Kerajinan',
-            'Pameran Produk',
-            'Destinasi Wisata',
-            'Aktivitas Wisata',
-            'Fasilitas Wisata',
-            'Wisatawan'
-        ];
-
-        $caption = $this->faker->randomElement($captions);
-
         return [
             'village_id' => $this->faker->optional(0.5)->randomElement(Village::pluck('id')->toArray() ?: [Village::factory()->create()->id]),
             'community_id' => $this->faker->optional(0.3)->randomElement(Community::pluck('id')->toArray() ?: [null]),
             'sme_id' => $this->faker->optional(0.3)->randomElement(Sme::pluck('id')->toArray() ?: [null]),
             'place_id' => $this->faker->optional(0.4)->randomElement(Place::pluck('id')->toArray() ?: [null]),
             'image_url' => $this->faker->imageUrl(800, 600),
-            'caption' => $caption,
-            'alt_text' => $this->faker->optional(0.8)->sentence(3),
+            'caption' => $this->faker->optional(0.7)->sentence(3),
+            'alt_text' => $this->faker->optional(0.8)->sentence(2),
             'sort_order' => $this->faker->numberBetween(0, 100),
             'is_featured' => $this->faker->boolean(30), // 30% chance of being featured
         ];
@@ -115,71 +90,6 @@ class ImageFactory extends Factory
     {
         return $this->state(fn(array $attributes) => [
             'is_featured' => true,
-        ]);
-    }
-
-    /**
-     * Nature category image.
-     */
-    public function nature(): static
-    {
-        $captions = ['Pemandangan Alam', 'Sunrise di Bukit', 'Air Terjun Indah', 'Hamparan Sawah'];
-
-        return $this->state(fn(array $attributes) => [
-            'image_url' => $this->faker->imageUrl(800, 600),
-            'caption' => $this->faker->randomElement($captions),
-        ]);
-    }
-
-    /**
-     * Culture category image.
-     */
-    public function culture(): static
-    {
-        $captions = ['Tarian Tradisional', 'Upacara Adat', 'Kerajinan Lokal', 'Festival Budaya'];
-
-        return $this->state(fn(array $attributes) => [
-            'image_url' => $this->faker->imageUrl(800, 600),
-            'caption' => $this->faker->randomElement($captions),
-        ]);
-    }
-
-    /**
-     * Food category image.
-     */
-    public function food(): static
-    {
-        $captions = ['Kuliner Khas', 'Makanan Tradisional', 'Jajanan Lokal', 'Proses Memasak'];
-
-        return $this->state(fn(array $attributes) => [
-            'image_url' => $this->faker->imageUrl(800, 600),
-            'caption' => $this->faker->randomElement($captions),
-        ]);
-    }
-
-    /**
-     * Business category image.
-     */
-    public function business(): static
-    {
-        $captions = ['Produk UMKM', 'Proses Produksi', 'Workshop Kerajinan', 'Pameran Produk'];
-
-        return $this->state(fn(array $attributes) => [
-            'image_url' => $this->faker->imageUrl(800, 600),
-            'caption' => $this->faker->randomElement($captions),
-        ]);
-    }
-
-    /**
-     * Tourism category image.
-     */
-    public function tourism(): static
-    {
-        $captions = ['Destinasi Wisata', 'Aktivitas Wisata', 'Fasilitas Wisata', 'Wisatawan'];
-
-        return $this->state(fn(array $attributes) => [
-            'image_url' => $this->faker->imageUrl(800, 600),
-            'caption' => $this->faker->randomElement($captions),
         ]);
     }
 

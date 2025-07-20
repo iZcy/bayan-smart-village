@@ -18,7 +18,7 @@ class VillagePageController extends Controller
     {
         $village = $request->attributes->get('village');
 
-        // Get featured content
+        // Get featured articles
         $featuredArticles = Article::where('village_id', $village->id)
             ->where('is_published', true)
             ->where('is_featured', true)
@@ -27,7 +27,8 @@ class VillagePageController extends Controller
             ->take(3)
             ->get();
 
-        $featuredOffers = Offer::whereHas('sme.community', function ($query) use ($village) {
+        // Get featured products (actual Offers from SMEs)
+        $featuredProducts = Offer::whereHas('sme.community', function ($query) use ($village) {
             $query->where('village_id', $village->id);
         })
             ->where('is_active', true)
@@ -37,13 +38,56 @@ class VillagePageController extends Controller
             ->take(6)
             ->get();
 
+        // Enhanced Places data with service/product distinction
+        // Tourism Places = Places that offer services (category type: "service") 
+        // SME Places = Places that offer products (category type: "product")
         $featuredPlaces = Place::where('village_id', $village->id)
-            ->with(['images' => function ($query) {
-                $query->where('is_featured', true)->take(1);
-            }])
+            ->with([
+                'category',
+                'images' => function ($query) {
+                    $query->where('is_featured', true)->take(1);
+                },
+                // Include SMEs if this is a product business location
+                'smes' => function ($query) {
+                    $query->where('is_active', true)
+                        ->with(['offers' => function ($offerQuery) {
+                            $offerQuery->where('is_active', true)->take(3);
+                        }]);
+                }
+            ])
+            ->whereHas('category') // Only places with categories
             ->latest()
-            ->take(4)
-            ->get();
+            ->take(12) // Increased to support both tourism and SME sections
+            ->get()
+            ->map(function ($place) {
+                return [
+                    'id' => $place->id,
+                    'name' => $place->name,
+                    'slug' => $place->slug,
+                    'description' => $place->description,
+                    'address' => $place->address,
+                    'phone_number' => $place->phone_number,
+                    'latitude' => $place->latitude,
+                    'longitude' => $place->longitude,
+                    'image_url' => $place->image_url ?: ($place->images->first()?->image_url),
+                    'custom_fields' => $place->custom_fields,
+                    'category' => $place->category ? [
+                        'id' => $place->category->id,
+                        'name' => $place->category->name,
+                        'type' => $place->category->type, // "service" or "product"
+                        'icon' => $place->category->icon,
+                        'description' => $place->category->description,
+                    ] : null,
+                    // Additional info for SME places (product businesses)
+                    'smes_count' => $place->smes->count(),
+                    'products_count' => $place->smes->sum(function ($sme) {
+                        return $sme->offers->count();
+                    }),
+                    'business_type' => $place->category?->type === 'product' ? 'SME Business' : 'Tourism Service',
+                    'created_at' => $place->created_at,
+                    'updated_at' => $place->updated_at,
+                ];
+            });
 
         $featuredImages = Image::where('village_id', $village->id)
             ->where('is_featured', true)
@@ -53,11 +97,31 @@ class VillagePageController extends Controller
             ->get();
 
         return Inertia::render('Village/Home', [
-            'village' => $village,
+            'village' => [
+                'id' => $village->id,
+                'name' => $village->name,
+                'slug' => $village->slug,
+                'description' => $village->description,
+                'domain' => $village->domain,
+                'phone_number' => $village->phone_number,
+                'email' => $village->email,
+                'address' => $village->address,
+                'image_url' => $village->image_url,
+                'latitude' => $village->latitude,
+                'longitude' => $village->longitude,
+                'established_at' => $village->established_at,
+                'settings' => $village->settings,
+            ],
             'featuredArticles' => $featuredArticles,
-            'featuredProducts' => $featuredOffers, // Note: renamed to match frontend expectation
-            'featuredPlaces' => $featuredPlaces,
+            'featuredProducts' => $featuredProducts, // Actual products from SMEs
+            'featuredPlaces' => $featuredPlaces, // Places categorized by service/product type
             'featuredImages' => $featuredImages,
+            // Additional context for frontend
+            'placeStats' => [
+                'tourism_places_count' => $featuredPlaces->where('category.type', 'service')->count(),
+                'sme_places_count' => $featuredPlaces->where('category.type', 'product')->count(),
+                'total_places_count' => $featuredPlaces->count(),
+            ]
         ]);
     }
 
@@ -255,9 +319,19 @@ class VillagePageController extends Controller
         $village = $request->attributes->get('village');
 
         $query = Place::where('village_id', $village->id)
-            ->with(['images' => function ($query) {
-                $query->where('is_featured', true)->take(1);
-            }]);
+            ->with([
+                'category',
+                'images' => function ($query) {
+                    $query->where('is_featured', true)->take(1);
+                },
+                // Include related SMEs for product business places
+                'smes' => function ($query) {
+                    $query->where('is_active', true)
+                        ->withCount(['offers' => function ($offerQuery) {
+                            $offerQuery->where('is_active', true);
+                        }]);
+                }
+            ]);
 
         // Apply filters if provided
         if ($request->filled('search')) {
@@ -282,21 +356,37 @@ class VillagePageController extends Controller
 
         $places = $query->paginate(12);
 
-        // Get available categories
+        // Get available categories separated by type
         $categories = Category::where('village_id', $village->id)
             ->whereHas('places')
             ->withCount('places')
-            ->get();
+            ->get()
+            ->groupBy('type');
 
         return Inertia::render('Village/Places/Index', [
             'village' => $village,
             'places' => $places,
-            'categories' => $categories,
+            'categories' => $categories->flatten(), // Flatten for the filter dropdown
+            'categoryGroups' => $categories, // Grouped for display sections
             'filters' => [
                 'search' => $request->get('search', ''),
                 'category' => $request->get('category', ''),
                 'type' => $request->get('type', ''),
             ],
+            'placeTypes' => [
+                'service' => [
+                    'label' => 'Tourism & Services',
+                    'description' => 'Hotels, restaurants, tour guides, and other service providers',
+                    'icon' => '🏞️',
+                    'count' => $places->where('category.type', 'service')->count()
+                ],
+                'product' => [
+                    'label' => 'Product Businesses',
+                    'description' => 'Shops, craft centers, markets, and product manufacturers',
+                    'icon' => '🏪',
+                    'count' => $places->where('category.type', 'product')->count()
+                ]
+            ]
         ]);
     }
 
@@ -309,11 +399,20 @@ class VillagePageController extends Controller
         $place = Place::where('village_id', $village->id)
             ->where('slug', $slug)
             ->with([
+                'category',
                 'images' => function ($query) {
                     $query->orderBy('sort_order');
                 },
                 'smes' => function ($query) {
-                    $query->where('is_active', true)->with('community');
+                    $query->where('is_active', true)
+                        ->with([
+                            'community',
+                            'offers' => function ($offerQuery) {
+                                $offerQuery->where('is_active', true)
+                                    ->orderBy('is_featured', 'desc')
+                                    ->take(6);
+                            }
+                        ]);
                 },
                 'articles' => function ($query) {
                     $query->where('is_published', true)->latest('published_at')->take(3);
@@ -321,9 +420,21 @@ class VillagePageController extends Controller
             ])
             ->firstOrFail();
 
+        // Additional context based on place type
+        $placeContext = [
+            'is_service_place' => $place->category?->type === 'service',
+            'is_product_place' => $place->category?->type === 'product',
+            'service_type' => $place->category?->type === 'service' ? $place->category->name : null,
+            'business_count' => $place->smes->count(),
+            'product_count' => $place->smes->sum(function ($sme) {
+                return $sme->offers->count();
+            }),
+        ];
+
         return Inertia::render('Village/Places/Show', [
             'village' => $village,
             'place' => $place,
+            'placeContext' => $placeContext,
         ]);
     }
 
@@ -349,21 +460,34 @@ class VillagePageController extends Controller
             $query->where('place_id', $request->get('place'));
         }
 
+        if ($request->filled('type')) {
+            // Filter by place type (service/product)
+            $query->whereHas('place.category', function ($q) use ($request) {
+                $q->where('type', $request->get('type'));
+            });
+        }
+
         $images = $query->orderBy('sort_order')->paginate(24);
 
-        // Get available places for filtering
+        // Get available places for filtering, grouped by type
         $places = Place::where('village_id', $village->id)
             ->whereHas('images')
-            ->select('id', 'name')
-            ->get();
+            ->with('category')
+            ->select('id', 'name', 'category_id')
+            ->get()
+            ->groupBy(function ($place) {
+                return $place->category?->type ?? 'other';
+            });
 
         return Inertia::render('Village/Gallery', [
             'village' => $village,
             'images' => $images,
-            'places' => $places,
+            'places' => $places->flatten(), // For the filter dropdown
+            'placeGroups' => $places, // Grouped for organized display
             'filters' => [
                 'search' => $request->get('search', ''),
                 'place' => $request->get('place', ''),
+                'type' => $request->get('type', ''),
             ],
         ]);
     }

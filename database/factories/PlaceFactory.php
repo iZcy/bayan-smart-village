@@ -71,13 +71,10 @@ class PlaceFactory extends Factory
         $villageId = Village::factory()->create()->id;
         $slug = $this->generateUniqueSlug($villageId, $name);
 
-        $categoryId = null;
-        if ($this->faker->boolean(70)) { // 70% chance of having a category
-            $categories = \App\Models\Category::where('village_id', $villageId)->pluck('id');
-            if ($categories->isNotEmpty()) {
-                $categoryId = $this->faker->randomElement($categories->toArray());
-            }
-        }
+        // Category cannot be null, so random pick existing or create
+        $categoryId = $this->faker->randomElement(
+            \App\Models\Category::where('village_id', $villageId)->pluck('id')->toArray()
+        ) ?: \App\Models\Category::factory()->forVillage(Village::find($villageId))->create()->id;
 
         return [
             'village_id' => $villageId,

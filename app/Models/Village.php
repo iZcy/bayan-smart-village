@@ -1,6 +1,6 @@
 <?php
 
-// Model: Village.php
+// Model: Village.php (Updated)
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -64,5 +64,69 @@ class Village extends Model
     public function images(): HasMany
     {
         return $this->hasMany(Image::class);
+    }
+
+    // New media relationship
+    public function media(): HasMany
+    {
+        return $this->hasMany(Media::class);
+    }
+
+    // Helper methods for media
+    public function getBackgroundVideoForContext(string $context)
+    {
+        return $this->media()
+            ->where('type', 'video')
+            ->where(function ($query) use ($context) {
+                $query->where('context', $context)
+                    ->orWhere('context', 'global');
+            })
+            ->where('is_featured', true)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->first();
+    }
+
+    public function getBackgroundAudioForContext(string $context)
+    {
+        return $this->media()
+            ->where('type', 'audio')
+            ->where(function ($query) use ($context) {
+                $query->where('context', $context)
+                    ->orWhere('context', 'global');
+            })
+            ->where('is_featured', true)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->first();
+    }
+
+    public function getAllMediaForContext(string $context)
+    {
+        return $this->media()
+            ->where(function ($query) use ($context) {
+                $query->where('context', $context)
+                    ->orWhere('context', 'global');
+            })
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    public function getMediaStatistics(): array
+    {
+        $media = $this->media()->where('is_active', true);
+
+        return [
+            'total' => $media->count(),
+            'videos' => $media->where('type', 'video')->count(),
+            'audios' => $media->where('type', 'audio')->count(),
+            'featured' => $media->where('is_featured', true)->count(),
+            'by_context' => $media->selectRaw('context, COUNT(*) as count')
+                ->groupBy('context')
+                ->pluck('count', 'context')
+                ->toArray(),
+        ];
     }
 }

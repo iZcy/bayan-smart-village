@@ -28,7 +28,7 @@ class ImageSeeder extends Seeder
             return;
         }
 
-        // Village images (for galleries and features)
+        // Village images
         $this->command->info('Creating village images...');
         foreach ($villages as $village) {
             // Featured village images
@@ -36,7 +36,6 @@ class ImageSeeder extends Seeder
                 ->count(rand(5, 10))
                 ->forVillage($village)
                 ->featured()
-                ->nature()
                 ->create();
 
             // Regular village gallery images
@@ -44,23 +43,15 @@ class ImageSeeder extends Seeder
                 ->count(rand(8, 15))
                 ->forVillage($village)
                 ->create();
-
-            // Culture images for villages
-            Image::factory()
-                ->count(rand(3, 6))
-                ->forVillage($village)
-                ->culture()
-                ->create();
         }
 
-        // Place images (tourism destinations)
+        // Place images
         if ($places->isNotEmpty()) {
             $this->command->info('Creating place images...');
             foreach ($places as $place) {
                 Image::factory()
                     ->count(rand(4, 8))
                     ->forPlace($place)
-                    ->tourism()
                     ->create();
 
                 // Some featured images for places
@@ -69,51 +60,31 @@ class ImageSeeder extends Seeder
                         ->count(rand(1, 2))
                         ->forPlace($place)
                         ->featured()
-                        ->nature()
                         ->create();
                 }
             }
         }
 
-        // SME images (business and products)
+        // SME images
         if ($smes->isNotEmpty()) {
             $this->command->info('Creating SME images...');
             $randomSmes = $smes->random(min(30, $smes->count()));
             foreach ($randomSmes as $sme) {
-                // Business operation images
                 Image::factory()
                     ->count(rand(3, 6))
                     ->forSme($sme)
-                    ->business()
                     ->create();
-
-                // Product images for product SMEs
-                if ($sme->type === 'product') {
-                    Image::factory()
-                        ->count(rand(2, 4))
-                        ->forSme($sme)
-                        ->create();
-                }
             }
         }
 
-        // Community images (events and activities)
+        // Community images
         if ($communities->isNotEmpty()) {
             $this->command->info('Creating community images...');
             $randomCommunities = $communities->random(min(15, $communities->count()));
             foreach ($randomCommunities as $community) {
-                // Cultural events and community activities
                 Image::factory()
                     ->count(rand(4, 8))
                     ->forCommunity($community)
-                    ->culture()
-                    ->create();
-
-                // Food and local cuisine images
-                Image::factory()
-                    ->count(rand(2, 4))
-                    ->forCommunity($community)
-                    ->food()
                     ->create();
             }
         }
