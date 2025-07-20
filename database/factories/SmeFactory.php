@@ -85,7 +85,7 @@ class SmeFactory extends Factory
             'owner_name' => $this->faker->name(),
             'contact_phone' => $this->faker->phoneNumber(),
             'contact_email' => $this->faker->optional(0.7)->email(),
-            'logo_url' => $this->faker->optional(0.5)->imageUrl(300, 300, 'business', true, 'logo'),
+            'logo_url' => $this->faker->optional(0.5)->imageUrl(300, 300),
             'business_hours' => [
                 'monday' => '08:00 - 17:00',
                 'tuesday' => '08:00 - 17:00',

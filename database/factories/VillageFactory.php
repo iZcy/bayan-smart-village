@@ -53,7 +53,7 @@ class VillageFactory extends Factory
             'phone_number' => $this->faker->phoneNumber(),
             'email' => $this->faker->email(),
             'address' => $this->faker->address(),
-            'image_url' => $this->faker->optional(0.7)->imageUrl(800, 600, 'nature', true, 'village'),
+            'image_url' => $this->faker->optional(0.7)->imageUrl(800, 600),
             'settings' => [
                 'maintenance_mode' => false,
                 'theme_color' => $this->faker->hexColor(),

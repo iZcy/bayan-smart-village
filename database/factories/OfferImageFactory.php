@@ -15,49 +15,35 @@ class OfferImageFactory extends Factory
 
     public function definition(): array
     {
-        $imageTypes = [
-            'product' => [
-                'descriptions' => [
-                    'Tampak Depan Produk',
-                    'Tampak Samping Produk',
-                    'Detail Tekstur',
-                    'Tampak Belakang',
-                    'Close-up Detail',
-                    'Produk dalam Kemasan',
-                    'Produk Sedang Digunakan',
-                    'Variasi Warna',
-                    'Ukuran Produk'
-                ]
-            ],
-            'process' => [
-                'descriptions' => [
-                    'Proses Pembuatan',
-                    'Bahan Baku',
-                    'Tahap Pengerjaan',
-                    'Alat yang Digunakan',
-                    'Finishing Process',
-                    'Quality Control'
-                ]
-            ],
-            'lifestyle' => [
-                'descriptions' => [
-                    'Produk dalam Penggunaan',
-                    'Lifestyle Shot',
-                    'Dekorasi Rumah',
-                    'Fashion Style',
-                    'Outdoor Usage',
-                    'Indoor Setting'
-                ]
-            ]
+        $descriptions = [
+            'Tampak Depan Produk',
+            'Tampak Samping Produk',
+            'Detail Tekstur',
+            'Tampak Belakang',
+            'Close-up Detail',
+            'Produk dalam Kemasan',
+            'Produk Sedang Digunakan',
+            'Variasi Warna',
+            'Ukuran Produk',
+            'Proses Pembuatan',
+            'Bahan Baku',
+            'Tahap Pengerjaan',
+            'Alat yang Digunakan',
+            'Finishing Process',
+            'Quality Control',
+            'Produk dalam Penggunaan',
+            'Lifestyle Shot',
+            'Dekorasi Rumah',
+            'Fashion Style',
+            'Outdoor Usage',
+            'Indoor Setting'
         ];
 
-        $category = $this->faker->randomKey($imageTypes);
-        $descriptions = $imageTypes[$category]['descriptions'];
         $altText = $this->faker->randomElement($descriptions);
 
         return [
             'offer_id' => Offer::factory(),
-            'image_url' => $this->faker->imageUrl(600, 400, 'business', true, 'product'),
+            'image_url' => $this->faker->imageUrl(600, 400),
             'alt_text' => $altText,
             'sort_order' => $this->faker->numberBetween(0, 20),
             'is_primary' => false, // Will be set to true for one image per offer in seeder
@@ -83,14 +69,14 @@ class OfferImageFactory extends Factory
             'is_primary' => true,
             'sort_order' => 0,
             'alt_text' => 'Gambar Utama Produk',
-            'image_url' => $this->faker->imageUrl(800, 600, 'business', true, 'main-product'),
+            'image_url' => $this->faker->imageUrl(800, 600),
         ]);
     }
 
     /**
      * Secondary image (additional product images).
      */
-    public function secondary(int $sortOrder = null): static
+    public function secondary(int $sortOrder = 0): static
     {
         return $this->state(fn(array $attributes) => [
             'is_primary' => false,
@@ -119,7 +105,7 @@ class OfferImageFactory extends Factory
                 'Motif Detail',
                 'Kualitas Produk'
             ]),
-            'image_url' => $this->faker->imageUrl(600, 400, 'business', true, 'detail'),
+            'image_url' => $this->faker->imageUrl(600, 400),
         ]);
     }
 
@@ -137,7 +123,7 @@ class OfferImageFactory extends Factory
                 'Proses Finishing',
                 'Quality Control'
             ]),
-            'image_url' => $this->faker->imageUrl(600, 400, 'business', true, 'process'),
+            'image_url' => $this->faker->imageUrl(600, 400),
         ]);
     }
 
@@ -155,7 +141,7 @@ class OfferImageFactory extends Factory
                 'Produk dalam Dekorasi',
                 'Gaya Hidup'
             ]),
-            'image_url' => $this->faker->imageUrl(600, 400, 'people', true, 'lifestyle'),
+            'image_url' => $this->faker->imageUrl(600, 400),
         ]);
     }
 
@@ -173,7 +159,7 @@ class OfferImageFactory extends Factory
                 'Wrapping',
                 'Gift Packaging'
             ]),
-            'image_url' => $this->faker->imageUrl(600, 400, 'business', true, 'packaging'),
+            'image_url' => $this->faker->imageUrl(600, 400),
         ]);
     }
 
@@ -191,7 +177,7 @@ class OfferImageFactory extends Factory
                 'Color Options',
                 'Model Variations'
             ]),
-            'image_url' => $this->faker->imageUrl(600, 400, 'business', true, 'comparison'),
+            'image_url' => $this->faker->imageUrl(600, 400),
         ]);
     }
 

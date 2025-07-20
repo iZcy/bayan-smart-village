@@ -18,16 +18,29 @@ class ImageFactory extends Factory
 
     public function definition(): array
     {
-        $imageCategories = [
-            'nature' => ['Pemandangan Alam', 'Sunrise di Bukit', 'Air Terjun Indah', 'Hamparan Sawah'],
-            'culture' => ['Tarian Tradisional', 'Upacara Adat', 'Kerajinan Lokal', 'Festival Budaya'],
-            'food' => ['Kuliner Khas', 'Makanan Tradisional', 'Jajanan Lokal', 'Proses Memasak'],
-            'business' => ['Produk UMKM', 'Proses Produksi', 'Workshop Kerajinan', 'Pameran Produk'],
-            'tourism' => ['Destinasi Wisata', 'Aktivitas Wisata', 'Fasilitas Wisata', 'Wisatawan'],
+        $captions = [
+            'Pemandangan Alam',
+            'Sunrise di Bukit',
+            'Air Terjun Indah',
+            'Hamparan Sawah',
+            'Tarian Tradisional',
+            'Upacara Adat',
+            'Kerajinan Lokal',
+            'Festival Budaya',
+            'Kuliner Khas',
+            'Makanan Tradisional',
+            'Jajanan Lokal',
+            'Proses Memasak',
+            'Produk UMKM',
+            'Proses Produksi',
+            'Workshop Kerajinan',
+            'Pameran Produk',
+            'Destinasi Wisata',
+            'Aktivitas Wisata',
+            'Fasilitas Wisata',
+            'Wisatawan'
         ];
 
-        $category = $this->faker->randomKey($imageCategories);
-        $captions = $imageCategories[$category];
         $caption = $this->faker->randomElement($captions);
 
         return [
@@ -35,7 +48,7 @@ class ImageFactory extends Factory
             'community_id' => $this->faker->optional(0.3)->randomElement(Community::pluck('id')->toArray() ?: [null]),
             'sme_id' => $this->faker->optional(0.3)->randomElement(Sme::pluck('id')->toArray() ?: [null]),
             'place_id' => $this->faker->optional(0.4)->randomElement(Place::pluck('id')->toArray() ?: [null]),
-            'image_url' => $this->faker->imageUrl(800, 600, $category, true, $caption),
+            'image_url' => $this->faker->imageUrl(800, 600),
             'caption' => $caption,
             'alt_text' => $this->faker->optional(0.8)->sentence(3),
             'sort_order' => $this->faker->numberBetween(0, 100),
@@ -113,7 +126,7 @@ class ImageFactory extends Factory
         $captions = ['Pemandangan Alam', 'Sunrise di Bukit', 'Air Terjun Indah', 'Hamparan Sawah'];
 
         return $this->state(fn(array $attributes) => [
-            'image_url' => $this->faker->imageUrl(800, 600, 'nature', true, 'landscape'),
+            'image_url' => $this->faker->imageUrl(800, 600),
             'caption' => $this->faker->randomElement($captions),
         ]);
     }
@@ -126,7 +139,7 @@ class ImageFactory extends Factory
         $captions = ['Tarian Tradisional', 'Upacara Adat', 'Kerajinan Lokal', 'Festival Budaya'];
 
         return $this->state(fn(array $attributes) => [
-            'image_url' => $this->faker->imageUrl(800, 600, 'people', true, 'culture'),
+            'image_url' => $this->faker->imageUrl(800, 600),
             'caption' => $this->faker->randomElement($captions),
         ]);
     }
@@ -139,7 +152,7 @@ class ImageFactory extends Factory
         $captions = ['Kuliner Khas', 'Makanan Tradisional', 'Jajanan Lokal', 'Proses Memasak'];
 
         return $this->state(fn(array $attributes) => [
-            'image_url' => $this->faker->imageUrl(800, 600, 'food', true, 'cuisine'),
+            'image_url' => $this->faker->imageUrl(800, 600),
             'caption' => $this->faker->randomElement($captions),
         ]);
     }
@@ -152,7 +165,7 @@ class ImageFactory extends Factory
         $captions = ['Produk UMKM', 'Proses Produksi', 'Workshop Kerajinan', 'Pameran Produk'];
 
         return $this->state(fn(array $attributes) => [
-            'image_url' => $this->faker->imageUrl(800, 600, 'business', true, 'workshop'),
+            'image_url' => $this->faker->imageUrl(800, 600),
             'caption' => $this->faker->randomElement($captions),
         ]);
     }
@@ -165,7 +178,7 @@ class ImageFactory extends Factory
         $captions = ['Destinasi Wisata', 'Aktivitas Wisata', 'Fasilitas Wisata', 'Wisatawan'];
 
         return $this->state(fn(array $attributes) => [
-            'image_url' => $this->faker->imageUrl(800, 600, 'nature', true, 'tourism'),
+            'image_url' => $this->faker->imageUrl(800, 600),
             'caption' => $this->faker->randomElement($captions),
         ]);
     }
@@ -173,7 +186,7 @@ class ImageFactory extends Factory
     /**
      * Gallery image with specific sort order.
      */
-    public function gallery(int $sortOrder = null): static
+    public function gallery(int $sortOrder = 0): static
     {
         return $this->state(fn(array $attributes) => [
             'sort_order' => $sortOrder ?? $this->faker->numberBetween(1, 50),
