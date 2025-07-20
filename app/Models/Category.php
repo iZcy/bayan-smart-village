@@ -16,6 +16,7 @@ class Category extends Model
     protected $fillable = [
         'village_id',
         'name',
+        'slug',
         'type',
         'description',
         'icon'
@@ -29,5 +30,10 @@ class Category extends Model
     public function offers(): HasMany
     {
         return $this->hasMany(Offer::class);
+    }
+
+    public function places(): HasMany
+    {
+        return $this->hasMany(Place::class);
     }
 }

@@ -10,7 +10,7 @@ import {
 import { useInView } from "react-intersection-observer";
 import MainLayout from "@/Layouts/MainLayout";
 import HeroSection from "@/Components/HeroSection";
-import { ArticleCard, ProductCard } from "@/Components/Cards/Index";
+import { ArticleCard, ProductCard, PlaceCard } from "@/Components/Cards/Index";
 
 const Home = ({
     village,
@@ -29,12 +29,13 @@ const Home = ({
     const { scrollY } = useScroll();
     const audioRef = useRef(null);
 
-    // Separate places by type
+    // Separate places by type - ensure we have arrays
     const tourismPlaces =
-        featuredPlaces.filter((place) => place.category?.type === "tourism") ||
+        featuredPlaces?.filter((place) => place.category?.type === "service") ||
         [];
     const smePlaces =
-        featuredPlaces.filter((place) => place.category?.type === "sme") || [];
+        featuredPlaces?.filter((place) => place.category?.type === "product") ||
+        [];
 
     // Audio management
     useEffect(() => {
@@ -63,24 +64,20 @@ const Home = ({
 
     // Auto-scroll for tourism places
     useEffect(() => {
-        if (isUserInteracting) return;
+        if (isUserInteracting || tourismPlaces.length === 0) return;
         const interval = setInterval(() => {
-            if (tourismPlaces.length > 0) {
-                setSelectedTourismPlace(
-                    (prev) => (prev + 1) % tourismPlaces.length
-                );
-            }
+            setSelectedTourismPlace(
+                (prev) => (prev + 1) % tourismPlaces.length
+            );
         }, 5000);
         return () => clearInterval(interval);
     }, [tourismPlaces.length, isUserInteracting]);
 
     // Auto-scroll for SME places
     useEffect(() => {
-        if (isUserInteracting) return;
+        if (isUserInteracting || smePlaces.length === 0) return;
         const interval = setInterval(() => {
-            if (smePlaces.length > 0) {
-                setSelectedSME((prev) => (prev + 1) % smePlaces.length);
-            }
+            setSelectedSME((prev) => (prev + 1) % smePlaces.length);
         }, 5000);
         return () => clearInterval(interval);
     }, [smePlaces.length, isUserInteracting]);
@@ -193,17 +190,14 @@ const Home = ({
                 </HeroSection>
             </section>
 
-            {/* Tourism Section */}
-            {tourismPlaces.length > 0 && (
+            {/* Featured Places Section */}
+            {featuredPlaces && featuredPlaces.length > 0 && (
                 <section
                     id="content"
-                    ref={tourismRef}
                     className="min-h-screen relative overflow-hidden py-20 z-10"
-                    onMouseEnter={() => handleUserInteraction()}
-                    onTouchStart={handleUserInteraction}
                 >
                     <div className="absolute inset-0 backdrop-blur-sm" />
-                    <div className="container mx-auto px-6 h-full relative z-10">
+                    <div className="container mx-auto px-6 relative z-10">
                         <motion.div
                             initial={{ opacity: 0, y: 50 }}
                             whileInView={{ opacity: 1, y: 0 }}
@@ -211,7 +205,7 @@ const Home = ({
                             className="text-center mb-16"
                         >
                             <h2 className="text-5xl font-bold text-white mb-4">
-                                Tourism Destinations
+                                Featured Places
                             </h2>
                             <motion.div
                                 initial={{ width: 0 }}
@@ -221,448 +215,39 @@ const Home = ({
                             />
                         </motion.div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
-                            {/* Interactive Map */}
-                            <motion.div
-                                initial={{ opacity: 0, x: -50 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.8 }}
-                                className="bg-white/10 backdrop-blur-md rounded-2xl p-6 flex items-center justify-center"
-                            >
-                                <AnimatePresence mode="wait">
-                                    <motion.div
-                                        key={selectedTourismPlace}
-                                        initial={{ scale: 0.8, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        exit={{ scale: 0.8, opacity: 0 }}
-                                        transition={{ duration: 0.5 }}
-                                        className="w-full h-80 bg-gradient-to-br from-green-400/30 to-blue-400/30 rounded-xl relative overflow-hidden"
-                                    >
-                                        {tourismPlaces[selectedTourismPlace]
-                                            ?.latitude &&
-                                        tourismPlaces[selectedTourismPlace]
-                                            ?.longitude ? (
-                                            <div className="w-full h-full relative">
-                                                <iframe
-                                                    src={`https://maps.google.com/maps?q=${tourismPlaces[selectedTourismPlace].latitude},${tourismPlaces[selectedTourismPlace].longitude}&z=15&output=embed`}
-                                                    width="100%"
-                                                    height="100%"
-                                                    style={{ border: 0 }}
-                                                    className="rounded-xl"
-                                                />
-                                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 rounded-b-xl">
-                                                    <h3 className="text-white font-semibold text-lg">
-                                                        {tourismPlaces[
-                                                            selectedTourismPlace
-                                                        ]?.name ||
-                                                            "Beautiful Destination"}
-                                                    </h3>
-                                                    <p className="text-white/80 text-sm">
-                                                        📍{" "}
-                                                        {tourismPlaces[
-                                                            selectedTourismPlace
-                                                        ]?.address ||
-                                                            "Village Location"}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <div className="text-center text-white">
-                                                    <motion.div
-                                                        animate={{
-                                                            y: [0, -10, 0],
-                                                        }}
-                                                        transition={{
-                                                            duration: 2,
-                                                            repeat: Infinity,
-                                                        }}
-                                                        className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4"
-                                                    >
-                                                        📍
-                                                    </motion.div>
-                                                    <h3 className="text-xl font-semibold mb-2">
-                                                        {tourismPlaces[
-                                                            selectedTourismPlace
-                                                        ]?.name ||
-                                                            "Beautiful Destination"}
-                                                    </h3>
-                                                    <p className="text-sm opacity-75">
-                                                        Interactive location
-                                                        view
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </motion.div>
-                                </AnimatePresence>
-                            </motion.div>
-
-                            {/* Description */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 50 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.8, delay: 0.2 }}
-                                className="flex flex-col justify-center"
-                            >
-                                <AnimatePresence mode="wait">
-                                    <motion.div
-                                        key={selectedTourismPlace}
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -20 }}
-                                        transition={{ duration: 0.5 }}
-                                        className="text-white"
-                                    >
-                                        <h3 className="text-3xl font-bold mb-4">
-                                            {tourismPlaces[selectedTourismPlace]
-                                                ?.name ||
-                                                "Beautiful Destination"}
-                                        </h3>
-                                        <div className="text-lg opacity-90 mb-6 leading-relaxed">
-                                            <p>
-                                                {tourismPlaces[
-                                                    selectedTourismPlace
-                                                ]?.description ||
-                                                    "Explore the natural beauty and cultural richness of this amazing destination."}
-                                            </p>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="flex items-center">
-                                                <span className="text-green-200">
-                                                    📍
-                                                </span>
-                                                <span className="ml-2 text-sm">
-                                                    {tourismPlaces[
-                                                        selectedTourismPlace
-                                                    ]?.address ||
-                                                        "Village Location"}
-                                                </span>
-                                            </div>
-                                            {tourismPlaces[selectedTourismPlace]
-                                                ?.phone_number && (
-                                                <div className="flex items-center">
-                                                    <span className="text-green-200">
-                                                        📞
-                                                    </span>
-                                                    <span className="ml-2 text-sm">
-                                                        {
-                                                            tourismPlaces[
-                                                                selectedTourismPlace
-                                                            ].phone_number
-                                                        }
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                </AnimatePresence>
-                            </motion.div>
-
-                            {/* Places List */}
-                            <motion.div
-                                initial={{ opacity: 0, x: 50 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.8, delay: 0.4 }}
-                                className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 pr-2"
-                            >
-                                {tourismPlaces
-                                    .slice(0, 6)
-                                    .map((place, index) => (
-                                        <motion.div
-                                            key={place.id}
-                                            onClick={() => {
-                                                setSelectedTourismPlace(index);
-                                                handleUserInteraction();
-                                            }}
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
-                                            className={`p-4 rounded-xl cursor-pointer transition-all duration-300 ${
-                                                selectedTourismPlace === index
-                                                    ? "bg-white/20 backdrop-blur-md border border-white/30 shadow-lg"
-                                                    : "bg-white/10 backdrop-blur-sm hover:bg-white/15"
-                                            }`}
-                                        >
-                                            <div className="flex items-center space-x-4">
-                                                <motion.div
-                                                    className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center relative overflow-hidden flex-shrink-0"
-                                                    whileHover={{ rotate: 5 }}
-                                                >
-                                                    {place.image_url ? (
-                                                        <img
-                                                            src={
-                                                                place.image_url
-                                                            }
-                                                            alt={place.name}
-                                                            className="w-full h-full object-cover rounded-lg"
-                                                        />
-                                                    ) : (
-                                                        <span className="text-2xl">
-                                                            🏞️
-                                                        </span>
-                                                    )}
-                                                </motion.div>
-                                                <div className="flex-1 text-white min-w-0">
-                                                    <h4 className="font-semibold text-lg truncate">
-                                                        {place.name}
-                                                    </h4>
-                                                    <p className="text-sm opacity-75 truncate">
-                                                        {place.category?.name}
-                                                    </p>
-                                                </div>
-                                                <motion.div
-                                                    animate={{
-                                                        scale:
-                                                            selectedTourismPlace ===
-                                                            index
-                                                                ? 1.2
-                                                                : 1,
-                                                        opacity:
-                                                            selectedTourismPlace ===
-                                                            index
-                                                                ? 1
-                                                                : 0.3,
-                                                    }}
-                                                    className="w-3 h-3 rounded-full bg-white flex-shrink-0"
-                                                />
-                                            </div>
-                                        </motion.div>
-                                    ))}
-                            </motion.div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {featuredPlaces.slice(0, 6).map((place, index) => (
+                                <PlaceCard
+                                    key={place.id}
+                                    place={place}
+                                    index={index}
+                                    village={village}
+                                />
+                            ))}
                         </div>
-                    </div>
-                </section>
-            )}
 
-            {/* SME Section */}
-            {smePlaces.length > 0 && (
-                <section
-                    ref={smeRef}
-                    className="min-h-screen relative overflow-hidden py-20 z-10"
-                    onMouseEnter={() => handleUserInteraction()}
-                    onTouchStart={handleUserInteraction}
-                >
-                    <div className="absolute inset-0 backdrop-blur-sm" />
-                    <div className="container mx-auto px-6 h-full relative z-10">
                         <motion.div
-                            initial={{ opacity: 0, y: 50 }}
+                            initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8 }}
-                            className="text-center mb-16"
+                            transition={{ delay: 1, duration: 0.8 }}
+                            className="text-center mt-12"
                         >
-                            <h2 className="text-5xl font-bold text-white mb-4">
-                                Local Businesses
-                            </h2>
-                            <motion.div
-                                initial={{ width: 0 }}
-                                whileInView={{ width: "10rem" }}
-                                transition={{ delay: 0.5, duration: 1 }}
-                                className="h-1 bg-gradient-to-r from-orange-400 to-red-400 mx-auto"
-                            />
+                            <Link href="/places">
+                                <motion.button
+                                    whileHover={{ scale: 1.05, y: -3 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                                >
+                                    Explore All Places →
+                                </motion.button>
+                            </Link>
                         </motion.div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
-                            {/* SME Places List */}
-                            <motion.div
-                                initial={{ opacity: 0, x: -50 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.8 }}
-                                className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 pr-2"
-                            >
-                                {smePlaces.slice(0, 6).map((place, index) => (
-                                    <motion.div
-                                        key={place.id}
-                                        onClick={() => {
-                                            setSelectedSME(index);
-                                            handleUserInteraction();
-                                        }}
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                        className={`p-4 rounded-xl cursor-pointer transition-all duration-300 ${
-                                            selectedSME === index
-                                                ? "bg-white/20 backdrop-blur-md border border-white/30 shadow-lg"
-                                                : "bg-white/10 backdrop-blur-sm hover:bg-white/15"
-                                        }`}
-                                    >
-                                        <div className="flex items-center space-x-4">
-                                            <motion.div
-                                                animate={{
-                                                    scale:
-                                                        selectedSME === index
-                                                            ? 1.2
-                                                            : 1,
-                                                    opacity:
-                                                        selectedSME === index
-                                                            ? 1
-                                                            : 0.3,
-                                                }}
-                                                className="w-3 h-3 rounded-full bg-white flex-shrink-0"
-                                            />
-                                            <div className="flex-1 text-white min-w-0">
-                                                <h4 className="font-semibold text-lg truncate">
-                                                    {place.name}
-                                                </h4>
-                                                <p className="text-sm opacity-75 truncate">
-                                                    {place.category?.name}
-                                                </p>
-                                            </div>
-                                            <motion.div
-                                                className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center relative overflow-hidden flex-shrink-0"
-                                                whileHover={{ rotate: -5 }}
-                                            >
-                                                {place.image_url ? (
-                                                    <img
-                                                        src={place.image_url}
-                                                        alt={place.name}
-                                                        className="w-full h-full object-cover rounded-lg"
-                                                    />
-                                                ) : (
-                                                    <span className="text-2xl">
-                                                        🏪
-                                                    </span>
-                                                )}
-                                            </motion.div>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-
-                            {/* Description */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 50 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.8, delay: 0.2 }}
-                                className="flex flex-col justify-center"
-                            >
-                                <AnimatePresence mode="wait">
-                                    <motion.div
-                                        key={selectedSME}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 20 }}
-                                        transition={{ duration: 0.6 }}
-                                        className="text-white bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10"
-                                    >
-                                        <h3 className="text-3xl font-bold mb-4">
-                                            {smePlaces[selectedSME]?.name ||
-                                                "Local Business"}
-                                        </h3>
-                                        <div className="text-lg opacity-90 mb-6 leading-relaxed">
-                                            <p>
-                                                {smePlaces[selectedSME]
-                                                    ?.description ||
-                                                    "Supporting local economy through quality products and services."}
-                                            </p>
-                                        </div>
-                                        <div className="space-y-3">
-                                            <div className="flex items-center p-3 bg-orange-500/20 rounded-lg">
-                                                <span className="text-orange-200 text-xl mr-3">
-                                                    📍
-                                                </span>
-                                                <span className="text-sm">
-                                                    {smePlaces[selectedSME]
-                                                        ?.address ||
-                                                        "Village Location"}
-                                                </span>
-                                            </div>
-                                            {smePlaces[selectedSME]
-                                                ?.phone_number && (
-                                                <div className="flex items-center p-3 bg-orange-500/20 rounded-lg">
-                                                    <span className="text-orange-200 text-xl mr-3">
-                                                        📞
-                                                    </span>
-                                                    <span className="text-sm">
-                                                        {
-                                                            smePlaces[
-                                                                selectedSME
-                                                            ].phone_number
-                                                        }
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                </AnimatePresence>
-                            </motion.div>
-
-                            {/* Interactive Business Map */}
-                            <motion.div
-                                initial={{ opacity: 0, x: 50 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.8, delay: 0.4 }}
-                                className="bg-white/10 backdrop-blur-md rounded-2xl p-6 flex items-center justify-center"
-                            >
-                                <AnimatePresence mode="wait">
-                                    <motion.div
-                                        key={selectedSME}
-                                        initial={{ scale: 0.8, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        exit={{ scale: 0.8, opacity: 0 }}
-                                        transition={{ duration: 0.6 }}
-                                        className="w-full h-80 bg-gradient-to-br from-orange-400/30 to-red-400/30 rounded-xl relative overflow-hidden"
-                                    >
-                                        {smePlaces[selectedSME]?.latitude &&
-                                        smePlaces[selectedSME]?.longitude ? (
-                                            <div className="w-full h-full relative">
-                                                <iframe
-                                                    src={`https://maps.google.com/maps?q=${smePlaces[selectedSME].latitude},${smePlaces[selectedSME].longitude}&z=15&output=embed`}
-                                                    width="100%"
-                                                    height="100%"
-                                                    style={{ border: 0 }}
-                                                    className="rounded-xl"
-                                                />
-                                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 rounded-b-xl">
-                                                    <h3 className="text-white font-semibold text-lg">
-                                                        {smePlaces[selectedSME]
-                                                            ?.name ||
-                                                            "Business Location"}
-                                                    </h3>
-                                                    <p className="text-white/80 text-sm">
-                                                        📍{" "}
-                                                        {smePlaces[selectedSME]
-                                                            ?.address ||
-                                                            "Village Location"}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <div className="text-center text-white">
-                                                    <motion.div
-                                                        animate={{
-                                                            rotateY: [0, 360],
-                                                            scale: [1, 1.2, 1],
-                                                        }}
-                                                        transition={{
-                                                            duration: 3,
-                                                            repeat: Infinity,
-                                                        }}
-                                                        className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center mx-auto mb-4"
-                                                    >
-                                                        🏪
-                                                    </motion.div>
-                                                    <h3 className="text-xl font-semibold mb-2">
-                                                        {smePlaces[selectedSME]
-                                                            ?.name ||
-                                                            "Business Location"}
-                                                    </h3>
-                                                    <p className="text-sm opacity-75">
-                                                        Interactive business
-                                                        view
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </motion.div>
-                                </AnimatePresence>
-                            </motion.div>
-                        </div>
                     </div>
                 </section>
             )}
 
             {/* Products Section */}
-            {featuredProducts.length > 0 && (
+            {featuredProducts && featuredProducts.length > 0 && (
                 <section
                     ref={productsRef}
                     className="min-h-screen relative overflow-hidden py-20 z-10"
@@ -720,7 +305,7 @@ const Home = ({
             )}
 
             {/* Articles Section */}
-            {featuredArticles.length > 0 && (
+            {featuredArticles && featuredArticles.length > 0 && (
                 <section
                     ref={articlesRef}
                     className="min-h-screen relative overflow-hidden py-20 z-10"
@@ -778,7 +363,7 @@ const Home = ({
             )}
 
             {/* Gallery Section */}
-            {featuredImages.length > 0 && (
+            {featuredImages && featuredImages.length > 0 && (
                 <section
                     ref={galleryRef}
                     className="min-h-screen relative overflow-hidden py-20 z-10"

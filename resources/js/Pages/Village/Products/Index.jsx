@@ -9,16 +9,21 @@ import SectionHeader from "@/Components/SectionHeader";
 import { ProductCard } from "@/Components/Cards/Index";
 import Pagination from "@/Components/Pagination";
 
-const ProductsPage = ({ village, products, categories, filters }) => {
-    const [filteredProducts, setFilteredProducts] = useState(products.data);
-    const [searchTerm, setSearchTerm] = useState(filters.search || "");
+const ProductsPage = ({ village, products, categories = [], filters = {} }) => {
+    // Ensure we have valid data
+    const productData = products?.data || [];
+    const filterData = filters || {};
+    const categoryData = categories || [];
+
+    const [filteredProducts, setFilteredProducts] = useState(productData);
+    const [searchTerm, setSearchTerm] = useState(filterData.search || "");
     const [selectedCategory, setSelectedCategory] = useState(
-        filters.category || ""
+        filterData.category || ""
     );
-    const [sortBy, setSortBy] = useState(filters.sort || "featured");
+    const [sortBy, setSortBy] = useState(filterData.sort || "featured");
 
     useEffect(() => {
-        let filtered = products.data;
+        let filtered = productData;
 
         // Filter by search
         if (searchTerm) {
@@ -87,7 +92,7 @@ const ProductsPage = ({ village, products, categories, filters }) => {
         }
 
         setFilteredProducts(filtered);
-    }, [searchTerm, selectedCategory, sortBy, products.data]);
+    }, [searchTerm, selectedCategory, sortBy, productData]);
 
     return (
         <MainLayout title="Products">
@@ -105,7 +110,7 @@ const ProductsPage = ({ village, products, categories, filters }) => {
                     setSearchTerm={setSearchTerm}
                     selectedCategory={selectedCategory}
                     setSelectedCategory={setSelectedCategory}
-                    categories={categories}
+                    categories={categoryData}
                     sortBy={sortBy}
                     setSortBy={setSortBy}
                     searchPlaceholder="Search products..."
@@ -149,7 +154,7 @@ const ProductsPage = ({ village, products, categories, filters }) => {
                     )}
 
                     {/* Pagination */}
-                    {products.last_page > 1 && (
+                    {products?.last_page > 1 && (
                         <Pagination
                             paginationData={products}
                             theme="products"
@@ -171,7 +176,7 @@ const ProductsPage = ({ village, products, categories, filters }) => {
                     </motion.h2>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        {categories?.slice(0, 8).map((category, index) => (
+                        {categoryData?.slice(0, 8).map((category, index) => (
                             <motion.button
                                 key={category.id}
                                 initial={{ opacity: 0, y: 30 }}
@@ -224,7 +229,7 @@ const ProductsPage = ({ village, products, categories, filters }) => {
                                     "Handpicked items from our village artisans",
                                 icon: "⭐",
                                 count:
-                                    products.data?.filter((p) => p.is_featured)
+                                    productData?.filter((p) => p.is_featured)
                                         .length || 0,
                                 color: "from-yellow-400 to-orange-500",
                             },
@@ -234,7 +239,7 @@ const ProductsPage = ({ village, products, categories, filters }) => {
                                     "Products ready for immediate purchase",
                                 icon: "✅",
                                 count:
-                                    products.data?.filter(
+                                    productData?.filter(
                                         (p) => p.availability === "available"
                                     ).length || 0,
                                 color: "from-green-400 to-emerald-500",
@@ -245,7 +250,7 @@ const ProductsPage = ({ village, products, categories, filters }) => {
                                     "Limited time offerings based on harvest seasons",
                                 icon: "🌱",
                                 count:
-                                    products.data?.filter(
+                                    productData?.filter(
                                         (p) => p.availability === "seasonal"
                                     ).length || 0,
                                 color: "from-blue-400 to-cyan-500",
@@ -303,19 +308,19 @@ const ProductsPage = ({ village, products, categories, filters }) => {
                         {[
                             {
                                 label: "Total Products",
-                                value: products.total || 0,
+                                value: products?.total || 0,
                                 icon: "📦",
                             },
                             {
                                 label: "Categories",
-                                value: categories?.length || 0,
+                                value: categoryData?.length || 0,
                                 icon: "🏷️",
                             },
                             {
                                 label: "Local Artisans",
                                 value:
                                     new Set(
-                                        products.data
+                                        productData
                                             ?.map((p) => p.sme?.id)
                                             .filter(Boolean)
                                     ).size || 0,
@@ -366,3 +371,4 @@ const ProductsPage = ({ village, products, categories, filters }) => {
 };
 
 export default ProductsPage;
+

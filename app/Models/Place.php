@@ -1,6 +1,6 @@
 <?php
 
-// Model: SmeTourismPlace.php
+// Model: Place.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -15,6 +15,7 @@ class Place extends Model
 
     protected $fillable = [
         'village_id',
+        'category_id',
         'name',
         'slug',
         'description',
@@ -35,6 +36,11 @@ class Place extends Model
     public function village(): BelongsTo
     {
         return $this->belongsTo(Village::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 
     public function smes(): HasMany

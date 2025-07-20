@@ -82,7 +82,7 @@ export default function PlaceShowPage({ village, place }) {
                             className="absolute inset-0 w-full h-full"
                             viewBox="0 0 1200 600"
                         >
-                            {place.category?.type === "tourism" ? (
+                            {place.category?.type === "service" ? (
                                 <>
                                     <motion.path
                                         initial={{ pathLength: 0 }}

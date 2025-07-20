@@ -9,16 +9,21 @@ import SectionHeader from "@/Components/SectionHeader";
 import { PlaceCard } from "@/Components/Cards/Index";
 import Pagination from "@/Components/Pagination";
 
-const PlacesPage = ({ village, places, categories, filters }) => {
-    const [filteredPlaces, setFilteredPlaces] = useState(places.data);
-    const [searchTerm, setSearchTerm] = useState(filters.search || "");
+const PlacesPage = ({ village, places, categories = [], filters = {} }) => {
+    // Ensure we have valid data
+    const placeData = places?.data || [];
+    const filterData = filters || {};
+    const categoryData = categories || [];
+
+    const [filteredPlaces, setFilteredPlaces] = useState(placeData);
+    const [searchTerm, setSearchTerm] = useState(filterData.search || "");
     const [selectedCategory, setSelectedCategory] = useState(
-        filters.category || ""
+        filterData.category || ""
     );
-    const [selectedType, setSelectedType] = useState(filters.type || "");
+    const [selectedType, setSelectedType] = useState(filterData.type || "");
 
     useEffect(() => {
-        let filtered = places.data;
+        let filtered = placeData;
 
         // Filter by search
         if (searchTerm) {
@@ -48,7 +53,7 @@ const PlacesPage = ({ village, places, categories, filters }) => {
         }
 
         setFilteredPlaces(filtered);
-    }, [searchTerm, selectedCategory, selectedType, places.data]);
+    }, [searchTerm, selectedCategory, selectedType, placeData]);
 
     const handleClearFilters = () => {
         setSearchTerm("");
@@ -66,10 +71,10 @@ const PlacesPage = ({ village, places, categories, filters }) => {
             <option value="" className="text-black">
                 All Types
             </option>
-            <option value="tourism" className="text-black">
+            <option value="service" className="text-black">
                 Tourism
             </option>
-            <option value="sme" className="text-black">
+            <option value="product" className="text-black">
                 Businesses
             </option>
         </select>
@@ -91,7 +96,7 @@ const PlacesPage = ({ village, places, categories, filters }) => {
                     setSearchTerm={setSearchTerm}
                     selectedCategory={selectedCategory}
                     setSelectedCategory={setSelectedCategory}
-                    categories={categories}
+                    categories={categoryData}
                     additionalFilters={[
                         { component: typeFilterComponent },
                         {
@@ -147,7 +152,7 @@ const PlacesPage = ({ village, places, categories, filters }) => {
                     )}
 
                     {/* Pagination */}
-                    {places.last_page > 1 && (
+                    {places?.last_page > 1 && (
                         <Pagination paginationData={places} theme="places" />
                     )}
                 </div>
@@ -166,7 +171,7 @@ const PlacesPage = ({ village, places, categories, filters }) => {
                     </motion.h2>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        {categories?.slice(0, 8).map((category, index) => (
+                        {categoryData?.slice(0, 8).map((category, index) => (
                             <motion.button
                                 key={category.id}
                                 initial={{ opacity: 0, y: 30 }}
@@ -185,7 +190,7 @@ const PlacesPage = ({ village, places, categories, filters }) => {
                                 }`}
                             >
                                 <div className="text-3xl mb-3">
-                                    {category.type === "tourism" ? "🏞️" : "🏪"}
+                                    {category.type === "service" ? "🏞️" : "🏪"}
                                 </div>
                                 <h3 className="text-white font-semibold text-lg">
                                     {category.name}
@@ -211,27 +216,28 @@ const PlacesPage = ({ village, places, categories, filters }) => {
                         {[
                             {
                                 label: "Total Places",
-                                value: places.total || 0,
+                                value: places?.total || 0,
                                 icon: "📍",
                             },
                             {
                                 label: "Tourism Sites",
                                 value:
-                                    categories?.filter(
-                                        (c) => c.type === "tourism"
+                                    categoryData?.filter(
+                                        (c) => c.type === "service"
                                     ).length || 0,
                                 icon: "🏞️",
                             },
                             {
                                 label: "Businesses",
                                 value:
-                                    categories?.filter((c) => c.type === "sme")
-                                        .length || 0,
+                                    categoryData?.filter(
+                                        (c) => c.type === "product"
+                                    ).length || 0,
                                 icon: "🏪",
                             },
                             {
                                 label: "Categories",
-                                value: categories?.length || 0,
+                                value: categoryData?.length || 0,
                                 icon: "📂",
                             },
                         ].map((stat, index) => (

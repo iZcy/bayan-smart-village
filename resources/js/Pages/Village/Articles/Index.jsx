@@ -9,16 +9,20 @@ import SectionHeader from "@/Components/SectionHeader";
 import { ArticleCard } from "@/Components/Cards/Index";
 import Pagination from "@/Components/Pagination";
 
-const ArticlesPage = ({ village, articles, filters }) => {
-    const [filteredArticles, setFilteredArticles] = useState(articles.data);
-    const [searchTerm, setSearchTerm] = useState(filters.search || "");
+const ArticlesPage = ({ village, articles, filters = {} }) => {
+    // Ensure we have valid data
+    const articleData = articles?.data || [];
+    const filterData = filters || {};
+
+    const [filteredArticles, setFilteredArticles] = useState(articleData);
+    const [searchTerm, setSearchTerm] = useState(filterData.search || "");
     const [selectedCategory, setSelectedCategory] = useState(
-        filters.category || ""
+        filterData.category || ""
     );
-    const [sortBy, setSortBy] = useState(filters.sort || "newest");
+    const [sortBy, setSortBy] = useState(filterData.sort || "newest");
 
     useEffect(() => {
-        let filtered = articles.data;
+        let filtered = articleData;
 
         // Filter by search
         if (searchTerm) {
@@ -75,12 +79,12 @@ const ArticlesPage = ({ village, articles, filters }) => {
         }
 
         setFilteredArticles(filtered);
-    }, [searchTerm, selectedCategory, sortBy, articles.data]);
+    }, [searchTerm, selectedCategory, sortBy, articleData]);
 
     // Extract unique categories from articles
     const categories = [
         ...new Map(
-            articles.data
+            articleData
                 .flatMap((article) => [
                     article.place && {
                         id: article.place.id,
@@ -95,7 +99,7 @@ const ArticlesPage = ({ village, articles, filters }) => {
                     article.sme && {
                         id: article.sme.id,
                         name: `🏪 ${article.sme.name}`,
-                        type: "sme",
+                        type: "product",
                     },
                 ])
                 .filter(Boolean)
@@ -163,7 +167,7 @@ const ArticlesPage = ({ village, articles, filters }) => {
                     )}
 
                     {/* Pagination */}
-                    {articles.last_page > 1 && (
+                    {articles?.last_page > 1 && (
                         <Pagination
                             paginationData={articles}
                             theme="articles"
@@ -218,7 +222,7 @@ const ArticlesPage = ({ village, articles, filters }) => {
                                     </h3>
                                     <p className="text-gray-300 text-xs mt-1">
                                         {
-                                            articles.data.filter((article) =>
+                                            articleData.filter((article) =>
                                                 category.type === "place"
                                                     ? article.place?.id ===
                                                       category.id
@@ -258,9 +262,8 @@ const ArticlesPage = ({ village, articles, filters }) => {
                                 description:
                                     "Stories about the rich history and heritage",
                                 icon: "🏛️",
-                                count: articles.data.filter(
-                                    (a) => a.is_featured
-                                ).length,
+                                count: articleData.filter((a) => a.is_featured)
+                                    .length,
                                 color: "from-yellow-400 to-orange-500",
                             },
                             {
@@ -268,7 +271,7 @@ const ArticlesPage = ({ village, articles, filters }) => {
                                 description:
                                     "Daily life and community activities",
                                 icon: "👥",
-                                count: articles.data.filter((a) => a.community)
+                                count: articleData.filter((a) => a.community)
                                     .length,
                                 color: "from-green-400 to-emerald-500",
                             },
@@ -277,7 +280,7 @@ const ArticlesPage = ({ village, articles, filters }) => {
                                 description:
                                     "Stories about special places and landmarks",
                                 icon: "📍",
-                                count: articles.data.filter((a) => a.place)
+                                count: articleData.filter((a) => a.place)
                                     .length,
                                 color: "from-blue-400 to-cyan-500",
                             },
@@ -334,13 +337,13 @@ const ArticlesPage = ({ village, articles, filters }) => {
                         {[
                             {
                                 label: "Total Articles",
-                                value: articles.total || 0,
+                                value: articles?.total || 0,
                                 icon: "📖",
                             },
                             {
                                 label: "Featured",
                                 value:
-                                    articles.data?.filter((a) => a.is_featured)
+                                    articleData?.filter((a) => a.is_featured)
                                         .length || 0,
                                 icon: "⭐",
                             },
@@ -348,7 +351,7 @@ const ArticlesPage = ({ village, articles, filters }) => {
                                 label: "Authors",
                                 value:
                                     new Set(
-                                        articles.data
+                                        articleData
                                             ?.map((a) => a.author_id)
                                             .filter(Boolean)
                                     ).size || 1,
@@ -357,7 +360,7 @@ const ArticlesPage = ({ village, articles, filters }) => {
                             {
                                 label: "This Year",
                                 value:
-                                    articles.data?.filter((a) =>
+                                    articleData?.filter((a) =>
                                         new Date(a.published_at || a.created_at)
                                             .getFullYear()
                                             .toString()

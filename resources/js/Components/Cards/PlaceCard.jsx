@@ -5,23 +5,23 @@ import ImageCard from "./ImageCard";
 
 const PlaceCard = ({ place, index, village }) => {
     const getTypeColor = () => {
-        return place.category?.type === "tourism"
+        return place.category?.type === "service"
             ? "from-green-500 to-teal-600"
             : "from-blue-500 to-purple-600";
     };
 
     const getTypeIcon = () => {
-        return place.category?.type === "tourism" ? "🏞️" : "🏪";
+        return place.category?.type === "service" ? "🏞️" : "🏪";
     };
 
     const badges = [
         {
             content:
-                place.category?.type === "tourism"
+                place.category?.type === "service"
                     ? "🏞️ Tourism"
                     : "🏪 Business",
             className: `px-3 py-1 rounded-full text-xs font-medium text-white ${
-                place.category?.type === "tourism"
+                place.category?.type === "service"
                     ? "bg-green-500"
                     : "bg-blue-500"
             }`,
@@ -58,7 +58,7 @@ const PlaceCard = ({ place, index, village }) => {
                     {place.category && (
                         <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                                place.category.type === "tourism"
+                                place.category.type === "service"
                                     ? "bg-green-500/20 text-green-300 border-green-500/30"
                                     : "bg-blue-500/20 text-blue-300 border-blue-500/30"
                             }`}

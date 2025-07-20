@@ -9,10 +9,15 @@ import FilterControls from "@/Components/FilterControls";
 import SectionHeader from "@/Components/SectionHeader";
 import Pagination from "@/Components/Pagination";
 
-const GalleryPage = ({ village, images, places, filters }) => {
-    const [filteredImages, setFilteredImages] = useState(images.data);
-    const [selectedPlace, setSelectedPlace] = useState(filters.place || "");
-    const [searchTerm, setSearchTerm] = useState(filters.search || "");
+const GalleryPage = ({ village, images, places = [], filters = {} }) => {
+    // Ensure we have valid data
+    const imageData = images?.data || [];
+    const filterData = filters || {};
+    const placeData = places || [];
+
+    const [filteredImages, setFilteredImages] = useState(imageData);
+    const [selectedPlace, setSelectedPlace] = useState(filterData.place || "");
+    const [searchTerm, setSearchTerm] = useState(filterData.search || "");
     const [selectedImage, setSelectedImage] = useState(null);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     const audioRef = useRef(null);
@@ -31,7 +36,7 @@ const GalleryPage = ({ village, images, places, filters }) => {
     }, []);
 
     useEffect(() => {
-        let filtered = images.data;
+        let filtered = imageData;
 
         // Filter by search
         if (searchTerm) {
@@ -54,7 +59,7 @@ const GalleryPage = ({ village, images, places, filters }) => {
         }
 
         setFilteredImages(filtered);
-    }, [searchTerm, selectedPlace, images.data]);
+    }, [searchTerm, selectedPlace, imageData]);
 
     const openLightbox = (image) => {
         setSelectedImage(image);
@@ -94,7 +99,7 @@ const GalleryPage = ({ village, images, places, filters }) => {
             <option value="" className="text-black">
                 All Places
             </option>
-            {places?.map((place) => (
+            {placeData?.map((place) => (
                 <option key={place.id} value={place.id} className="text-black">
                     {place.name}
                 </option>
@@ -129,7 +134,7 @@ const GalleryPage = ({ village, images, places, filters }) => {
                     setSearchTerm={setSearchTerm}
                     selectedCategory={selectedPlace}
                     setSelectedCategory={setSelectedPlace}
-                    categories={places}
+                    categories={placeData}
                     additionalFilters={[
                         { component: placeFilterComponent },
                         {
@@ -186,7 +191,7 @@ const GalleryPage = ({ village, images, places, filters }) => {
                     )}
 
                     {/* Pagination */}
-                    {images.last_page > 1 && (
+                    {images?.last_page > 1 && (
                         <Pagination paginationData={images} theme="gallery" />
                     )}
                 </div>
@@ -204,12 +209,12 @@ const GalleryPage = ({ village, images, places, filters }) => {
                         {[
                             {
                                 label: "Total Photos",
-                                value: images.total || 0,
+                                value: images?.total || 0,
                                 icon: "📸",
                             },
                             {
                                 label: "Locations",
-                                value: places?.length || 0,
+                                value: placeData?.length || 0,
                                 icon: "📍",
                             },
                             {
@@ -261,7 +266,7 @@ const GalleryPage = ({ village, images, places, filters }) => {
             </section>
 
             {/* Photo Categories Section */}
-            {places && places.length > 0 && (
+            {placeData && placeData.length > 0 && (
                 <section className="py-20 bg-gradient-to-b from-gray-900 to-purple-900">
                     <div className="container mx-auto px-6">
                         <motion.h2
@@ -274,7 +279,7 @@ const GalleryPage = ({ village, images, places, filters }) => {
                         </motion.h2>
 
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            {places.slice(0, 8).map((place, index) => (
+                            {placeData.slice(0, 8).map((place, index) => (
                                 <motion.button
                                     key={place.id}
                                     initial={{ opacity: 0, y: 30 }}
@@ -298,7 +303,7 @@ const GalleryPage = ({ village, images, places, filters }) => {
                                     </h3>
                                     <p className="text-gray-300 text-xs mt-1">
                                         {
-                                            images.data.filter(
+                                            imageData.filter(
                                                 (img) =>
                                                     img.place?.id === place.id
                                             ).length
@@ -474,49 +479,53 @@ const LightboxModal = ({
                 </button>
 
                 {/* Navigation Buttons */}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate("prev");
-                    }}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
-                >
-                    <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 19l-7-7 7-7"
-                        />
-                    </svg>
-                </button>
+                {totalImages > 1 && (
+                    <>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onNavigate("prev");
+                            }}
+                            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
+                        >
+                            <svg
+                                className="w-6 h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 19l-7-7 7-7"
+                                />
+                            </svg>
+                        </button>
 
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate("next");
-                    }}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
-                >
-                    <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                        />
-                    </svg>
-                </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onNavigate("next");
+                            }}
+                            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
+                        >
+                            <svg
+                                className="w-6 h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                />
+                            </svg>
+                        </button>
+                    </>
+                )}
 
                 {/* Image */}
                 <motion.div

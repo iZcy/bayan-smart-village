@@ -13,12 +13,14 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('village_id');
             $table->string('name');
+            $table->string('slug')->unique();
             $table->enum('type', ['service', 'product']);
             $table->text('description')->nullable();
             $table->string('icon')->nullable();
             $table->timestamps();
 
             $table->foreign('village_id')->references('id')->on('villages')->onDelete('cascade');
+            $table->index('slug');
             $table->index(['village_id', 'type']);
             $table->unique(['village_id', 'name']);
         });
