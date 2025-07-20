@@ -82,17 +82,8 @@ Route::domain('{village}.' . $baseDomain)
         Route::get('/gallery', [VillagePageController::class, 'gallery'])->name('village.gallery');
 
         // Short link redirect for village subdomains
-        Route::get('/l/{slug}', function (Request $request, $slug) {
-            Log::info('Village route parameters debug', [
-                'slug_from_route' => $slug,
-                'path' => $request->path(),
-                'all_route_params' => $request->route()->parameters(),
-                'route_param_names' => array_keys($request->route()->parameters()),
-                'village' => $request->attributes->get('village')?->name,
-            ]);
-
-            return app(ExternalLinkController::class)->redirect($request, $slug);
-        })->name('village.short-link.redirect');
+        Route::get('/l/{slug}', [ExternalLinkController::class, 'redirect'])
+            ->name('village.short-link.redirect');
 
         // Village-specific API
         Route::prefix('api')->name('village.api.')->group(function () {

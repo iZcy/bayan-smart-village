@@ -1,10 +1,9 @@
 // resources/js/Components/Cards/BaseCard.jsx
-import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "@inertiajs/react";
 import { useInView } from "react-intersection-observer";
 
-export const BaseCard = ({
+const BaseCard = ({
     children,
     href,
     index = 0,
@@ -33,3 +32,5 @@ export const BaseCard = ({
 
     return href ? <Link href={href}>{cardContent}</Link> : cardContent;
 };
+
+export default BaseCard;

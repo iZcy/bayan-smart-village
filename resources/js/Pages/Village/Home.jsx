@@ -10,14 +10,10 @@ import {
 import { useInView } from "react-intersection-observer";
 import MainLayout from "@/Layouts/MainLayout";
 import HeroSection from "@/Components/HeroSection";
-import {
-    BaseCard,
-    PlaceCard,
-    ProductCard,
-    ArticleCard,
-} from "@/Components/Cards/BaseCard";
+import ArticleCard from "@/Components/Cards/ArticleCard";
+import ProductCard from "@/Components/Cards/ProductCard";
 
-const VillageHomePage = ({
+const Home = ({
     village,
     featuredPlaces = [],
     featuredProducts = [],
@@ -991,4 +987,4 @@ const VillageHomePage = ({
     );
 };
 
-export default VillageHomePage;
+export default Home;

@@ -1,5 +1,8 @@
 // resources/js/Components/Cards/ArticleCard.jsx
-export const ArticleCard = ({ article, index, village }) => {
+import BaseCard from "./BaseCard";
+import ImageCard from "./ImageCard";
+
+const ArticleCard = ({ article, index, village }) => {
     const getReadingTime = () => {
         const content = article.content?.replace(/<[^>]*>/g, "") || "";
         return Math.ceil(content.split(" ").length / 200) || 5;
@@ -63,3 +66,5 @@ export const ArticleCard = ({ article, index, village }) => {
         </BaseCard>
     );
 };
+
+export default ArticleCard;

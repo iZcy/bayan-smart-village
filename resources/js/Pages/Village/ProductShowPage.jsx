@@ -56,6 +56,7 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
         return "Contact for price";
     };
 
+    // Simplified CSRF token handling for React components
     const handleLinkClick = async (linkId) => {
         try {
             const response = await fetch(
@@ -64,16 +65,21 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        Accept: "application/json",
                         "X-CSRF-TOKEN": document
                             .querySelector('meta[name="csrf-token"]')
                             ?.getAttribute("content"),
                     },
+                    credentials: "same-origin",
+                    body: JSON.stringify({}),
                 }
             );
 
             if (response.ok) {
                 const data = await response.json();
                 window.open(data.redirect_url, "_blank");
+            } else {
+                console.error("Failed to track link click");
             }
         } catch (error) {
             console.error("Error tracking link click:", error);

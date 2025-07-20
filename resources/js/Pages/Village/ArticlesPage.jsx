@@ -159,7 +159,7 @@ const ArticlesPage = ({ village, articles, filters }) => {
 
                     {/* Pagination */}
                     {articles.last_page > 1 && (
-                        <Pagination articles={articles} />
+                        <Pagination paginationData={articles} theme="articles" />
                     )}
                 </div>
             </section>

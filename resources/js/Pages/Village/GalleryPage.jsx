@@ -360,7 +360,7 @@ const GalleryPage = ({ village, images, places, filters }) => {
                     )}
 
                     {/* Pagination */}
-                    {images.last_page > 1 && <Pagination images={images} />}
+                    {images.last_page > 1 && <Pagination paginationData={images} theme="gallery" />}
                 </div>
             </section>
 
