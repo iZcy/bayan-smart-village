@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CategoryResource\Pages;
 use App\Models\Category;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -12,6 +13,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class CategoryResource extends Resource
 {
@@ -19,6 +22,24 @@ class CategoryResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-tag';
     protected static ?string $navigationGroup = 'Business';
     protected static ?int $navigationSort = 3;
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = User::find(Auth::id());
+
+        if ($user->isSuperAdmin()) {
+            return parent::getEloquentQuery();
+        }
+
+        $villageIds = $user->getAccessibleVillages()->pluck('id');
+        return parent::getEloquentQuery()->whereIn('village_id', $villageIds);
+    }
+
+    public static function canViewAny(): bool
+    {
+        $user = User::find(Auth::id());
+        return !$user->isSmeAdmin();
+    }
 
     public static function form(Form $form): Form
     {
@@ -130,6 +151,7 @@ class CategoryResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        $user = User::find(Auth::id());
+        return static::getEloquentQuery()->count();
     }
 }

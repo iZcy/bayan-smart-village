@@ -4,6 +4,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\VillageResource\Pages;
+use App\Models\User;
 use App\Models\Village;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -12,6 +13,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class VillageResource extends Resource
@@ -20,6 +23,18 @@ class VillageResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-map';
     protected static ?string $navigationGroup = 'Management';
     protected static ?int $navigationSort = 1;
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = User::find(Auth::id());
+        return $user->getAccessibleVillages();
+    }
+
+    public static function canViewAny(): bool
+    {
+        $user = User::find(Auth::id());
+        return $user->isSuperAdmin() || $user->isVillageAdmin();
+    }
 
     public static function form(Form $form): Form
     {
@@ -186,6 +201,7 @@ class VillageResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        $user = User::find(Auth::id());
+        return static::getEloquentQuery()->count();
     }
 }

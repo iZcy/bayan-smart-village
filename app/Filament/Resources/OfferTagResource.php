@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use App\Filament\Resources\OfferTagResource\Pages;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class OfferTagResource extends Resource
 {
@@ -110,6 +112,7 @@ class OfferTagResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        $user = User::find(Auth::id());
+        return static::getEloquentQuery()->count();
     }
 }

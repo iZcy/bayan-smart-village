@@ -13,6 +13,9 @@ use Illuminate\Support\Str;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use App\Filament\Resources\PlaceResource\Pages;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class PlaceResource extends Resource
 {
@@ -20,6 +23,24 @@ class PlaceResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-map-pin';
     protected static ?string $navigationGroup = 'Management';
     protected static ?int $navigationSort = 3;
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = User::find(Auth::id());
+
+        if ($user->isSuperAdmin()) {
+            return parent::getEloquentQuery();
+        }
+
+        $villageIds = $user->getAccessibleVillages()->pluck('id');
+        return parent::getEloquentQuery()->whereIn('village_id', $villageIds);
+    }
+
+    public static function canViewAny(): bool
+    {
+        $user = User::find(Auth::id());
+        return !$user->isSmeAdmin();
+    }
 
     public static function form(Form $form): Form
     {
@@ -152,6 +173,7 @@ class PlaceResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        $user = User::find(Auth::id());
+        return static::getEloquentQuery()->count();
     }
 }

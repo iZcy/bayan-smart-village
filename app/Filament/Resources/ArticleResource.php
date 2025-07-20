@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ArticleResource\Pages;
 use App\Models\Article;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -12,6 +13,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class ArticleResource extends Resource
@@ -20,6 +23,39 @@ class ArticleResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Content';
     protected static ?int $navigationSort = 1;
+
+    // ADD THIS METHOD - Filter articles by user scope
+    public static function getEloquentQuery(): Builder
+    {
+        $user = User::find(Auth::id());
+
+        if ($user->isSuperAdmin()) {
+            return parent::getEloquentQuery();
+        }
+
+        $query = parent::getEloquentQuery();
+
+        if ($user->isVillageAdmin()) {
+            return $query->where('village_id', $user->village_id);
+        }
+
+        if ($user->isCommunityAdmin()) {
+            return $query->where(function ($q) use ($user) {
+                $q->where('village_id', $user->village_id)
+                    ->orWhere('community_id', $user->community_id);
+            });
+        }
+
+        if ($user->isSmeAdmin()) {
+            return $query->where(function ($q) use ($user) {
+                $q->where('village_id', $user->village_id)
+                    ->orWhere('community_id', $user->community_id)
+                    ->orWhere('sme_id', $user->sme_id);
+            });
+        }
+
+        return $query->whereRaw('1 = 0'); // No access by default
+    }
 
     public static function form(Form $form): Form
     {
@@ -47,19 +83,39 @@ class ArticleResource extends Resource
                         Forms\Components\Select::make('village_id')
                             ->relationship('village', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = User::find(Auth::id());
+                                return $user->getAccessibleVillages()->pluck('name', 'id');
+                            }),
                         Forms\Components\Select::make('community_id')
                             ->relationship('community', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = User::find(Auth::id());
+                                return $user->getAccessibleCommunities()->pluck('name', 'id');
+                            }),
                         Forms\Components\Select::make('sme_id')
                             ->relationship('sme', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = User::find(Auth::id());
+                                return $user->getAccessibleSmes()->pluck('name', 'id');
+                            }),
                         Forms\Components\Select::make('place_id')
                             ->relationship('place', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = User::find(Auth::id());
+                                if ($user->isSuperAdmin()) {
+                                    return \App\Models\Place::pluck('name', 'id');
+                                }
+                                $villageIds = $user->getAccessibleVillages()->pluck('id');
+                                return \App\Models\Place::whereIn('village_id', $villageIds)->pluck('name', 'id');
+                            }),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Publishing')
@@ -175,6 +231,7 @@ class ArticleResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        $user = User::find(Auth::id());
+        return static::getEloquentQuery()->count();
     }
 }

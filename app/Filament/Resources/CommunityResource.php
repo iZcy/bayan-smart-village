@@ -177,6 +177,6 @@ class CommunityResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         $user = User::find(Auth::id());
-        return $user->getAccessibleCommunities()->count();
+        return static::getEloquentQuery()->count();
     }
 }

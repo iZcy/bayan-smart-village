@@ -201,6 +201,6 @@ class SmeResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         $user = User::find(Auth::id());
-        return $user->getAccessibleSmes()->count();
+        return static::getEloquentQuery()->count();
     }
 }

@@ -12,6 +12,9 @@ use Filament\Tables\Table;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use App\Filament\Resources\ImageResource\Pages;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class ImageResource extends Resource
 {
@@ -19,6 +22,58 @@ class ImageResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-photo';
     protected static ?string $navigationGroup = 'Content';
     protected static ?int $navigationSort = 3;
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = User::find(Auth::id());
+
+        if ($user->isSuperAdmin()) {
+            return parent::getEloquentQuery();
+        }
+
+        $query = parent::getEloquentQuery();
+
+        if ($user->isVillageAdmin()) {
+            return $query->where(function ($q) use ($user) {
+                $q->where('village_id', $user->village_id)
+                    ->orWhereHas('community', function ($sq) use ($user) {
+                        $sq->where('village_id', $user->village_id);
+                    })
+                    ->orWhereHas('sme.community', function ($sq) use ($user) {
+                        $sq->where('village_id', $user->village_id);
+                    })
+                    ->orWhereHas('place', function ($sq) use ($user) {
+                        $sq->where('village_id', $user->village_id);
+                    });
+            });
+        }
+
+        if ($user->isCommunityAdmin()) {
+            return $query->where(function ($q) use ($user) {
+                $q->where('village_id', $user->village_id)
+                    ->orWhere('community_id', $user->community_id)
+                    ->orWhereHas('sme', function ($sq) use ($user) {
+                        $sq->where('community_id', $user->community_id);
+                    })
+                    ->orWhereHas('place', function ($sq) use ($user) {
+                        $sq->where('village_id', $user->village_id);
+                    });
+            });
+        }
+
+        if ($user->isSmeAdmin()) {
+            return $query->where(function ($q) use ($user) {
+                $q->where('village_id', $user->village_id)
+                    ->orWhere('community_id', $user->community_id)
+                    ->orWhere('sme_id', $user->sme_id)
+                    ->orWhereHas('place', function ($sq) use ($user) {
+                        $sq->where('village_id', $user->village_id);
+                    });
+            });
+        }
+
+        return $query->whereRaw('1 = 0'); // No access by default
+    }
 
     public static function form(Form $form): Form
     {
@@ -45,19 +100,39 @@ class ImageResource extends Resource
                         Forms\Components\Select::make('village_id')
                             ->relationship('village', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = User::find(Auth::id());
+                                return $user->getAccessibleVillages()->pluck('name', 'id');
+                            }),
                         Forms\Components\Select::make('community_id')
                             ->relationship('community', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = User::find(Auth::id());
+                                return $user->getAccessibleCommunities()->pluck('name', 'id');
+                            }),
                         Forms\Components\Select::make('sme_id')
                             ->relationship('sme', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = User::find(Auth::id());
+                                return $user->getAccessibleSmes()->pluck('name', 'id');
+                            }),
                         Forms\Components\Select::make('place_id')
                             ->relationship('place', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = User::find(Auth::id());
+                                if ($user->isSuperAdmin()) {
+                                    return \App\Models\Place::pluck('name', 'id');
+                                }
+                                $villageIds = $user->getAccessibleVillages()->pluck('id');
+                                return \App\Models\Place::whereIn('village_id', $villageIds)->pluck('name', 'id');
+                            }),
                     ])->columns(2),
             ]);
     }
@@ -150,6 +225,7 @@ class ImageResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        $user = User::find(Auth::id());
+        return static::getEloquentQuery()->count();
     }
 }
