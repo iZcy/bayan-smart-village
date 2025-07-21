@@ -28,10 +28,14 @@ return new class extends Migration
             $table->foreign('village_id')->references('id')->on('villages')->onDelete('cascade');
             $table->foreign('community_id')->references('id')->on('communities')->onDelete('cascade');
             $table->foreign('sme_id')->references('id')->on('smes')->onDelete('cascade');
-            $table->unique(['village_id', 'slug']);
-            $table->unique(['community_id', 'slug']);
+
+            $table->index(['village_id', 'slug']);
+            $table->index(['community_id', 'slug']);
+            $table->index(['sme_id', 'slug']);
             $table->index(['community_id', 'is_active']);
             $table->index(['sme_id', 'is_active']);
+
+            $table->unique(['village_id', 'community_id', 'sme_id', 'slug'], 'external_links_scope_slug_unique');
         });
     }
 

@@ -28,9 +28,13 @@ return new class extends Migration
             $table->foreign('community_id')->references('id')->on('communities')->onDelete('cascade');
             $table->foreign('sme_id')->references('id')->on('smes')->onDelete('cascade');
             $table->foreign('place_id')->references('id')->on('places')->onDelete('cascade');
+
+            $table->index(['village_id', 'slug']);
             $table->index(['community_id', 'slug']);
             $table->index(['sme_id', 'is_published']);
             $table->index(['village_id', 'is_published']);
+
+            $table->unique(['village_id', 'community_id', 'sme_id', 'place_id', 'slug'], 'articles_scope_slug_unique');
         });
     }
 

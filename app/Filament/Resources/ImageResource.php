@@ -143,7 +143,8 @@ class ImageResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')
                     ->label('Image')
-                    ->size(60),
+                    ->size(60)
+                    ->circular(false),
                 Tables\Columns\TextColumn::make('caption')
                     ->searchable()
                     ->limit(30),
