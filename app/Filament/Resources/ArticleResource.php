@@ -74,8 +74,18 @@ class ArticleResource extends Resource
                         Forms\Components\RichEditor::make('content')
                             ->required()
                             ->columnSpanFull(),
-                        Forms\Components\TextInput::make('cover_image_url')
-                            ->url(),
+                        Forms\Components\FileUpload::make('cover_image_url')
+                            ->label('Cover Image')
+                            ->image()
+                            ->disk('public')
+                            ->directory('articles')
+                            ->visibility('public')
+                            ->maxSize(5120) // 5MB
+                            ->imageResizeMode('cover')
+                            ->imageCropAspectRatio('16:9')
+                            ->imageResizeTargetWidth(800)
+                            ->imageResizeTargetHeight(450)
+                            ->columnSpanFull(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Associations')

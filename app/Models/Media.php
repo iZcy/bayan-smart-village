@@ -1,12 +1,13 @@
 <?php
 
-// Model: Media.php
+// app/Models/Media.php - Updated with enhanced file handling
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class Media extends Model
 {
@@ -49,7 +50,7 @@ class Media extends Model
         'settings' => 'array',
     ];
 
-    // Relationships
+    // Relationships remain the same...
     public function village(): BelongsTo
     {
         return $this->belongsTo(Village::class);
@@ -70,7 +71,181 @@ class Media extends Model
         return $this->belongsTo(Place::class);
     }
 
-    // Scopes
+    // Enhanced file handling methods
+    public function getFilePathAttribute(): ?string
+    {
+        if (!$this->file_url) {
+            return null;
+        }
+
+        $baseUrl = Storage::disk('public')->url('');
+        return str_replace($baseUrl, '', $this->file_url);
+    }
+
+    public function getThumbnailPathAttribute(): ?string
+    {
+        if (!$this->thumbnail_url) {
+            return null;
+        }
+
+        $baseUrl = Storage::disk('public')->url('');
+        return str_replace($baseUrl, '', $this->thumbnail_url);
+    }
+
+    public function getFileInfoAttribute(): ?array
+    {
+        if (!$this->file_url) {
+            return null;
+        }
+
+        $path = $this->file_path;
+        if ($path && Storage::disk('public')->exists($path)) {
+            $fullPath = Storage::disk('public')->path($path);
+            $fileSize = Storage::disk('public')->size($path);
+
+            return [
+                'path' => $path,
+                'full_path' => $fullPath,
+                'size' => $fileSize,
+                'human_size' => $this->formatFileSize($fileSize),
+                'exists' => true,
+                'extension' => pathinfo($fullPath, PATHINFO_EXTENSION),
+                'basename' => basename($fullPath),
+            ];
+        }
+
+        return ['exists' => false];
+    }
+
+    public function getFormattedDurationAttribute(): ?string
+    {
+        if (!$this->duration) {
+            return null;
+        }
+
+        $minutes = floor($this->duration / 60);
+        $seconds = $this->duration % 60;
+
+        if ($minutes >= 60) {
+            $hours = floor($minutes / 60);
+            $minutes = $minutes % 60;
+            return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+        }
+
+        return sprintf('%02d:%02d', $minutes, $seconds);
+    }
+
+    public function getFormattedFileSizeAttribute(): ?string
+    {
+        if (!$this->file_size) {
+            return null;
+        }
+
+        return $this->formatFileSize($this->file_size);
+    }
+
+    private function formatFileSize(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $size = $bytes;
+        $unitIndex = 0;
+
+        while ($size >= 1024 && $unitIndex < count($units) - 1) {
+            $size /= 1024;
+            $unitIndex++;
+        }
+
+        return round($size, 2) . ' ' . $units[$unitIndex];
+    }
+
+    public function deleteMediaFiles(): bool
+    {
+        $success = true;
+
+        // Delete main file
+        if ($this->file_url) {
+            $path = $this->file_path;
+            if ($path && Storage::disk('public')->exists($path)) {
+                $success = Storage::disk('public')->delete($path) && $success;
+            }
+        }
+
+        // Delete thumbnail
+        if ($this->thumbnail_url) {
+            $path = $this->thumbnail_path;
+            if ($path && Storage::disk('public')->exists($path)) {
+                $success = Storage::disk('public')->delete($path) && $success;
+            }
+        }
+
+        return $success;
+    }
+
+    public function updateFileInfo(): void
+    {
+        if ($this->file_url) {
+            $path = $this->file_path;
+            if ($path && Storage::disk('public')->exists($path)) {
+                $fullPath = Storage::disk('public')->path($path);
+
+                // Update file size if not set
+                if (!$this->file_size) {
+                    $this->file_size = Storage::disk('public')->size($path);
+                }
+
+                // Update MIME type if not set
+                if (!$this->mime_type) {
+                    $this->mime_type = Storage::disk('public')->mimeType($path);
+                }
+
+                // Try to get duration for video/audio files if not set
+                if (!$this->duration && in_array($this->type, ['video', 'audio'])) {
+                    $this->duration = $this->extractDuration($fullPath);
+                }
+
+                $this->saveQuietly();
+            }
+        }
+    }
+
+    private function extractDuration(string $filePath): ?int
+    {
+        // This would require FFmpeg or similar tool
+        // For now, return null - you can implement this based on your needs
+        try {
+            // Example using getID3 library (install with: composer require james-heinrich/getid3)
+            if (class_exists('\getID3')) {
+                $getID3 = new \getID3();
+                $fileInfo = $getID3->analyze($filePath);
+
+                if (isset($fileInfo['playtime_seconds'])) {
+                    return (int) round($fileInfo['playtime_seconds']);
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Could not extract media duration: ' . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    // Boot method
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Update file info after creating
+        static::created(function (Media $media) {
+            $media->updateFileInfo();
+        });
+
+        // Clean up files when media record is deleted
+        static::deleting(function (Media $media) {
+            $media->deleteMediaFiles();
+        });
+    }
+
+    // Existing scopes and methods remain the same...
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -101,77 +276,7 @@ class Media extends Model
         return $query->orderBy('sort_order')->orderBy('created_at', 'desc');
     }
 
-    // Accessors
-    public function getFormattedDurationAttribute(): ?string
-    {
-        if (!$this->duration) {
-            return null;
-        }
-
-        $minutes = floor($this->duration / 60);
-        $seconds = $this->duration % 60;
-
-        return sprintf('%02d:%02d', $minutes, $seconds);
-    }
-
-    public function getFormattedFileSizeAttribute(): ?string
-    {
-        if (!$this->file_size) {
-            return null;
-        }
-
-        $units = ['B', 'KB', 'MB', 'GB'];
-        $size = $this->file_size;
-        $unitIndex = 0;
-
-        while ($size >= 1024 && $unitIndex < count($units) - 1) {
-            $size /= 1024;
-            $unitIndex++;
-        }
-
-        return round($size, 2) . ' ' . $units[$unitIndex];
-    }
-
-    public function getIsVideoAttribute(): bool
-    {
-        return $this->type === 'video';
-    }
-
-    public function getIsAudioAttribute(): bool
-    {
-        return $this->type === 'audio';
-    }
-
-    // Helper methods
-    public function getDefaultThumbnail(): string
-    {
-        if ($this->is_video && $this->thumbnail_url) {
-            return $this->thumbnail_url;
-        }
-
-        // Return default thumbnails based on context
-        $defaults = [
-            'home' => '/images/default-video-home.jpg',
-            'places' => '/images/default-video-places.jpg',
-            'products' => '/images/default-video-products.jpg',
-            'articles' => '/images/default-video-articles.jpg',
-            'gallery' => '/images/default-video-gallery.jpg',
-        ];
-
-        return $defaults[$this->context] ?? '/images/default-video.jpg';
-    }
-
-    public function canAutoplay(): bool
-    {
-        return $this->autoplay && $this->is_active;
-    }
-
-    public function getVolumeLevel(): float
-    {
-        return max(0, min(1, $this->volume));
-    }
-
-    // Static helper methods
+    // Static helper methods remain the same...
     public static function getContextOptions(): array
     {
         return [

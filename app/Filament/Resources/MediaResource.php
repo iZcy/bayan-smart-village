@@ -90,16 +90,30 @@ class MediaResource extends Resource
 
                 Forms\Components\Section::make('File Information')
                     ->schema([
-                        Forms\Components\TextInput::make('file_url')
-                            ->label('Media File URL')
+                        // Updated: Use FileUpload for media files
+                        Forms\Components\FileUpload::make('file_url')
+                            ->label('Media File')
+                            ->disk('public')
+                            ->directory('media')
+                            ->visibility('public')
+                            ->maxSize(104857600) // 100MB
+                            ->acceptedFileTypes(['video/*', 'audio/*'])
                             ->required()
-                            ->url()
-                            ->placeholder('https://example.com/video.mp4 or /local/path/audio.mp3'),
-                        Forms\Components\TextInput::make('thumbnail_url')
-                            ->label('Thumbnail URL')
-                            ->url()
-                            ->placeholder('https://example.com/thumbnail.jpg')
-                            ->visible(fn($get) => $get('type') === 'video'),
+                            ->columnSpanFull(),
+                        // Updated: Use FileUpload for thumbnail
+                        Forms\Components\FileUpload::make('thumbnail_url')
+                            ->label('Thumbnail Image')
+                            ->image()
+                            ->disk('public')
+                            ->directory('media/thumbnails')
+                            ->visibility('public')
+                            ->maxSize(5120) // 5MB
+                            ->imageResizeMode('cover')
+                            ->imageCropAspectRatio('16:9')
+                            ->imageResizeTargetWidth(800)
+                            ->imageResizeTargetHeight(450)
+                            ->visible(fn($get) => $get('type') === 'video')
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('duration')
                             ->numeric()
                             ->suffix('seconds')

@@ -315,6 +315,24 @@ Route::domain('{village}.' . $baseDomain)
         });
     });
 
+// Image upload routes (add these to your existing routes)
+Route::middleware(['auth'])->prefix('admin/uploads')->name('admin.uploads.')->group(function () {
+    Route::post('/image', [App\Http\Controllers\ImageUploadController::class, 'upload'])->name('image');
+    Route::post('/images', [App\Http\Controllers\ImageUploadController::class, 'uploadMultiple'])->name('images');
+    Route::delete('/image', [App\Http\Controllers\ImageUploadController::class, 'delete'])->name('image.delete');
+    Route::post('/thumbnail', [App\Http\Controllers\ImageUploadController::class, 'generateThumbnail'])->name('thumbnail');
+});
+
+// Public image serving routes (for optimization)
+Route::prefix('media')->name('media.')->group(function () {
+    Route::get('/thumbnail/{path}', [App\Http\Controllers\MediaServeController::class, 'thumbnail'])
+        ->where('path', '.*')
+        ->name('thumbnail');
+    Route::get('/optimized/{path}', [App\Http\Controllers\MediaServeController::class, 'optimized'])
+        ->where('path', '.*')
+        ->name('optimized');
+});
+
 // Handle custom domains dynamically
 try {
     $villagesWithCustomDomains = \App\Models\Village::whereNotNull('domain')

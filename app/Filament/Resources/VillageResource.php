@@ -56,8 +56,18 @@ class VillageResource extends Resource
                         Forms\Components\TextInput::make('domain')
                             ->url()
                             ->placeholder('example.com'),
-                        Forms\Components\TextInput::make('image_url')
-                            ->url(),
+                        Forms\Components\FileUpload::make('image_url')
+                            ->label('Village Image')
+                            ->image()
+                            ->disk('public')
+                            ->directory('villages')
+                            ->visibility('public')
+                            ->maxSize(10240) // 10MB
+                            ->imageResizeMode('cover')
+                            ->imageCropAspectRatio('16:9')
+                            ->imageResizeTargetWidth(1200)
+                            ->imageResizeTargetHeight(675)
+                            ->columnSpanFull(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Contact Information')

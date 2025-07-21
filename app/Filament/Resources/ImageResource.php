@@ -81,9 +81,16 @@ class ImageResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Image Information')
                     ->schema([
-                        Forms\Components\TextInput::make('image_url')
+                        Forms\Components\FileUpload::make('image_url')
+                            ->label('Image File')
+                            ->image()
+                            ->disk('public')
+                            ->directory('gallery')
+                            ->visibility('public')
+                            ->maxSize(10240) // 10MB
+                            ->imagePreviewHeight(200)
                             ->required()
-                            ->url(),
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('caption')
                             ->maxLength(255),
                         Forms\Components\TextInput::make('alt_text')

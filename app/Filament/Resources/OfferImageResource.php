@@ -34,9 +34,17 @@ class OfferImageResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload(),
-                        Forms\Components\TextInput::make('image_url')
+                        // Updated: Use FileUpload for image
+                        Forms\Components\FileUpload::make('image_url')
+                            ->label('Product Image')
+                            ->image()
+                            ->disk('public')
+                            ->directory('products/gallery')
+                            ->visibility('public')
+                            ->maxSize(5120) // 5MB
+                            ->imagePreviewHeight(200)
                             ->required()
-                            ->url(),
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('alt_text')
                             ->maxLength(255),
                         Forms\Components\TextInput::make('sort_order')

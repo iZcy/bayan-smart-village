@@ -96,8 +96,19 @@ class OfferResource extends Resource
                             ->default('available'),
                         Forms\Components\TagsInput::make('seasonal_availability')
                             ->placeholder('Add months (e.g., January, February)'),
-                        Forms\Components\TextInput::make('primary_image_url')
-                            ->url(),
+                        // Updated: Use FileUpload for primary image
+                        Forms\Components\FileUpload::make('primary_image_url')
+                            ->label('Primary Product Image')
+                            ->image()
+                            ->disk('public')
+                            ->directory('products')
+                            ->visibility('public')
+                            ->maxSize(5120) // 5MB
+                            ->imageResizeMode('cover')
+                            ->imageCropAspectRatio('1:1')
+                            ->imageResizeTargetWidth(600)
+                            ->imageResizeTargetHeight(600)
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('production_time')
                             ->maxLength(100),
                         Forms\Components\TextInput::make('minimum_order')
