@@ -501,10 +501,11 @@ export default function PlaceShowPage({ village, place }) {
                                         }}
                                         viewport={{ once: true }}
                                     >
-                                        <BaseCard
-                                            className="bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-green-400/50 transition-all duration-300"
-                                            hoverEffects={true}
-                                        >
+                                        <Link href={`/products?sme=${sme.slug}`}>
+                                            <BaseCard
+                                                className="bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 hover:border-green-400/50 transition-all duration-300"
+                                                hoverEffects={true}
+                                            >
                                             <div className="relative h-48 overflow-hidden">
                                                 {sme.logo_url ? (
                                                     <img
@@ -543,6 +544,7 @@ export default function PlaceShowPage({ village, place }) {
                                                 </span>
                                             </div>
                                         </BaseCard>
+                                        </Link>
                                     </motion.div>
                                 ))}
                             </div>

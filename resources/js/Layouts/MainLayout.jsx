@@ -294,8 +294,8 @@ export default function MainLayout({ children, title = "", description = "" }) {
             {/* Main Content */}
             <main>{children}</main>
 
-            {/* Enhanced Village-Aware Footer */}
-            <footer className="bg-gradient-to-t from-black via-gray-900 to-black text-white py-16 relative overflow-hidden">
+            {/* Enhanced Village-Aware Footer - More efficient spacing */}
+            <footer className="bg-black text-white py-12 md:py-16 relative overflow-hidden">
                 {/* Background decorations */}
                 <div className="absolute inset-0 opacity-5">
                     <motion.div
@@ -318,11 +318,11 @@ export default function MainLayout({ children, title = "", description = "" }) {
                     />
                 </div>
 
-                <div className="container mx-auto px-6 relative z-10">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div className="container mx-auto px-4 md:px-6 relative z-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                         {/* Village Information */}
                         <motion.div
-                            className="col-span-1 md:col-span-2"
+                            className="col-span-1"
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
@@ -386,6 +386,7 @@ export default function MainLayout({ children, title = "", description = "" }) {
 
                         {/* Quick Links */}
                         <motion.div
+                            className="col-span-1 align-self-start"
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 0.2 }}
@@ -413,86 +414,49 @@ export default function MainLayout({ children, title = "", description = "" }) {
                                 ))}
                             </ul>
                         </motion.div>
-
-                        {/* Village Stats */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.4 }}
-                        >
-                            <h4 className="text-lg font-semibold mb-6 text-green-400">
-                                Village Stats
-                            </h4>
-                            <div className="space-y-4">
-                                {[
-                                    {
-                                        label: "Established",
-                                        value: village?.established_at
-                                            ? new Date(
-                                                  village.established_at
-                                              ).getFullYear()
-                                            : "Historic",
-                                        icon: "🏗️",
-                                    },
-                                    {
-                                        label: "Tourism Sites",
-                                        value: "12+",
-                                        icon: "🏞️",
-                                    },
-                                    {
-                                        label: "Local Businesses",
-                                        value: "25+",
-                                        icon: "🏪",
-                                    },
-                                    {
-                                        label: "Community",
-                                        value: "Strong",
-                                        icon: "👥",
-                                    },
-                                ].map((stat, index) => (
-                                    <motion.div
-                                        key={stat.label}
-                                        className="flex items-center justify-between text-sm"
-                                        whileHover={{ scale: 1.05 }}
-                                        transition={{ duration: 0.2 }}
-                                    >
-                                        <span className="text-gray-400 flex items-center space-x-2">
-                                            <span>{stat.icon}</span>
-                                            <span>{stat.label}</span>
-                                        </span>
-                                        <span className="text-white font-medium">
-                                            {stat.value}
-                                        </span>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </motion.div>
                     </div>
 
-                    {/* Footer Bottom */}
+                    {/* Footer Bottom - Compact and efficient */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         transition={{ duration: 0.8, delay: 0.6 }}
-                        className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between"
+                        className="border-t border-gray-800 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0"
                     >
-                        <p className="text-gray-400 text-sm">
-                            &copy; {new Date().getFullYear()}{" "}
-                            {village?.name || "Smart Village"}.
-                            <span className="ml-1">
-                                Made with ❤️ for our community
-                            </span>
-                        </p>
-
-                        <div className="flex items-center space-x-4 mt-4 md:mt-0">
-                            <motion.div
-                                className="text-xs text-gray-500"
-                                animate={{ opacity: [0.5, 1, 0.5] }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                            >
-                                🌱 Growing Together
-                            </motion.div>
+                        <div className="text-center sm:text-left">
+                            <p className="text-gray-400 text-xs leading-relaxed">
+                                &copy; {new Date().getFullYear()}{" "}
+                                {village?.name || "Smart Village"} • Made with
+                                ❤️ for our community
+                            </p>
+                            <p className="text-gray-500 text-xs mt-1">
+                                Powered by{" "}
+                                <a
+                                    href="https://www.claude.ai"
+                                    className="text-orange-400 hover:underline"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Claude
+                                </a>{" "}
+                                and{" "}
+                                <a
+                                    href="https://www.openai.com/chatgpt"
+                                    className="text-blue-400 hover:underline"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    ChatGPT
+                                </a>
+                            </p>
                         </div>
+                        <motion.div
+                            className="text-xs text-gray-500 flex items-center"
+                            animate={{ opacity: [0.5, 1, 0.5] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                        >
+                            🌱 Growing Together
+                        </motion.div>
                     </motion.div>
                 </div>
             </footer>

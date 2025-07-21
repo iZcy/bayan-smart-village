@@ -4,6 +4,7 @@ import { Head, Link } from "@inertiajs/react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import MainLayout from "@/Layouts/MainLayout";
+import MediaBackground from "@/Components/MediaBackground";
 import HeroSection from "@/Components/HeroSection";
 import { ProductCard } from "@/Components/Cards/Index";
 
@@ -86,6 +87,28 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                 <source src="/audio/village-ambient.mp3" type="audio/mpeg" />
             </audio>
 
+            {/* Media Background */}
+            <MediaBackground
+                context="product"
+                village={village}
+                enableControls={true}
+                blur={true}
+                audioOnly={true}
+                controlsId="product-media-controls"
+                fallbackVideo="/video/videobackground.mp4"
+                fallbackAudio="/audio/sasakbacksong.mp3"
+            />
+
+            {/* Product Image Background Overlay */}
+            <div
+                className="fixed inset-0 bg-cover bg-center opacity-30 z-0"
+                style={{
+                    backgroundImage: product.primary_image_url
+                        ? `url(${product.primary_image_url})`
+                        : "none",
+                }}
+            />
+
             {/* Hero Section */}
             <HeroSection
                 title={product.name}
@@ -93,57 +116,64 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                     product.short_description ||
                     "Quality product from our local artisans"
                 }
-                backgroundGradient="from-green-400 via-blue-500 to-purple-600"
+                backgroundGradient="from-transparent to-transparent"
                 parallax={true}
                 scrollY={{ useTransform: useTransform }}
             >
-                {/* Product meta in hero */}
+                {/* Product meta in hero - Better Layout */}
                 <motion.div
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1, delay: 1.5 }}
-                    className="flex flex-wrap items-center justify-center gap-4 mt-6"
+                    className="flex flex-col items-center gap-6 mt-8 max-w-2xl mx-auto"
                 >
-                    {product.category && (
-                        <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
-                            📦 {product.category.name}
-                        </span>
-                    )}
-                    {product.sme && (
-                        <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
-                            🏪 {product.sme.name}
-                        </span>
-                    )}
-                    <span
-                        className={`px-4 py-2 rounded-full text-sm font-medium text-white ${
-                            product.availability === "available"
-                                ? "bg-green-500"
-                                : product.availability === "out_of_stock"
-                                ? "bg-red-500"
-                                : product.availability === "seasonal"
-                                ? "bg-yellow-500"
-                                : "bg-blue-500"
-                        }`}
-                    >
-                        {product.availability?.replace("_", " ").toUpperCase()}
-                    </span>
-                </motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.8, delay: 2 }}
-                    className="mt-8"
-                >
-                    <div className="text-3xl font-bold text-green-300 mb-4">
-                        {getDisplayPrice()}
-                        {product.price_unit && (
-                            <span className="text-lg text-white/70 ml-2">
-                                / {product.price_unit}
+                    {/* Tags Row */}
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                        {product.category && (
+                            <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
+                                📦 {product.category.name}
+                            </span>
+                        )}
+                        {product.sme && (
+                            <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
+                                🏪 {product.sme.name}
                             </span>
                         )}
                     </div>
-                    <button
+
+                    {/* Stock and Price Row */}
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <span
+                            className={`px-4 py-2 rounded-full text-sm font-medium text-white ${
+                                product.availability === "available"
+                                    ? "bg-green-500"
+                                    : product.availability === "out_of_stock"
+                                    ? "bg-red-500"
+                                    : product.availability === "seasonal"
+                                    ? "bg-yellow-500"
+                                    : "bg-blue-500"
+                            }`}
+                        >
+                            {product.availability
+                                ?.replace("_", " ")
+                                .toUpperCase()}
+                        </span>
+
+                        <div className="text-2xl sm:text-3xl font-bold text-green-300 text-center">
+                            {getDisplayPrice()}
+                            {product.price_unit && (
+                                <span className="text-base text-white/70 ml-2 block sm:inline">
+                                    / {product.price_unit}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* View Details Button */}
+                    <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8, delay: 2 }}
                         onClick={() => {
                             document
                                 .getElementById("content")
@@ -165,7 +195,7 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                                 d="M19 14l-7 7m0 0l-7-7m7 7V3"
                             />
                         </svg>
-                    </button>
+                    </motion.button>
                 </motion.div>
             </HeroSection>
 
@@ -378,7 +408,7 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                                                                     link.id
                                                                 )
                                                             }
-                                                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-md transition-all duration-300"
+                                                            className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-lg transition-all duration-300 bg-white hover:bg-blue-50 group"
                                                         >
                                                             <div className="flex items-center">
                                                                 <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
@@ -499,25 +529,30 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
 
             {/* Related Products */}
             {relatedProducts && relatedProducts.length > 0 && (
-                <section className="py-20 bg-gray-50">
-                    <div className="container mx-auto px-6">
+                <section className="py-20 bg-gray-900 text-white relative">
+                    <div className="absolute inset-0 backdrop-blur-sm" />
+                    <div className="container mx-auto px-6 relative z-10">
                         <motion.h2
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
-                            className="text-3xl font-bold text-center mb-12"
+                            className="text-3xl font-bold text-center mb-12 text-white"
                         >
                             Related Products from {village?.name}
                         </motion.h2>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             {relatedProducts.map((relatedProduct, index) => (
-                                <ProductCard
+                                <div
                                     key={relatedProduct.id}
-                                    product={relatedProduct}
-                                    index={index}
-                                    village={village}
-                                />
+                                    className="[&_*]:text-white [&_*]:border-white/30"
+                                >
+                                    <ProductCard
+                                        product={relatedProduct}
+                                        index={index}
+                                        village={village}
+                                    />
+                                </div>
                             ))}
                         </div>
                     </div>

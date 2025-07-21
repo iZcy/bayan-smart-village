@@ -28,7 +28,7 @@ const ImageCard = ({
             )}
 
             {/* Overlay */}
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-300" />
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/80 transition-colors duration-300" />
 
             {/* Badges */}
             {badges.map((badge, index) => (

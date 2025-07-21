@@ -1,7 +1,12 @@
 // resources/js/Pages/Village/Gallery.jsx (Updated with Media)
 import React, { useState, useEffect, useRef } from "react";
 import { Head } from "@inertiajs/react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+    motion,
+    AnimatePresence,
+    useScroll,
+    useTransform,
+} from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import MainLayout from "@/Layouts/MainLayout";
 import HeroSection from "@/Components/HeroSection";
@@ -24,6 +29,20 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
     const [contextAudio, setContextAudio] = useState(null);
     const [isContextAudioPlaying, setIsContextAudioPlaying] = useState(false);
     const contextAudioRef = useRef(null);
+    const { scrollY } = useScroll();
+
+    // Color overlay based on scroll for Gallery sections
+    const colorOverlay = useTransform(
+        scrollY,
+        [0, 800, 1600, 2400, 3200],
+        [
+            "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.2))", // Hero
+            "linear-gradient(to bottom, rgba(219,39,119,0.4), rgba(126,34,206,0.6))", // Gallery Grid - pink to purple
+            "linear-gradient(to bottom, rgba(126,34,206,0.4), rgba(88,28,135,0.6))", // Statistics - purple to darker purple
+            "linear-gradient(to bottom, rgba(88,28,135,0.4), rgba(55,48,163,0.6))", // Categories - dark purple to indigo
+            "linear-gradient(to bottom, rgba(55,48,163,0.3), rgba(0,0,0,0.4))", // End fade
+        ]
+    );
 
     // Fetch context-specific audio
     useEffect(() => {
@@ -154,16 +173,15 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
     return (
         <MainLayout title="Gallery">
             <Head title={`Gallery - ${village?.name}`} />
-
             {/* Dynamic Media Background */}
             <MediaBackground
                 context="gallery"
                 village={village}
-                enableControls={false}
+                enableControls={true}
+                controlsId="gallery-media-controls"
                 fallbackVideo="/video/videobackground.mp4"
                 fallbackAudio="/audio/village-nature.mp3"
             />
-
             {/* Context Audio */}
             {contextAudio && (
                 <audio
@@ -174,7 +192,11 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
                     <source src={contextAudio.file_url} type="audio/mpeg" />
                 </audio>
             )}
-
+            {/* Enhanced Color Overlay */}
+            <motion.div
+                className="fixed inset-0 z-5 pointer-events-none"
+                style={{ background: colorOverlay }}
+            />
             {/* Audio Control for Gallery */}
             {contextAudio && (
                 <motion.button
@@ -187,7 +209,6 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
                     {isContextAudioPlaying ? "🔊" : "🔇"}
                 </motion.button>
             )}
-
             {/* Hero Section */}
             <HeroSection
                 title="Village Gallery"
@@ -207,9 +228,10 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
                     className="max-w-3xl mx-auto"
                 />
             </HeroSection>
-
             {/* Gallery Grid Section */}
-            <section className="py-20 bg-gradient-to-b from-red-600 to-purple-900 relative overflow-hidden">
+            <section className="py-20 relative overflow-hidden">
+                {/* Background blur overlay */}
+                <div className="absolute inset-0 backdrop-blur-sm" />
                 <div className="container mx-auto px-6 relative z-10">
                     <SectionHeader
                         title="Photo"
@@ -251,126 +273,6 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
                     )}
                 </div>
             </section>
-
-            {/* Statistics Section */}
-            <section className="py-20 bg-gradient-to-b from-purple-900 to-gray-900">
-                <div className="container mx-auto px-6">
-                    <motion.div
-                        initial={{ opacity: 0, y: 50 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8 }}
-                        className="grid grid-cols-2 md:grid-cols-4 gap-8"
-                    >
-                        {[
-                            {
-                                label: "Total Photos",
-                                value: images?.total || 0,
-                                icon: "📸",
-                            },
-                            {
-                                label: "Locations",
-                                value: placeData?.length || 0,
-                                icon: "📍",
-                            },
-                            {
-                                label: "With Captions",
-                                value: filteredImages.filter(
-                                    (img) => img.caption
-                                ).length,
-                                icon: "💬",
-                            },
-                            {
-                                label: "Current Year",
-                                value: new Date().getFullYear(),
-                                icon: "📅",
-                            },
-                        ].map((stat, index) => (
-                            <motion.div
-                                key={stat.label}
-                                initial={{ scale: 0, rotateY: 90 }}
-                                whileInView={{ scale: 1, rotateY: 0 }}
-                                transition={{
-                                    delay: index * 0.2,
-                                    duration: 0.6,
-                                    type: "spring",
-                                }}
-                                whileHover={{ scale: 1.1, y: -5 }}
-                                className="text-center text-white bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20"
-                            >
-                                <motion.div
-                                    animate={{ rotate: [0, 10, -10, 0] }}
-                                    transition={{
-                                        duration: 2,
-                                        repeat: Infinity,
-                                        delay: index,
-                                    }}
-                                    className="text-3xl mb-2"
-                                >
-                                    {stat.icon}
-                                </motion.div>
-                                <div className="text-4xl font-bold mb-2">
-                                    {stat.value}
-                                </div>
-                                <div className="text-gray-300">
-                                    {stat.label}
-                                </div>
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* Photo Categories Section */}
-            {placeData && placeData.length > 0 && (
-                <section className="py-20 bg-gradient-to-b from-gray-900 to-purple-900">
-                    <div className="container mx-auto px-6">
-                        <motion.h2
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8 }}
-                            className="text-4xl font-bold text-white text-center mb-12"
-                        >
-                            Browse by Location
-                        </motion.h2>
-
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            {placeData.slice(0, 8).map((place, index) => (
-                                <motion.button
-                                    key={place.id}
-                                    initial={{ opacity: 0, y: 30 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    transition={{
-                                        duration: 0.6,
-                                        delay: index * 0.1,
-                                    }}
-                                    whileHover={{ scale: 1.05, y: -5 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={() => setSelectedPlace(place.id)}
-                                    className={`p-6 rounded-xl backdrop-blur-md border transition-all duration-300 ${
-                                        selectedPlace === place.id
-                                            ? "bg-white/20 border-white/40"
-                                            : "bg-white/10 border-white/20 hover:bg-white/15"
-                                    }`}
-                                >
-                                    <div className="text-2xl mb-3">📸</div>
-                                    <h3 className="text-white font-semibold text-sm">
-                                        {place.name}
-                                    </h3>
-                                    <p className="text-gray-300 text-xs mt-1">
-                                        {
-                                            imageData.filter(
-                                                (img) =>
-                                                    img.place?.id === place.id
-                                            ).length
-                                        }{" "}
-                                        photos
-                                    </p>
-                                </motion.button>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-            )}
 
             {/* Lightbox Modal */}
             {isLightboxOpen && selectedImage && (
@@ -454,7 +356,7 @@ const GalleryItem = ({ image, index, onClick }) => {
                 )}
 
                 {/* Overlay */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                     <div className="text-white text-center p-4">
                         <div className="text-2xl mb-2">🔍</div>
                         <div className="text-sm font-semibold">View Image</div>

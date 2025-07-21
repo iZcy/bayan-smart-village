@@ -4,6 +4,7 @@ import { Head, Link } from "@inertiajs/react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import MainLayout from "@/Layouts/MainLayout";
+import MediaBackground from "@/Components/MediaBackground";
 import HeroSection from "@/Components/HeroSection";
 import { ArticleCard } from "@/Components/Cards/Index";
 
@@ -48,6 +49,28 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
                 <source src="/audio/village-ambient.mp3" type="audio/mpeg" />
             </audio>
 
+            {/* Media Background */}
+            <MediaBackground
+                context="article"
+                village={village}
+                enableControls={true}
+                audioOnly={true}
+                blur={true}
+                controlsId="article-media-controls"
+                fallbackVideo="/video/videobackground.mp4"
+                fallbackAudio="/audio/sasakbacksong.mp3"
+            />
+
+            {/* Article Image Background Overlay */}
+            <div
+                className="fixed inset-0 bg-cover bg-center opacity-40 z-0"
+                style={{
+                    backgroundImage: article.cover_image_url
+                        ? `url(${article.cover_image_url})`
+                        : "none",
+                }}
+            />
+
             {/* Hero Section */}
             <HeroSection
                 title={article.title}
@@ -55,91 +78,94 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
                     article.content?.replace(/<[^>]*>/g, "").substring(0, 150) +
                         "..." || "A story from our village"
                 }
-                backgroundGradient="from-orange-400 via-red-500 to-pink-600"
+                backgroundGradient="from-transparent to-transparent"
                 parallax={true}
                 scrollY={{ useTransform: useTransform }}
             >
-                {/* Article meta in hero */}
+                {/* Article meta in hero - Better Layout */}
                 <motion.div
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1, delay: 1.5 }}
-                    className="flex flex-wrap items-center justify-center gap-4 mt-6"
+                    className="flex flex-col items-center gap-6 mt-8 max-w-2xl mx-auto"
                 >
-                    {article.place && (
-                        <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
-                            📍 {article.place.name}
-                        </span>
-                    )}
-                    {article.community && (
-                        <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
-                            👥 {article.community.name}
-                        </span>
-                    )}
-                    {article.sme && (
-                        <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
-                            🏪 {article.sme.name}
-                        </span>
-                    )}
-                </motion.div>
+                    {/* Category Tags */}
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                        {article.place && (
+                            <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
+                                📍 {article.place.name}
+                            </span>
+                        )}
+                        {article.community && (
+                            <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
+                                👥 {article.community.name}
+                            </span>
+                        )}
+                        {article.sme && (
+                            <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
+                                🏪 {article.sme.name}
+                            </span>
+                        )}
+                    </div>
 
-                <motion.div
-                    initial={{ opacity: 0, y: 60 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1, delay: 1.8 }}
-                    className="flex items-center justify-center space-x-8 text-white/80 mt-6"
-                >
-                    <time
-                        dateTime={article.published_at || article.created_at}
-                        className="flex items-center bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full"
+                    {/* Article Meta Info */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 1, delay: 1.8 }}
+                        className="flex flex-col sm:flex-row items-center gap-4 text-white/90"
                     >
-                        <svg
-                            className="w-4 h-4 mr-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        <time
+                            dateTime={
+                                article.published_at || article.created_at
+                            }
+                            className="flex items-center bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full"
                         >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                        </svg>
-                        {new Date(
-                            article.published_at || article.created_at
-                        ).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                        })}
-                    </time>
+                            <svg
+                                className="w-4 h-4 mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                            </svg>
+                            {new Date(
+                                article.published_at || article.created_at
+                            ).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                            })}
+                        </time>
 
-                    <span className="flex items-center bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-                        <svg
-                            className="w-4 h-4 mr-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
-                        {getReadingTime()} min read
-                    </span>
-                </motion.div>
+                        <span className="flex items-center bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+                            <svg
+                                className="w-4 h-4 mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                            {getReadingTime()} min read
+                        </span>
+                    </motion.div>
 
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.8, delay: 2.2 }}
-                    className="mt-8"
-                >
-                    <button
+                    {/* Read Story Button */}
+                    <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8, delay: 2.2 }}
                         onClick={() => {
                             document
                                 .getElementById("content")
@@ -161,7 +187,7 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
                                 d="M19 14l-7 7m0 0l-7-7m7 7V3"
                             />
                         </svg>
-                    </button>
+                    </motion.button>
                 </motion.div>
             </HeroSection>
 

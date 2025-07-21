@@ -11,6 +11,9 @@ const MediaBackground = ({
     fallbackAudio = "/audio/sasakbacksong.mp3",
     onMediaLoad = null,
     overlay = true,
+    blur = false,
+    controlsId = "global-media-controls", // Unique ID to prevent conflicts
+    audioOnly = false, // New prop to disable video and only show audio controls
 }) => {
     const [backgroundVideo, setBackgroundVideo] = useState(null);
     const [backgroundAudio, setBackgroundAudio] = useState(null);
@@ -27,14 +30,16 @@ const MediaBackground = ({
     useEffect(() => {
         const fetchMedia = async () => {
             try {
-                // Fetch background video
-                const videoResponse = await fetch(
-                    `/api/media/${context}/featured?type=video`
-                );
-                if (videoResponse.ok) {
-                    const videoData = await videoResponse.json();
-                    if (videoData.media) {
-                        setBackgroundVideo(videoData.media);
+                // Fetch background video (only if not audio-only mode)
+                if (!audioOnly) {
+                    const videoResponse = await fetch(
+                        `/api/media/${context}/featured?type=video`
+                    );
+                    if (videoResponse.ok) {
+                        const videoData = await videoResponse.json();
+                        if (videoData.media) {
+                            setBackgroundVideo(videoData.media);
+                        }
                     }
                 }
 
@@ -54,7 +59,7 @@ const MediaBackground = ({
         };
 
         fetchMedia();
-    }, [context, village]);
+    }, [context, village, audioOnly]);
 
     // Handle video load
     const handleVideoLoad = () => {
@@ -164,18 +169,20 @@ const MediaBackground = ({
     };
 
     return (
-        <div className={`fixed inset-0 z-0 ${className}`}>
-            {/* Background Video */}
-            <video
-                ref={videoRef}
-                className="w-full h-full object-cover"
-                onLoadedData={handleVideoLoad}
-                onError={handleVideoError}
-                {...getVideoProps()}
-            >
-                <source src={getVideoSource()} type="video/mp4" />
-                Your browser does not support the video tag.
-            </video>
+        <div className={`${audioOnly ? "" : "fixed inset-0 z-0"} ${className}`}>
+            {/* Background Video - Only render if not audio-only mode */}
+            {!audioOnly && (
+                <video
+                    ref={videoRef}
+                    className="w-full h-full object-cover"
+                    onLoadedData={handleVideoLoad}
+                    onError={handleVideoError}
+                    {...getVideoProps()}
+                >
+                    <source src={getVideoSource()} type="video/mp4" />
+                    Your browser does not support the video tag.
+                </video>
+            )}
 
             {/* Background Audio */}
             <audio
@@ -191,9 +198,12 @@ const MediaBackground = ({
             {/* Overlay */}
             {overlay && <div className="absolute inset-0 bg-black/20" />}
 
-            {/* Loading indicator */}
+            {/* Blur overlay for index pages */}
+            {blur && <div className="absolute inset-0 backdrop-blur-sm" />}
+
+            {/* Loading indicator - Only show for video when not audio-only mode */}
             <AnimatePresence>
-                {!isVideoLoaded && !videoError && (
+                {!audioOnly && !isVideoLoaded && !videoError && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -217,37 +227,43 @@ const MediaBackground = ({
             </AnimatePresence>
 
             {/* Media Controls */}
-            {enableControls && (isVideoLoaded || isAudioLoaded) && (
-                <div className="absolute top-20 right-4 z-50 flex gap-2">
-                    {/* Audio Control */}
-                    {isAudioLoaded && (
-                        <motion.button
-                            onClick={toggleAudio}
-                            className="bg-black/30 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/50 transition-colors"
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            title={isAudioPlaying ? "Mute Audio" : "Play Audio"}
-                        >
-                            <span className="text-lg">
-                                {isAudioPlaying ? "🔊" : "🔇"}
-                            </span>
-                        </motion.button>
-                    )}
+            {enableControls &&
+                ((!audioOnly && isVideoLoaded) || isAudioLoaded) && (
+                    <div
+                        id={controlsId}
+                        className="fixed top-20 right-8 z-50 flex gap-2"
+                    >
+                        {/* Audio Control */}
+                        {isAudioLoaded && (
+                            <motion.button
+                                onClick={toggleAudio}
+                                className="bg-black/30 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/50 transition-colors"
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                title={
+                                    isAudioPlaying ? "Mute Audio" : "Play Audio"
+                                }
+                            >
+                                <span className="text-lg">
+                                    {isAudioPlaying ? "🔊" : "🔇"}
+                                </span>
+                            </motion.button>
+                        )}
 
-                    {/* Media Info */}
-                    {(backgroundVideo || backgroundAudio) && (
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="bg-black/30 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm"
-                        >
-                            {backgroundVideo?.title ||
-                                backgroundAudio?.title ||
-                                "Default Media"}
-                        </motion.div>
-                    )}
-                </div>
-            )}
+                        {/* Media Info */}
+                        {(backgroundVideo || backgroundAudio) && (
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="bg-black/30 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm"
+                            >
+                                {backgroundVideo?.title ||
+                                    backgroundAudio?.title ||
+                                    "Default Media"}
+                            </motion.div>
+                        )}
+                    </div>
+                )}
 
             {/* Error indicator */}
             {videoError && audioError && (

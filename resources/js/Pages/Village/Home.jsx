@@ -1220,7 +1220,6 @@ const Home = ({
                                 className="h-1 bg-gradient-to-r from-pink-400 to-purple-400 mx-auto"
                             />
                         </motion.div>
-
                         {/* Artistic Grid Layout (Enhanced from previous version) */}
                         <div className="grid grid-cols-12 gap-4 max-w-7xl mx-auto">
                             {featuredImages.slice(0, 12).map((image, index) => {
@@ -1453,63 +1452,6 @@ const Home = ({
                                 );
                             })}
                         </div>
-
-                        {/* Gallery stats with animated counters (From previous version) */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 50 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 1.2, duration: 0.8 }}
-                            className="grid grid-cols-3 gap-8 mt-16 max-w-2xl mx-auto"
-                        >
-                            {[
-                                {
-                                    label: "Total Photos",
-                                    value: featuredImages?.length || 0,
-                                    icon: "📸",
-                                },
-                                {
-                                    label: "Locations",
-                                    value: new Set(
-                                        featuredImages
-                                            ?.map((img) => img.place?.id)
-                                            .filter(Boolean)
-                                    ).size,
-                                    icon: "📍",
-                                },
-                                { label: "Memories", value: "∞", icon: "💫" },
-                            ].map((stat, index) => (
-                                <motion.div
-                                    key={stat.label}
-                                    initial={{ scale: 0, rotateY: 90 }}
-                                    whileInView={{ scale: 1, rotateY: 0 }}
-                                    transition={{
-                                        delay: 1.5 + index * 0.2,
-                                        duration: 0.6,
-                                        type: "spring",
-                                    }}
-                                    whileHover={{ scale: 1.1, y: -5 }}
-                                    className="text-center bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20"
-                                >
-                                    <motion.div
-                                        animate={{ rotate: [0, 10, -10, 0] }}
-                                        transition={{
-                                            duration: 2,
-                                            repeat: Infinity,
-                                            delay: index,
-                                        }}
-                                        className="text-3xl mb-2"
-                                    >
-                                        {stat.icon}
-                                    </motion.div>
-                                    <div className="text-2xl font-bold text-white mb-1">
-                                        {stat.value}
-                                    </div>
-                                    <div className="text-sm text-white/70">
-                                        {stat.label}
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </motion.div>
 
                         <motion.div
                             initial={{ opacity: 0, scale: 0.8 }}
