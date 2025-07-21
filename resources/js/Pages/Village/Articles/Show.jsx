@@ -63,13 +63,15 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
 
             {/* Article Image Background Overlay */}
             <div
-                className="fixed inset-0 bg-cover bg-center opacity-40 z-0"
+                className="fixed inset-0 bg-cover bg-center z-0"
                 style={{
                     backgroundImage: article.cover_image_url
                         ? `url(${article.cover_image_url})`
                         : "none",
                 }}
-            />
+            >
+                <div className="absolute inset-0 bg-black/50" />
+            </div>
 
             {/* Hero Section */}
             <HeroSection
@@ -408,25 +410,30 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
 
             {/* Related Articles */}
             {relatedArticles && relatedArticles.length > 0 && (
-                <section className="py-20 bg-gray-50">
-                    <div className="container mx-auto px-6">
+                <section className="py-20 bg-gray-900 text-white relative">
+                    <div className="absolute inset-0 backdrop-blur-sm" />
+                    <div className="container mx-auto px-6 relative z-10">
                         <motion.h2
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
-                            className="text-3xl font-bold text-center mb-12"
+                            className="text-3xl font-bold text-center mb-12 text-white"
                         >
                             More Stories from {village?.name}
                         </motion.h2>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                             {relatedArticles.map((relatedArticle, index) => (
-                                <ArticleCard
+                                <div
                                     key={relatedArticle.id}
-                                    article={relatedArticle}
-                                    index={index}
-                                    village={village}
-                                />
+                                    className="[&_*]:text-white [&_*]:border-white/30"
+                                >
+                                    <ArticleCard
+                                        article={relatedArticle}
+                                        index={index}
+                                        village={village}
+                                    />
+                                </div>
                             ))}
                         </div>
                     </div>

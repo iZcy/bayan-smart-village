@@ -8,7 +8,6 @@ import {
     useTransform,
 } from "framer-motion";
 import MainLayout from "@/Layouts/MainLayout";
-import HeroSection from "@/Components/HeroSection";
 import MediaBackground from "@/Components/MediaBackground";
 import FilterControls from "@/Components/FilterControls";
 import SectionHeader from "@/Components/SectionHeader";

@@ -231,7 +231,7 @@ const MediaBackground = ({
                 ((!audioOnly && isVideoLoaded) || isAudioLoaded) && (
                     <div
                         id={controlsId}
-                        className="fixed top-20 right-8 z-50 flex gap-2"
+                        className="fixed top-24 right-8 z-50 flex gap-2"
                     >
                         {/* Audio Control */}
                         {isAudioLoaded && (

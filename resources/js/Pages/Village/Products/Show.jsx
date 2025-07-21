@@ -99,15 +99,17 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                 fallbackAudio="/audio/sasakbacksong.mp3"
             />
 
-            {/* Product Image Background Overlay */}
+            {/* Product Image Background Overlay with darken layer*/}
             <div
-                className="fixed inset-0 bg-cover bg-center opacity-30 z-0"
+                className="fixed inset-0 bg-cover bg-center z-0"
                 style={{
                     backgroundImage: product.primary_image_url
                         ? `url(${product.primary_image_url})`
                         : "none",
                 }}
-            />
+            >
+                <div className="absolute inset-0 bg-black/50" />
+            </div>
 
             {/* Hero Section */}
             <HeroSection
