@@ -31,8 +31,8 @@ const FilterControls = ({
             transition={{ duration: 1, delay: 2 }}
             className={`${className || "max-w-4xl mx-auto"}`}
         >
-            {/* Single Row Layout - Always Horizontal */}
-            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+            {/* Single Row Layout - Fixed Heights, No Scroll */}
+            <div className="flex items-center justify-center gap-3 flex-wrap">
                 {/* Search Input */}
                 <div className="flex-1 min-w-[200px] max-w-[300px]">
                     <div className="relative">
@@ -43,7 +43,7 @@ const FilterControls = ({
                                 setSearchTerm && setSearchTerm(e.target.value)
                             }
                             placeholder={searchPlaceholder}
-                            className="w-full px-4 py-3 pl-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all duration-300"
+                            className="w-full h-12 px-4 pl-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all duration-300"
                         />
                         <svg
                             className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70"
@@ -63,14 +63,14 @@ const FilterControls = ({
 
                 {/* Category Filter */}
                 {categories && categories.length > 0 && (
-                    <div className="min-w-[150px]">
+                    <div className="min-w-[160px]">
                         <select
                             value={selectedCategory}
                             onChange={(e) =>
                                 setSelectedCategory &&
                                 setSelectedCategory(e.target.value)
                             }
-                            className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
+                            className="w-full h-12 px-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
                         >
                             <option value="" className="text-black">
                                 All Categories
@@ -94,7 +94,7 @@ const FilterControls = ({
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
-                            className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
+                            className="w-full h-12 px-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
                         >
                             <option value="newest" className="text-black">
                                 Newest
@@ -135,7 +135,9 @@ const FilterControls = ({
                 {/* Additional Filters */}
                 {additionalFilters.map((filter, index) => (
                     <div key={index} className="min-w-[120px]">
-                        {filter.component}
+                        <div className="h-12 flex items-center">
+                            {filter.component}
+                        </div>
                     </div>
                 ))}
 
@@ -147,7 +149,7 @@ const FilterControls = ({
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleClearFilters}
-                        className="px-4 py-3 bg-red-500/20 hover:bg-red-500/30 backdrop-blur-md border border-red-400/30 rounded-lg text-white transition-all duration-300 whitespace-nowrap"
+                        className="h-12 px-4 bg-red-500/20 hover:bg-red-500/30 backdrop-blur-md border border-red-400/30 rounded-lg text-white transition-all duration-300 whitespace-nowrap"
                     >
                         <div className="flex items-center space-x-2">
                             <svg

@@ -202,21 +202,9 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
                     selectedCategory={selectedPlace}
                     setSelectedCategory={setSelectedPlace}
                     categories={placeData}
-                    additionalFilters={[
-                        { component: placeFilterComponent },
-                        {
-                            component: (
-                                <button
-                                    onClick={handleClearFilters}
-                                    className="px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg text-white hover:bg-white/30 transition-colors duration-300"
-                                >
-                                    Clear Filters
-                                </button>
-                            ),
-                        },
-                    ]}
+                    additionalFilters={[{ component: placeFilterComponent }]}
                     searchPlaceholder="Search gallery..."
-                    className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4"
+                    className="max-w-3xl mx-auto"
                 />
             </HeroSection>
 

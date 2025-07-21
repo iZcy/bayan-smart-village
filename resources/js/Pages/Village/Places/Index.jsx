@@ -84,12 +84,13 @@ const PlacesPage = ({ village, places, categories = [], filters = {} }) => {
         <MainLayout title="Places">
             <Head title={`Places - ${village?.name}`} />
 
-            {/* Hero Section */}
+            {/* Hero Section with Integrated Filters */}
             <HeroSection
                 title="Discover Places"
                 subtitle={`Explore amazing locations and businesses in ${village?.name}`}
                 backgroundGradient="from-teal-600 via-cyan-500 to-blue-700"
-                enableParallax={true}
+                parallax={true}
+                scrollY={{ useTransform: (scrollY) => scrollY }}
             >
                 <FilterControls
                     searchTerm={searchTerm}
@@ -97,21 +98,9 @@ const PlacesPage = ({ village, places, categories = [], filters = {} }) => {
                     selectedCategory={selectedCategory}
                     setSelectedCategory={setSelectedCategory}
                     categories={categoryData}
-                    additionalFilters={[
-                        { component: typeFilterComponent },
-                        {
-                            component: (
-                                <button
-                                    onClick={handleClearFilters}
-                                    className="px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg text-white hover:bg-white/30 transition-colors duration-300"
-                                >
-                                    Clear Filters
-                                </button>
-                            ),
-                        },
-                    ]}
+                    additionalFilters={[{ component: typeFilterComponent }]}
                     searchPlaceholder="Search places..."
-                    className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-4"
+                    className="max-w-4xl mx-auto"
                 />
             </HeroSection>
 

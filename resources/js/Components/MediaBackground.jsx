@@ -218,7 +218,7 @@ const MediaBackground = ({
 
             {/* Media Controls */}
             {enableControls && (isVideoLoaded || isAudioLoaded) && (
-                <div className="absolute top-4 right-4 z-50 flex gap-2">
+                <div className="absolute top-20 right-4 z-50 flex gap-2">
                     {/* Audio Control */}
                     {isAudioLoaded && (
                         <motion.button

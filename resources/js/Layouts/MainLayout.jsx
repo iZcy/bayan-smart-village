@@ -175,15 +175,6 @@ export default function MainLayout({ children, title = "", description = "" }) {
                                     </motion.div>
                                 );
                             })}
-
-                            {/* Village Info Button */}
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="ml-4 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-full text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-                            >
-                                ℹ️ Info
-                            </motion.button>
                         </div>
 
                         {/* Enhanced Mobile Menu Button */}

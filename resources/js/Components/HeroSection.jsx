@@ -45,7 +45,9 @@ const HeroSection = ({
                             {subtitle}
                         </motion.p>
                     )}
-                    {children}
+                    <div className="text-white text-lg md:text-xl flex justify-center">
+                        {children}
+                    </div>
                 </div>
             </div>
 
