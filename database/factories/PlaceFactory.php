@@ -86,7 +86,7 @@ class PlaceFactory extends Factory
             'latitude' => $this->faker->latitude(-10, -6),
             'longitude' => $this->faker->longitude(95, 141),
             'phone_number' => $this->faker->optional(0.6)->phoneNumber(),
-            'image_url' => $this->faker->optional(0.8)->imageUrl(800, 600),
+            'image_url' => 'https://picsum.photos/800/600?random=' . $this->faker->numberBetween(1, 1000),
             'custom_fields' => [
                 'opening_hours' => $this->faker->randomElement([
                     '08:00 - 17:00',

@@ -135,7 +135,7 @@ class MediaFactory extends Factory
             'type' => $type,
             'context' => $context,
             'file_url' => $fileUrl,
-            'thumbnail_url' => $type === 'video' ? $this->faker->optional(0.7)->imageUrl(800, 450) : null,
+            'thumbnail_url' => $type === 'video' ? 'https://picsum.photos/800/450?random=' . $this->faker->numberBetween(1, 1000) : null,
             'duration' => $this->faker->numberBetween(30, 300), // 30 seconds to 5 minutes
             'mime_type' => $mimeType,
             'file_size' => $this->faker->numberBetween(1048576, 52428800), // 1MB to 50MB

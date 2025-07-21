@@ -99,7 +99,7 @@ class OfferFactory extends Factory
                 'November',
                 'December'
             ], $this->faker->numberBetween(2, 6)),
-            'primary_image_url' => $this->faker->optional(0.8)->imageUrl(600, 400),
+            'primary_image_url' => 'https://picsum.photos/600/400?random=' . $this->faker->numberBetween(1, 1000),
             'materials' => $this->faker->optional(0.6)->randomElements([
                 'Bambu',
                 'Kayu Jati',

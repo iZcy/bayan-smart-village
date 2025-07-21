@@ -53,7 +53,7 @@ class VillageFactory extends Factory
             'phone_number' => $this->faker->phoneNumber(),
             'email' => $this->faker->email(),
             'address' => $this->faker->address(),
-            'image_url' => $this->faker->optional(0.7)->imageUrl(800, 600),
+            'image_url' => 'https://picsum.photos/800/600?random=' . $this->faker->numberBetween(1, 1000),
             'settings' => [
                 'maintenance_mode' => false,
                 'theme_color' => $this->faker->hexColor(),

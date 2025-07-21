@@ -52,7 +52,7 @@ class CommunityFactory extends Factory
             'slug' => $slug,
             'description' => $this->faker->paragraph(2),
             'domain' => $this->faker->optional(0.2)->domainName(),
-            'logo_url' => $this->faker->optional(0.6)->imageUrl(300, 300, 'business', true, 'logo'),
+            'logo_url' => 'https://picsum.photos/300/300?random=' . $this->faker->numberBetween(1, 1000),
             'contact_person' => $this->faker->name(),
             'contact_phone' => $this->faker->phoneNumber(),
             'contact_email' => $this->faker->email(),

@@ -58,7 +58,7 @@ class ArticleFactory extends Factory
             'title' => $title,
             'slug' => $this->generateUniqueSlug('general', $baseSlug),
             'content' => $content,
-            'cover_image_url' => $this->faker->optional(0.8)->imageUrl(800, 500),
+            'cover_image_url' => 'https://picsum.photos/800/500?random=' . $this->faker->numberBetween(1, 1000),
             'is_featured' => $this->faker->boolean(25), // 25% chance of being featured
             'is_published' => $this->faker->boolean(90), // 90% chance of being published
             'published_at' => $this->faker->dateTimeBetween('-1 year', 'now'),
