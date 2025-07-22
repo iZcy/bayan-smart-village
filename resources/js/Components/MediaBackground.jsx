@@ -26,7 +26,7 @@ const MediaBackground = ({
     const videoRef = useRef(null);
     const audioRef = useRef(null);
 
-    // Fetch media data from API
+    // Fetch village and context-specific media from API
     useEffect(() => {
         const fetchMedia = async () => {
             try {
@@ -39,7 +39,12 @@ const MediaBackground = ({
                         const videoData = await videoResponse.json();
                         if (videoData.media) {
                             setBackgroundVideo(videoData.media);
+                            console.log(`Loaded ${context} video:`, videoData.media.title);
+                        } else {
+                            console.log(`No featured video found for ${context} context in ${videoData.village || 'global'}`);
                         }
+                    } else {
+                        console.log(`Failed to fetch ${context} video:`, videoResponse.status);
                     }
                 }
 
@@ -51,15 +56,27 @@ const MediaBackground = ({
                     const audioData = await audioResponse.json();
                     if (audioData.media) {
                         setBackgroundAudio(audioData.media);
+                        console.log(`Loaded ${context} audio:`, audioData.media.title, {
+                            autoplay: audioData.media.autoplay,
+                            loop: audioData.media.loop,
+                            volume: audioData.media.volume,
+                            village: audioData.village
+                        });
+                    } else {
+                        console.log(`No featured audio found for ${context} context in ${audioData.village || 'global'}`);
                     }
+                } else {
+                    console.log(`Failed to fetch ${context} audio:`, audioResponse.status);
                 }
             } catch (error) {
-                console.log("Failed to fetch media, using fallbacks:", error);
+                console.log("Failed to fetch village-specific media, using fallbacks:", error);
             }
         };
 
-        fetchMedia();
-    }, [context, village, audioOnly]);
+        if (context) {
+            fetchMedia();
+        }
+    }, [context, village?.id, audioOnly]);
 
     // Handle video load
     const handleVideoLoad = () => {

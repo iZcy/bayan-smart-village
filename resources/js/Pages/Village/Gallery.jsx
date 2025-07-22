@@ -28,9 +28,6 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
     const [searchTerm, setSearchTerm] = useState(filterData.search || "");
     const [selectedImage, setSelectedImage] = useState(null);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-    const [contextAudio, setContextAudio] = useState(null);
-    const [isContextAudioPlaying, setIsContextAudioPlaying] = useState(false);
-    const contextAudioRef = useRef(null);
     const { scrollY } = useScroll();
 
     // Prepare slideshow data using the custom hook
@@ -48,55 +45,6 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
             "linear-gradient(to bottom, rgba(55,48,163,0.3), rgba(0,0,0,0.4))", // End fade
         ]
     );
-
-    // Fetch context-specific audio
-    useEffect(() => {
-        const fetchContextAudio = async () => {
-            try {
-                const response = await fetch(
-                    "/api/media/gallery/featured?type=audio"
-                );
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.media) {
-                        setContextAudio(data.media);
-                    }
-                }
-            } catch (error) {
-                console.log("Failed to fetch gallery audio:", error);
-            }
-        };
-
-        fetchContextAudio();
-    }, [village]);
-
-    // Handle context audio
-    useEffect(() => {
-        if (contextAudioRef.current && contextAudio) {
-            contextAudioRef.current.volume = contextAudio.volume || 0.2;
-            if (contextAudio.autoplay) {
-                contextAudioRef.current.play().catch(console.log);
-                setIsContextAudioPlaying(true);
-            }
-        }
-        return () => {
-            if (contextAudioRef.current) {
-                contextAudioRef.current.pause();
-            }
-        };
-    }, [contextAudio]);
-
-    const toggleContextAudio = () => {
-        if (contextAudioRef.current) {
-            if (isContextAudioPlaying) {
-                contextAudioRef.current.pause();
-                setIsContextAudioPlaying(false);
-            } else {
-                contextAudioRef.current.play().catch(console.log);
-                setIsContextAudioPlaying(true);
-            }
-        }
-    };
 
     useEffect(() => {
         let filtered = imageData;
@@ -189,17 +137,6 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
                 fallbackVideo="/video/videobackground.mp4"
                 fallbackAudio="/audio/village-nature.mp3"
             />
-            {/* Context Audio */}
-            {contextAudio && (
-                <audio
-                    ref={contextAudioRef}
-                    loop={contextAudio.loop}
-                    preload="auto"
-                >
-                    <source src={contextAudio.file_url} type="audio/mpeg" />
-                </audio>
-            )}
-
             {/* Enhanced Color Overlay */}
             <motion.div
                 className="fixed inset-0 z-5 pointer-events-none"
@@ -213,18 +150,6 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
                 transitionDuration={slideshowConfigs.gallery.transitionDuration}
                 placeholderConfig={slideshowConfigs.gallery.placeholderConfig}
             />
-            {/* Audio Control for Gallery */}
-            {contextAudio && (
-                <motion.button
-                    onClick={toggleContextAudio}
-                    className="fixed top-20 right-6 z-[60] bg-black/20 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/30 transition-colors"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    title={contextAudio.title || "Gallery Audio"}
-                >
-                    {isContextAudioPlaying ? "🔊" : "🔇"}
-                </motion.button>
-            )}
             {/* Hero Section */}
             <HeroSection
                 title="Village Gallery"

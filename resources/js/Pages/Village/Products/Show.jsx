@@ -10,7 +10,6 @@ import { ProductCard } from "@/Components/Cards/Index";
 
 const ProductShowPage = ({ village, product, relatedProducts }) => {
     const { scrollY } = useScroll();
-    const audioRef = useRef(null);
 
     // Parallax effects
     const heroY = useTransform(scrollY, [0, 800], [0, -200]);
@@ -21,19 +20,6 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
         threshold: 0.3,
         triggerOnce: true,
     });
-
-    // Village music
-    useEffect(() => {
-        if (audioRef.current) {
-            audioRef.current.volume = 0.3;
-            audioRef.current.play().catch(console.log);
-        }
-        return () => {
-            if (audioRef.current) {
-                audioRef.current.pause();
-            }
-        };
-    }, []);
 
     const getDisplayPrice = () => {
         if (product.price) {
@@ -82,14 +68,9 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
         <MainLayout title={product.name}>
             <Head title={`${product.name} - ${village?.name}`} />
 
-            {/* Background Audio */}
-            <audio ref={audioRef} loop>
-                <source src="/audio/village-ambient.mp3" type="audio/mpeg" />
-            </audio>
-
             {/* Media Background */}
             <MediaBackground
-                context="product"
+                context="products"
                 village={village}
                 enableControls={true}
                 blur={true}

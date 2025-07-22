@@ -124,7 +124,6 @@ const LightboxModal = ({
 
 export default function PlaceShowPage({ village, place, placeContext }) {
     const { scrollY } = useScroll();
-    const audioRef = useRef(null);
     
     // Gallery lightbox state
     const [selectedImage, setSelectedImage] = useState(null);
@@ -139,19 +138,6 @@ export default function PlaceShowPage({ village, place, placeContext }) {
         threshold: 0.3,
         triggerOnce: true,
     });
-
-    // Audio management
-    useEffect(() => {
-        if (audioRef.current) {
-            audioRef.current.volume = 0.3;
-            audioRef.current.play().catch(console.log);
-        }
-        return () => {
-            if (audioRef.current) {
-                audioRef.current.pause();
-            }
-        };
-    }, []);
 
     // Gallery functions
     const openLightbox = (image) => {
@@ -183,14 +169,9 @@ export default function PlaceShowPage({ village, place, placeContext }) {
         <MainLayout title={place.name} description={place.description}>
             <Head title={`${place.name} - ${village.name}`} />
 
-            {/* Background Audio */}
-            <audio ref={audioRef} loop>
-                <source src="/audio/village-ambient.mp3" type="audio/mpeg" />
-            </audio>
-
             {/* Media Background */}
             <MediaBackground
-                context="place"
+                context="places"
                 village={village}
                 enableControls={true}
                 blur={true}

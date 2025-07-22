@@ -117,12 +117,18 @@ class MediaResource extends Resource
                         Forms\Components\TextInput::make('duration')
                             ->numeric()
                             ->suffix('seconds')
-                            ->helperText('Duration in seconds'),
+                            ->helperText('Duration in seconds')
+                            ->disabled()
+                            ->dehydrated(),
                         Forms\Components\TextInput::make('mime_type')
-                            ->placeholder('video/mp4, audio/mpeg, etc.'),
+                            ->placeholder('video/mp4, audio/mpeg, etc.')
+                            ->disabled()
+                            ->dehydrated(),
                         Forms\Components\TextInput::make('file_size')
                             ->numeric()
-                            ->suffix('bytes'),
+                            ->suffix('bytes')
+                            ->disabled()
+                            ->dehydrated(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Associations')

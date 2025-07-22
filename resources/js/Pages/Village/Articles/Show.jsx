@@ -10,7 +10,6 @@ import { ArticleCard } from "@/Components/Cards/Index";
 
 const ArticleShowPage = ({ village, article, relatedArticles }) => {
     const { scrollY } = useScroll();
-    const audioRef = useRef(null);
 
     // Parallax effects
     const heroY = useTransform(scrollY, [0, 800], [0, -200]);
@@ -22,19 +21,6 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
         triggerOnce: true,
     });
 
-    // Village ambient music
-    useEffect(() => {
-        if (audioRef.current) {
-            audioRef.current.volume = 0.3;
-            audioRef.current.play().catch(console.log);
-        }
-        return () => {
-            if (audioRef.current) {
-                audioRef.current.pause();
-            }
-        };
-    }, []);
-
     const getReadingTime = () => {
         const content = article.content?.replace(/<[^>]*>/g, "") || "";
         return Math.ceil(content.split(" ").length / 200) || 5;
@@ -44,14 +30,9 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
         <MainLayout title={article.title}>
             <Head title={`${article.title} - ${village?.name}`} />
 
-            {/* Background Audio */}
-            <audio ref={audioRef} loop>
-                <source src="/audio/village-ambient.mp3" type="audio/mpeg" />
-            </audio>
-
             {/* Media Background */}
             <MediaBackground
-                context="article"
+                context="articles"
                 village={village}
                 enableControls={true}
                 audioOnly={true}
