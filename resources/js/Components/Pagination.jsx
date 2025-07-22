@@ -144,7 +144,7 @@ const Pagination = ({
             )}
 
             {/* Results Info */}
-            <div className="hidden md:block ml-8 text-sm text-gray-400">
+            <div className="hidden md:block ml-8 text-sm text-white">
                 Showing {(current_page - 1) * per_page + 1} to{" "}
                 {Math.min(current_page * per_page, total)} of {total} results
             </div>

@@ -559,10 +559,10 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                                                 </div>
                                                 <div className="p-6">
-                                                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-green-600 transition-colors">
+                                                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-green-600 transition-colors line-clamp-1">
                                                         {sme.name}
                                                     </h3>
-                                                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                                                    <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed h-[68px] overflow-hidden">
                                                         {sme.description}
                                                     </p>
                                                     <div className="flex items-center justify-between">
@@ -633,10 +633,10 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                                                 </div>
                                                 <div className="p-6">
-                                                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-1">
                                                         {article.title}
                                                     </h3>
-                                                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                                                    <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed h-[68px] overflow-hidden">
                                                         {article.content?.replace(/<[^>]*>/g, "").substring(0, 120)}...
                                                     </p>
                                                     <div className="text-xs text-gray-500">

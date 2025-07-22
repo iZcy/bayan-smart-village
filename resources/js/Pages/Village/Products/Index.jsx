@@ -1,7 +1,12 @@
 // resources/js/Pages/Products/Index.jsx
 import React, { useState, useEffect } from "react";
 import { Head } from "@inertiajs/react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import {
+    motion,
+    AnimatePresence,
+    useScroll,
+    useTransform,
+} from "framer-motion";
 import MainLayout from "@/Layouts/MainLayout";
 import HeroSection from "@/Components/HeroSection";
 import MediaBackground from "@/Components/MediaBackground";
@@ -31,8 +36,8 @@ const ProductsPage = ({ village, products, categories = [], filters = {} }) => {
         [0, 800, 1600, 2400],
         [
             "linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.5))", // Hero - darker for better card visibility
-            "linear-gradient(to bottom, rgba(34,197,94,0.7), rgba(16,185,129,0.8))", // Products Grid - green, darker for better card visibility
-            "linear-gradient(to bottom, rgba(16,185,129,0.6), rgba(6,78,59,0.7))", // Mid transition
+            "linear-gradient(to bottom, rgba(34,197,94,0.7), rgba(0,135,90,0.8))", // Products Grid - green, darker for better card visibility
+            "linear-gradient(to bottom, rgba(0,135,90,0.6), rgba(6,78,59,0.7))", // Mid transition
             "linear-gradient(to bottom, rgba(6,78,59,0.4), rgba(0,0,0,0.6))", // End fade to black for footer
         ]
     );
@@ -44,18 +49,23 @@ const ProductsPage = ({ village, products, categories = [], filters = {} }) => {
         .map((product) => {
             // Debug logging for first product to understand structure
             if (product === productData[0]) {
-                console.log('Product structure:', {
+                console.log("Product structure:", {
                     name: product.name,
                     primary_image_url: product.primary_image_url,
                     images: product.images,
                     main_image: product.main_image,
-                    image_url: product.image_url
+                    image_url: product.image_url,
                 });
             }
-            
+
             return {
                 id: product.id,
-                image_url: product.primary_image_url || product.image_url || product.images?.[0]?.image_url || product.main_image || null,
+                image_url:
+                    product.primary_image_url ||
+                    product.image_url ||
+                    product.images?.[0]?.image_url ||
+                    product.main_image ||
+                    null,
                 title: product.name,
                 subtitle: product.short_description || "Quality local product",
             };
@@ -212,7 +222,10 @@ const ProductsPage = ({ village, products, categories = [], filters = {} }) => {
                                 initial={{ opacity: 0, scale: 1.1 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 1.1 }}
-                                transition={{ duration: 1.5, ease: "easeInOut" }}
+                                transition={{
+                                    duration: 1.5,
+                                    ease: "easeInOut",
+                                }}
                                 className="absolute inset-0"
                             >
                                 {featuredImages[currentSlide]?.image_url ? (
@@ -224,22 +237,43 @@ const ProductsPage = ({ village, products, categories = [], filters = {} }) => {
                                         alt={featuredImages[currentSlide].title}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
-                                            e.target.style.display = 'none';
-                                            e.target.nextElementSibling.style.display = 'flex';
+                                            e.target.style.display = "none";
+                                            e.target.nextElementSibling.style.display =
+                                                "flex";
                                         }}
                                     />
                                 ) : null}
                                 {/* Fallback placeholder */}
-                                <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white" style={{ display: featuredImages[currentSlide]?.image_url ? 'none' : 'flex' }}>
+                                <div
+                                    className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white"
+                                    style={{
+                                        display: featuredImages[currentSlide]
+                                            ?.image_url
+                                            ? "none"
+                                            : "flex",
+                                    }}
+                                >
                                     <div className="text-center">
-                                        <span className="text-6xl mb-4 block">📦</span>
-                                        <h3 className="text-2xl font-bold mb-2">{featuredImages[currentSlide]?.title}</h3>
-                                        <p className="text-lg opacity-90">{featuredImages[currentSlide]?.subtitle}</p>
+                                        <span className="text-6xl mb-4 block">
+                                            📦
+                                        </span>
+                                        <h3 className="text-2xl font-bold mb-2">
+                                            {
+                                                featuredImages[currentSlide]
+                                                    ?.title
+                                            }
+                                        </h3>
+                                        <p className="text-lg opacity-90">
+                                            {
+                                                featuredImages[currentSlide]
+                                                    ?.subtitle
+                                            }
+                                        </p>
                                     </div>
                                 </div>
                             </motion.div>
                         </AnimatePresence>
-                        
+
                         {/* Slideshow indicators */}
                         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-30">
                             {featuredImages.map((_, index) => (

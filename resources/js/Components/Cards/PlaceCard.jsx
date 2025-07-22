@@ -73,11 +73,11 @@ const PlaceCard = ({ place, index, village }) => {
                     )}
                 </div>
 
-                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-cyan-300 transition-colors duration-300 line-clamp-2">
+                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-cyan-300 transition-colors duration-300 line-clamp-1">
                     {place.name}
                 </h3>
 
-                <p className="text-gray-300 mb-4 line-clamp-3 leading-relaxed text-sm">
+                <p className="text-gray-300 mb-4 line-clamp-3 leading-relaxed text-sm h-[68px] overflow-hidden">
                     {place.description?.substring(0, 150)}
                     {place.description?.length > 150 && "..."}
                 </p>
@@ -103,7 +103,7 @@ const PlaceCard = ({ place, index, village }) => {
                             <span>📍 Address Available</span>
                         )}
                     </div>
-                    <span className="group-hover:text-cyan-300 transition-colors duration-300 text-sm">
+                    <span className="group-hover:text-cyan-300 transition-colors duration-300 text-sm text-white">
                         View Details →
                     </span>
                 </div>

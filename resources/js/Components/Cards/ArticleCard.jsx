@@ -38,11 +38,11 @@ const ArticleCard = ({ article, index, village }) => {
             />
 
             <div className="p-6">
-                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors duration-300 line-clamp-2">
+                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-blue-300 transition-colors duration-300 line-clamp-1">
                     {article.title}
                 </h3>
 
-                <p className="text-white/70 text-sm line-clamp-3 mb-4 leading-relaxed">
+                <p className="text-white/70 text-sm line-clamp-3 mb-4 leading-relaxed h-[68px] overflow-hidden">
                     {article.content?.replace(/<[^>]*>/g, "").substring(0, 150)}
                     ...
                 </p>

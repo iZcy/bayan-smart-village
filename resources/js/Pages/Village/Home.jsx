@@ -352,7 +352,7 @@ const Home = ({
                                                     >
                                                         📍
                                                     </motion.div>
-                                                    <h3 className="text-xl font-semibold mb-2">
+                                                    <h3 className="text-xl font-semibold mb-2 line-clamp-1">
                                                         {tourismPlaces[
                                                             selectedTourismPlace
                                                         ]?.name ||
@@ -402,7 +402,7 @@ const Home = ({
                                                     ? { duration: 0 }
                                                     : { duration: 0.5 },
                                         }}
-                                        className="text-white h-full overflow-y-auto"
+                                        className="text-white bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10 h-full overflow-y-auto"
                                         onScroll={handleUserInteraction}
                                         onWheel={handleUserInteraction}
                                         onMouseDown={handleUserInteraction}
@@ -413,12 +413,15 @@ const Home = ({
                                                 ?.name ||
                                                 "Beautiful Destination"}
                                         </h3>
-                                        <div
-                                            className="text-base md:text-lg opacity-90 mb-6 leading-relaxed max-h-32 overflow-y-auto"
+                                        <motion.div
+                                            className="text-lg opacity-90 mb-6 leading-relaxed max-h-32 overflow-y-auto"
+                                            initial={{ y: 20 }}
+                                            animate={{ y: 0 }}
+                                            transition={{ delay: 0.3 }}
                                             onScroll={handleUserInteraction}
                                             onWheel={handleUserInteraction}
                                         >
-                                            <p className="line-clamp-4">
+                                            <p className="line-clamp-3">
                                                 {tourismPlaces[
                                                     selectedTourismPlace
                                                 ]?.description
@@ -436,7 +439,7 @@ const Home = ({
                                                           ].description
                                                     : "Explore the natural beauty and cultural richness of this amazing destination."}
                                             </p>
-                                        </div>
+                                        </motion.div>
                                         <div className="space-y-2">
                                             <div className="flex items-center">
                                                 <span className="text-green-200">
@@ -488,6 +491,18 @@ const Home = ({
                                                         </span>
                                                     </div>
                                                 )}
+
+                                            <motion.button
+                                                whileHover={{
+                                                    scale: 1.05,
+                                                    y: -2,
+                                                }}
+                                                whileTap={{ scale: 0.95 }}
+                                                className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                                                onClick={handleUserInteraction}
+                                            >
+                                                Visit Place →
+                                            </motion.button>
                                         </div>
                                     </motion.div>
                                 </AnimatePresence>
@@ -764,7 +779,7 @@ const Home = ({
                                         onTouchStart={handleUserInteraction}
                                     >
                                         <motion.h3
-                                            className="text-3xl font-bold mb-4"
+                                            className="text-3xl font-bold mb-4 line-clamp-1"
                                             initial={{ y: 20 }}
                                             animate={{ y: 0 }}
                                             transition={{ delay: 0.2 }}
@@ -781,7 +796,7 @@ const Home = ({
                                             onScroll={handleUserInteraction}
                                             onWheel={handleUserInteraction}
                                         >
-                                            <p className="line-clamp-4">
+                                            <p className="line-clamp-3">
                                                 {smePlaces[selectedSMEPlace]
                                                     ?.description
                                                     ? smePlaces[
@@ -1400,7 +1415,7 @@ const Home = ({
                                                         transition={{
                                                             delay: 0.2,
                                                         }}
-                                                        className="text-sm text-white font-medium line-clamp-2"
+                                                        className="text-sm text-white font-medium line-clamp-3 leading-relaxed h-[68px] overflow-hidden"
                                                     >
                                                         {image.caption}
                                                     </motion.div>

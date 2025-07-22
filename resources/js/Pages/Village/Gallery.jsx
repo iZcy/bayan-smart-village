@@ -371,7 +371,7 @@ const GalleryItem = ({ image, index, onClick }) => {
                         </div>
                     )}
                     {image.caption && (
-                        <div className="text-sm text-white line-clamp-2">
+                        <div className="text-sm text-white line-clamp-3 leading-relaxed h-[68px] overflow-hidden">
                             {image.caption}
                         </div>
                     )}

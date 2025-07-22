@@ -89,11 +89,11 @@ const ProductCard = ({ product, index, village }) => {
                     )}
                 </div>
 
-                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-green-300 transition-colors duration-300 line-clamp-2">
+                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-green-300 transition-colors duration-300 line-clamp-1">
                     {product.name}
                 </h3>
 
-                <p className="text-gray-300 mb-4 line-clamp-3 leading-relaxed text-sm">
+                <p className="text-gray-300 mb-4 line-clamp-3 leading-relaxed text-sm h-[68px] overflow-hidden">
                     {product.short_description ||
                         product.description
                             ?.replace(/<[^>]*>/g, "")
@@ -112,7 +112,7 @@ const ProductCard = ({ product, index, village }) => {
                             </span>
                         )}
                     </div>
-                    <span className="group-hover:text-green-300 transition-colors duration-300 text-sm">
+                    <span className="group-hover:text-green-300 transition-colors duration-300 text-sm text-white">
                         View Details →
                     </span>
                 </div>
