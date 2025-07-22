@@ -13,6 +13,157 @@ import HeroSection from "@/Components/HeroSection";
 import MediaBackground from "@/Components/MediaBackground";
 import { ArticleCard, ProductCard, PlaceCard } from "@/Components/Cards/Index";
 
+// Lightbox Modal Component
+const LightboxModal = ({
+    image,
+    onClose,
+    onNavigate,
+    currentIndex,
+    totalImages,
+}) => {
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") onClose();
+            if (e.key === "ArrowLeft") onNavigate("prev");
+            if (e.key === "ArrowRight") onNavigate("next");
+        };
+
+        document.addEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.removeEventListener("keydown", handleKeyDown);
+            document.body.style.overflow = "unset";
+        };
+    }, [onClose, onNavigate]);
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            onClick={onClose}
+        >
+            <div className="relative max-w-7xl max-h-full">
+                {/* Close Button */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
+                >
+                    <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                        />
+                    </svg>
+                </button>
+
+                {/* Navigation Buttons */}
+                {totalImages > 1 && (
+                    <>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onNavigate("prev");
+                            }}
+                            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
+                        >
+                            <svg
+                                className="w-6 h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 19l-7-7 7-7"
+                                />
+                            </svg>
+                        </button>
+
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onNavigate("next");
+                            }}
+                            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
+                        >
+                            <svg
+                                className="w-6 h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                />
+                            </svg>
+                        </button>
+                    </>
+                )}
+
+                {/* Image */}
+                <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="relative"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <img
+                        src={image.image_url}
+                        alt={image.caption || "Gallery image"}
+                        className="max-w-full max-h-[80vh] object-contain mx-auto rounded-lg shadow-2xl"
+                    />
+
+                    {/* Image Info */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6 rounded-b-lg">
+                        <div className="flex items-center justify-between text-white">
+                            <div>
+                                {image.place && (
+                                    <div className="text-sm text-purple-300 mb-2">
+                                        📍 {image.place.name}
+                                    </div>
+                                )}
+                                {image.caption && (
+                                    <div className="text-lg font-semibold mb-1">
+                                        {image.caption}
+                                    </div>
+                                )}
+                                <div className="text-sm text-gray-400">
+                                    {new Date(
+                                        image.created_at
+                                    ).toLocaleDateString("en-US", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                    })}
+                                </div>
+                            </div>
+                            <div className="text-sm text-gray-400">
+                                {currentIndex + 1} / {totalImages}
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        </motion.div>
+    );
+};
+
 const Home = ({
     village,
     featuredPlaces = [],
@@ -28,7 +179,37 @@ const Home = ({
     const [isSMEInteracting, setIsSMEInteracting] = useState(false);
     const [interactionTimeout, setInteractionTimeout] = useState(null);
     const [mediaLoaded, setMediaLoaded] = useState(false);
+    
+    // Gallery lightbox state
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     const { scrollY } = useScroll();
+
+    // Gallery lightbox functions
+    const openLightbox = (image) => {
+        setSelectedImage(image);
+        setIsLightboxOpen(true);
+    };
+
+    const closeLightbox = () => {
+        setSelectedImage(null);
+        setIsLightboxOpen(false);
+    };
+
+    const navigateImage = (direction) => {
+        if (!featuredImages || featuredImages.length === 0) return;
+        
+        const currentIndex = featuredImages.findIndex(img => img.id === selectedImage.id);
+        let newIndex;
+        
+        if (direction === "prev") {
+            newIndex = currentIndex === 0 ? featuredImages.length - 1 : currentIndex - 1;
+        } else {
+            newIndex = currentIndex === featuredImages.length - 1 ? 0 : currentIndex + 1;
+        }
+        
+        setSelectedImage(featuredImages[newIndex]);
+    };
 
     // Separate places by type - Tourism (services) vs SME (products)
     const tourismPlaces =
@@ -1289,6 +1470,7 @@ const Home = ({
                                                 index % gridPatterns.length
                                             ]
                                         } cursor-pointer group relative overflow-hidden rounded-2xl transform-gpu perspective-1000`}
+                                        onClick={() => openLightbox(image)}
                                     >
                                         <div
                                             className={`w-full ${
@@ -1515,6 +1697,19 @@ const Home = ({
                     Loading media content...
                 </motion.div>
             )}
+
+            {/* Lightbox Modal */}
+            <AnimatePresence>
+                {isLightboxOpen && selectedImage && (
+                    <LightboxModal
+                        image={selectedImage}
+                        onClose={closeLightbox}
+                        onNavigate={navigateImage}
+                        currentIndex={featuredImages?.findIndex(img => img.id === selectedImage.id) || 0}
+                        totalImages={featuredImages?.length || 0}
+                    />
+                )}
+            </AnimatePresence>
         </MainLayout>
     );
 };

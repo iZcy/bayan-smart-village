@@ -13,6 +13,8 @@ import FilterControls from "@/Components/FilterControls";
 import SectionHeader from "@/Components/SectionHeader";
 import { PlaceCard } from "@/Components/Cards/Index";
 import Pagination from "@/Components/Pagination";
+import SlideshowBackground from "@/Components/SlideshowBackground";
+import { useSlideshowData, slideshowConfigs } from "@/hooks/useSlideshowData";
 
 const PlacesPage = ({ village, places, categories = [], filters = {} }) => {
     // Ensure we have valid data
@@ -26,8 +28,10 @@ const PlacesPage = ({ village, places, categories = [], filters = {} }) => {
         filterData.category || ""
     );
     const [selectedType, setSelectedType] = useState(filterData.type || "");
-    const [currentSlide, setCurrentSlide] = useState(0);
     const { scrollY } = useScroll();
+
+    // Prepare slideshow data using the custom hook
+    const slideshowImages = useSlideshowData(placeData, slideshowConfigs.places);
 
     // Color overlay for Places sections - multiple scroll points for footer visibility
     const colorOverlay = useTransform(
@@ -40,14 +44,6 @@ const PlacesPage = ({ village, places, categories = [], filters = {} }) => {
             "linear-gradient(to bottom, rgba(15,23,42,0.4), rgba(0,0,0,0.6))", // End fade to black for footer
         ]
     );
-
-    // Get featured images for slideshow
-    const featuredImages = placeData.slice(0, 5).map((place) => ({
-        id: place.id,
-        image_url: place.image_url,
-        title: place.name,
-        subtitle: place.category?.name || "Discover this place",
-    }));
 
     useEffect(() => {
         let filtered = placeData;
@@ -107,16 +103,6 @@ const PlacesPage = ({ village, places, categories = [], filters = {} }) => {
         </select>
     );
 
-    // Auto-advance slideshow
-    useEffect(() => {
-        if (featuredImages.length > 1) {
-            const interval = setInterval(() => {
-                setCurrentSlide((prev) => (prev + 1) % featuredImages.length);
-            }, 6000);
-            return () => clearInterval(interval);
-        }
-    }, [featuredImages.length]);
-
     return (
         <MainLayout title="Places">
             <Head title={`Places - ${village?.name}`} />
@@ -139,53 +125,13 @@ const PlacesPage = ({ village, places, categories = [], filters = {} }) => {
                 style={{ background: colorOverlay }}
             />
 
-            {/* Fixed Hero Background */}
-            <div className="fixed inset-0 z-0">
-                {/* Slideshow Background */}
-                {featuredImages.length > 0 && (
-                    <div className="absolute inset-0">
-                        <AnimatePresence>
-                            <motion.div
-                                key={currentSlide}
-                                initial={{ opacity: 0, scale: 1.1 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 1.1 }}
-                                transition={{
-                                    duration: 1.5,
-                                    ease: "easeInOut",
-                                }}
-                                className="absolute inset-0"
-                            >
-                                {featuredImages[currentSlide]?.image_url && (
-                                    <img
-                                        src={
-                                            featuredImages[currentSlide]
-                                                .image_url
-                                        }
-                                        alt={featuredImages[currentSlide].title}
-                                        className="w-full h-full object-cover"
-                                    />
-                                )}
-                            </motion.div>
-                        </AnimatePresence>
-
-                        {/* Slideshow indicators */}
-                        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-30">
-                            {featuredImages.map((_, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => setCurrentSlide(index)}
-                                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                                        index === currentSlide
-                                            ? "bg-white scale-125"
-                                            : "bg-white/50 hover:bg-white/75"
-                                    }`}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
+            {/* Slideshow Background */}
+            <SlideshowBackground
+                images={slideshowImages}
+                interval={slideshowConfigs.places.interval}
+                transitionDuration={slideshowConfigs.places.transitionDuration}
+                placeholderConfig={slideshowConfigs.places.placeholderConfig}
+            />
 
             {/* Hero Section */}
             <section className="relative h-screen overflow-hidden z-10">

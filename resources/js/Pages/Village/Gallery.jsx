@@ -14,6 +14,8 @@ import MediaBackground from "@/Components/MediaBackground";
 import FilterControls from "@/Components/FilterControls";
 import SectionHeader from "@/Components/SectionHeader";
 import Pagination from "@/Components/Pagination";
+import SlideshowBackground from "@/Components/SlideshowBackground";
+import { useSlideshowData, slideshowConfigs } from "@/hooks/useSlideshowData";
 
 const GalleryPage = ({ village, images, places = [], filters = {} }) => {
     // Ensure we have valid data
@@ -30,6 +32,9 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
     const [isContextAudioPlaying, setIsContextAudioPlaying] = useState(false);
     const contextAudioRef = useRef(null);
     const { scrollY } = useScroll();
+
+    // Prepare slideshow data using the custom hook
+    const slideshowImages = useSlideshowData(imageData, slideshowConfigs.gallery);
 
     // Color overlay based on scroll for Gallery sections
     const colorOverlay = useTransform(
@@ -173,11 +178,13 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
     return (
         <MainLayout title="Gallery">
             <Head title={`Gallery - ${village?.name}`} />
-            {/* Dynamic Media Background */}
+            {/* Audio-only Media Background */}
             <MediaBackground
                 context="gallery"
                 village={village}
                 enableControls={true}
+                blur={true}
+                audioOnly={true}
                 controlsId="gallery-media-controls"
                 fallbackVideo="/video/videobackground.mp4"
                 fallbackAudio="/audio/village-nature.mp3"
@@ -192,10 +199,19 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
                     <source src={contextAudio.file_url} type="audio/mpeg" />
                 </audio>
             )}
+
             {/* Enhanced Color Overlay */}
             <motion.div
                 className="fixed inset-0 z-5 pointer-events-none"
                 style={{ background: colorOverlay }}
+            />
+
+            {/* Slideshow Background */}
+            <SlideshowBackground
+                images={slideshowImages}
+                interval={slideshowConfigs.gallery.interval}
+                transitionDuration={slideshowConfigs.gallery.transitionDuration}
+                placeholderConfig={slideshowConfigs.gallery.placeholderConfig}
             />
             {/* Audio Control for Gallery */}
             {contextAudio && (

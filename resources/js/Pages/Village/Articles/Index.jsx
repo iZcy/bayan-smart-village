@@ -9,6 +9,8 @@ import FilterControls from "@/Components/FilterControls";
 import SectionHeader from "@/Components/SectionHeader";
 import { ArticleCard } from "@/Components/Cards/Index";
 import Pagination from "@/Components/Pagination";
+import SlideshowBackground from "@/Components/SlideshowBackground";
+import { useSlideshowData, slideshowConfigs } from "@/hooks/useSlideshowData";
 
 const ArticlesPage = ({ village, articles, filters = {} }) => {
     // Ensure we have valid data
@@ -21,8 +23,10 @@ const ArticlesPage = ({ village, articles, filters = {} }) => {
         filterData.category || ""
     );
     const [sortBy, setSortBy] = useState(filterData.sort || "newest");
-    const [currentSlide, setCurrentSlide] = useState(0);
     const { scrollY } = useScroll();
+
+    // Prepare slideshow data using the custom hook
+    const slideshowImages = useSlideshowData(articleData, slideshowConfigs.articles);
 
     // Color overlay for Articles sections - multiple scroll points for footer visibility
     const colorOverlay = useTransform(
@@ -35,16 +39,6 @@ const ArticlesPage = ({ village, articles, filters = {} }) => {
             "linear-gradient(to bottom, rgba(55,48,163,0.4), rgba(0,0,0,0.6))", // End fade to black for footer
         ]
     );
-
-    // Get featured article images for slideshow
-    const featuredImages = articleData.slice(0, 5).map((article) => ({
-        id: article.id,
-        image_url: article.cover_image_url,
-        title: article.title,
-        subtitle: article.published_at
-            ? new Date(article.published_at).toLocaleDateString()
-            : "Village story",
-    }));
 
     useEffect(() => {
         let filtered = articleData;
@@ -165,16 +159,6 @@ const ArticlesPage = ({ village, articles, filters = {} }) => {
         </select>
     );
 
-    // Auto-advance slideshow
-    useEffect(() => {
-        if (featuredImages.length > 1) {
-            const interval = setInterval(() => {
-                setCurrentSlide((prev) => (prev + 1) % featuredImages.length);
-            }, 6000);
-            return () => clearInterval(interval);
-        }
-    }, [featuredImages.length]);
-
     return (
         <MainLayout title="Articles">
             <Head title={`Articles - ${village?.name}`} />
@@ -197,50 +181,13 @@ const ArticlesPage = ({ village, articles, filters = {} }) => {
                 style={{ background: colorOverlay }}
             />
 
-            {/* Fixed Hero Background */}
-            <div className="fixed inset-0 z-0">
-                {/* Slideshow Background */}
-                {featuredImages.length > 0 && (
-                    <div className="absolute inset-0">
-                        <AnimatePresence>
-                            <motion.div
-                                key={currentSlide}
-                                initial={{ opacity: 0, scale: 1.1 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 1.1 }}
-                                transition={{ duration: 1.5, ease: "easeInOut" }}
-                                className="absolute inset-0"
-                            >
-                                {featuredImages[currentSlide]?.image_url && (
-                                    <img
-                                        src={
-                                            featuredImages[currentSlide]
-                                                .image_url
-                                        }
-                                        alt={featuredImages[currentSlide].title}
-                                        className="w-full h-full object-cover"
-                                    />
-                                )}
-                            </motion.div>
-                        </AnimatePresence>
-                        
-                        {/* Slideshow indicators */}
-                        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-30">
-                            {featuredImages.map((_, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => setCurrentSlide(index)}
-                                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                                        index === currentSlide
-                                            ? "bg-white scale-125"
-                                            : "bg-white/50 hover:bg-white/75"
-                                    }`}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
+            {/* Slideshow Background */}
+            <SlideshowBackground
+                images={slideshowImages}
+                interval={slideshowConfigs.articles.interval}
+                transitionDuration={slideshowConfigs.articles.transitionDuration}
+                placeholderConfig={slideshowConfigs.articles.placeholderConfig}
+            />
 
             {/* Hero Section */}
             <section className="relative h-screen overflow-hidden z-10">

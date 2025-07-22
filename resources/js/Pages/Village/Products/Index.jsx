@@ -14,6 +14,8 @@ import FilterControls from "@/Components/FilterControls";
 import SectionHeader from "@/Components/SectionHeader";
 import { ProductCard } from "@/Components/Cards/Index";
 import Pagination from "@/Components/Pagination";
+import SlideshowBackground from "@/Components/SlideshowBackground";
+import { useSlideshowData, slideshowConfigs } from "@/hooks/useSlideshowData";
 
 const ProductsPage = ({ village, products, categories = [], filters = {} }) => {
     // Ensure we have valid data
@@ -27,8 +29,10 @@ const ProductsPage = ({ village, products, categories = [], filters = {} }) => {
         filterData.category || ""
     );
     const [sortBy, setSortBy] = useState(filterData.sort || "featured");
-    const [currentSlide, setCurrentSlide] = useState(0);
     const { scrollY } = useScroll();
+
+    // Prepare slideshow data using the custom hook
+    const slideshowImages = useSlideshowData(productData, slideshowConfigs.products);
 
     // Color overlay for Products sections - multiple scroll points for footer visibility
     const colorOverlay = useTransform(
@@ -41,35 +45,6 @@ const ProductsPage = ({ village, products, categories = [], filters = {} }) => {
             "linear-gradient(to bottom, rgba(6,78,59,0.4), rgba(0,0,0,0.6))", // End fade to black for footer
         ]
     );
-
-    // Get featured product images for slideshow
-    const featuredImages = productData
-        .slice(0, 5)
-        .filter((product) => product && product.name) // Ensure product exists and has a name
-        .map((product) => {
-            // Debug logging for first product to understand structure
-            if (product === productData[0]) {
-                console.log("Product structure:", {
-                    name: product.name,
-                    primary_image_url: product.primary_image_url,
-                    images: product.images,
-                    main_image: product.main_image,
-                    image_url: product.image_url,
-                });
-            }
-
-            return {
-                id: product.id,
-                image_url:
-                    product.primary_image_url ||
-                    product.image_url ||
-                    product.images?.[0]?.image_url ||
-                    product.main_image ||
-                    null,
-                title: product.name,
-                subtitle: product.short_description || "Quality local product",
-            };
-        });
 
     useEffect(() => {
         let filtered = productData;
@@ -179,16 +154,6 @@ const ProductsPage = ({ village, products, categories = [], filters = {} }) => {
         </select>
     );
 
-    // Auto-advance slideshow
-    useEffect(() => {
-        if (featuredImages.length > 1) {
-            const interval = setInterval(() => {
-                setCurrentSlide((prev) => (prev + 1) % featuredImages.length);
-            }, 6000);
-            return () => clearInterval(interval);
-        }
-    }, [featuredImages.length]);
-
     return (
         <MainLayout title="Products">
             <Head title={`Products - ${village?.name}`} />
@@ -211,86 +176,13 @@ const ProductsPage = ({ village, products, categories = [], filters = {} }) => {
                 style={{ background: colorOverlay }}
             />
 
-            {/* Fixed Hero Background */}
-            <div className="fixed inset-0 z-0">
-                {/* Slideshow Background */}
-                {featuredImages.length > 0 && (
-                    <div className="absolute inset-0">
-                        <AnimatePresence>
-                            <motion.div
-                                key={currentSlide}
-                                initial={{ opacity: 0, scale: 1.1 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 1.1 }}
-                                transition={{
-                                    duration: 1.5,
-                                    ease: "easeInOut",
-                                }}
-                                className="absolute inset-0"
-                            >
-                                {featuredImages[currentSlide]?.image_url ? (
-                                    <img
-                                        src={
-                                            featuredImages[currentSlide]
-                                                .image_url
-                                        }
-                                        alt={featuredImages[currentSlide].title}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            e.target.style.display = "none";
-                                            e.target.nextElementSibling.style.display =
-                                                "flex";
-                                        }}
-                                    />
-                                ) : null}
-                                {/* Fallback placeholder */}
-                                <div
-                                    className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white"
-                                    style={{
-                                        display: featuredImages[currentSlide]
-                                            ?.image_url
-                                            ? "none"
-                                            : "flex",
-                                    }}
-                                >
-                                    <div className="text-center">
-                                        <span className="text-6xl mb-4 block">
-                                            📦
-                                        </span>
-                                        <h3 className="text-2xl font-bold mb-2">
-                                            {
-                                                featuredImages[currentSlide]
-                                                    ?.title
-                                            }
-                                        </h3>
-                                        <p className="text-lg opacity-90">
-                                            {
-                                                featuredImages[currentSlide]
-                                                    ?.subtitle
-                                            }
-                                        </p>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        </AnimatePresence>
-
-                        {/* Slideshow indicators */}
-                        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-30">
-                            {featuredImages.map((_, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => setCurrentSlide(index)}
-                                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                                        index === currentSlide
-                                            ? "bg-white scale-125"
-                                            : "bg-white/50 hover:bg-white/75"
-                                    }`}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
+            {/* Slideshow Background */}
+            <SlideshowBackground
+                images={slideshowImages}
+                interval={slideshowConfigs.products.interval}
+                transitionDuration={slideshowConfigs.products.transitionDuration}
+                placeholderConfig={slideshowConfigs.products.placeholderConfig}
+            />
 
             {/* Hero Section */}
             <section className="relative h-screen overflow-hidden z-10">
