@@ -65,6 +65,34 @@ Route::domain($baseDomain)->group(function () {
     });
 });
 
+// Development localhost routes (same as main domain for testing)
+if (app()->environment('local')) {
+    Route::domain('localhost')->group(function () {
+        // Global Media API routes for development
+        Route::prefix('api/media')->name('api.media.dev.')->group(function () {
+            Route::get('/{context}', [MediaController::class, 'getContextMedia'])->name('context');
+            Route::get('/{context}/featured', [MediaController::class, 'getFeaturedMedia'])->name('featured');
+            Route::get('/', [MediaController::class, 'index'])->name('index');
+            Route::post('/', [MediaController::class, 'store'])->name('store');
+            Route::put('/{media}', [MediaController::class, 'update'])->name('update');
+            Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
+            Route::get('/stats', [MediaController::class, 'stats'])->name('stats');
+        });
+        
+        // Development village routes for testing (simulate a village subdomain)
+        Route::get('/', function () {
+            // Get a sample village for testing
+            $village = \App\Models\Village::first();
+            if (!$village) {
+                return response('No villages found. Please run database seeders.', 404);
+            }
+            // Set village in request attributes like the middleware does
+            request()->attributes->set('village', $village);
+            return app(\App\Http\Controllers\VillagePageController::class)->home();
+        })->name('dev.home');
+    });
+}
+
 // Routes for village subdomains (e.g., village-name.kecamatanbayan.id)
 Route::domain('{village}.' . $baseDomain)
     ->middleware([ResolveVillageSubdomain::class])
@@ -88,6 +116,12 @@ Route::domain('{village}.' . $baseDomain)
         Route::prefix('places')->name('village.places.')->group(function () {
             Route::get('/', [VillagePageController::class, 'places'])->name('index');
             Route::get('/{slug}', [VillagePageController::class, 'placeShow'])->name('show');
+        });
+
+        // SMEs (Businesses)
+        Route::prefix('smes')->name('village.smes.')->group(function () {
+            Route::get('/', [VillagePageController::class, 'smes'])->name('index');
+            Route::get('/{slug}', [VillagePageController::class, 'smeShow'])->name('show');
         });
 
         // Gallery
@@ -362,6 +396,12 @@ try {
                 Route::prefix('places')->name("custom.{$village->slug}.places.")->group(function () {
                     Route::get('/', [VillagePageController::class, 'places'])->name('index');
                     Route::get('/{slug}', [VillagePageController::class, 'placeShow'])->name('show');
+                });
+
+                // SMEs (Businesses)
+                Route::prefix('smes')->name("custom.{$village->slug}.smes.")->group(function () {
+                    Route::get('/', [VillagePageController::class, 'smes'])->name('index');
+                    Route::get('/{slug}', [VillagePageController::class, 'smeShow'])->name('show');
                 });
 
                 Route::get('/gallery', [VillagePageController::class, 'gallery'])->name("custom.{$village->slug}.gallery");

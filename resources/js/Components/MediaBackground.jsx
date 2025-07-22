@@ -14,6 +14,7 @@ const MediaBackground = ({
     blur = false,
     controlsId = "global-media-controls", // Unique ID to prevent conflicts
     audioOnly = false, // New prop to disable video and only show audio controls
+    disableAudio = false, // New prop to completely disable audio
 }) => {
     const [backgroundVideo, setBackgroundVideo] = useState(null);
     const [backgroundAudio, setBackgroundAudio] = useState(null);
@@ -22,9 +23,12 @@ const MediaBackground = ({
     const [isAudioPlaying, setIsAudioPlaying] = useState(false);
     const [videoError, setVideoError] = useState(false);
     const [audioError, setAudioError] = useState(false);
+    const [userHasInteracted, setUserHasInteracted] = useState(false);
+    const [isFading, setIsFading] = useState(false);
 
     const videoRef = useRef(null);
     const audioRef = useRef(null);
+    const fadeIntervalRef = useRef(null);
 
     // Fetch village and context-specific media from API
     useEffect(() => {
@@ -39,44 +43,137 @@ const MediaBackground = ({
                         const videoData = await videoResponse.json();
                         if (videoData.media) {
                             setBackgroundVideo(videoData.media);
-                            console.log(`Loaded ${context} video:`, videoData.media.title);
+                            console.log(
+                                `Loaded ${context} video:`,
+                                videoData.media.title
+                            );
                         } else {
-                            console.log(`No featured video found for ${context} context in ${videoData.village || 'global'}`);
+                            console.log(
+                                `No featured video found for ${context} context in ${
+                                    videoData.village || "global"
+                                }`
+                            );
                         }
                     } else {
-                        console.log(`Failed to fetch ${context} video:`, videoResponse.status);
+                        console.log(
+                            `Failed to fetch ${context} video:`,
+                            videoResponse.status
+                        );
                     }
                 }
 
-                // Fetch background audio
-                const audioResponse = await fetch(
-                    `/api/media/${context}/featured?type=audio`
-                );
-                if (audioResponse.ok) {
-                    const audioData = await audioResponse.json();
-                    if (audioData.media) {
-                        setBackgroundAudio(audioData.media);
-                        console.log(`Loaded ${context} audio:`, audioData.media.title, {
-                            autoplay: audioData.media.autoplay,
-                            loop: audioData.media.loop,
-                            volume: audioData.media.volume,
-                            village: audioData.village
-                        });
+                // Fetch background audio (only if audio is not disabled)
+                if (!disableAudio) {
+                    const audioResponse = await fetch(
+                        `/api/media/${context}/featured?type=audio`
+                    );
+                    if (audioResponse.ok) {
+                        const audioData = await audioResponse.json();
+                        if (audioData.media) {
+                            setBackgroundAudio(audioData.media);
+                            console.log(
+                                `Loaded ${context} audio:`,
+                                audioData.media.title,
+                                {
+                                    autoplay: audioData.media.autoplay,
+                                    loop: audioData.media.loop,
+                                    volume: audioData.media.volume,
+                                    village: audioData.village,
+                                }
+                            );
+                        } else {
+                            console.log(
+                                `No featured audio found for ${context} context in ${
+                                    audioData.village || "global"
+                                }`
+                            );
+                        }
                     } else {
-                        console.log(`No featured audio found for ${context} context in ${audioData.village || 'global'}`);
+                        console.log(
+                            `Failed to fetch ${context} audio:`,
+                            audioResponse.status
+                        );
                     }
-                } else {
-                    console.log(`Failed to fetch ${context} audio:`, audioResponse.status);
                 }
             } catch (error) {
-                console.log("Failed to fetch village-specific media, using fallbacks:", error);
+                console.log(
+                    "Failed to fetch village-specific media, using fallbacks:",
+                    error
+                );
             }
         };
 
         if (context) {
             fetchMedia();
         }
-    }, [context, village?.id, audioOnly]);
+    }, [context, village?.id, audioOnly, disableAudio]);
+
+    // Audio fade utility functions
+    const fadeIn = (duration = 1000) => {
+        if (!audioRef.current) return;
+        
+        const targetVolume = backgroundAudio?.volume || 0.3;
+        const steps = 50;
+        const stepTime = duration / steps;
+        const volumeStep = targetVolume / steps;
+        
+        audioRef.current.volume = 0;
+        setIsFading(true);
+        
+        let currentStep = 0;
+        fadeIntervalRef.current = setInterval(() => {
+            currentStep++;
+            if (currentStep <= steps && audioRef.current) {
+                audioRef.current.volume = Math.min(volumeStep * currentStep, targetVolume);
+                
+                if (currentStep >= steps) {
+                    clearInterval(fadeIntervalRef.current);
+                    setIsFading(false);
+                }
+            } else {
+                clearInterval(fadeIntervalRef.current);
+                setIsFading(false);
+            }
+        }, stepTime);
+    };
+
+    const fadeOut = (duration = 1000, callback = null) => {
+        if (!audioRef.current) return;
+        
+        const initialVolume = audioRef.current.volume;
+        const steps = 50;
+        const stepTime = duration / steps;
+        const volumeStep = initialVolume / steps;
+        
+        setIsFading(true);
+        
+        let currentStep = 0;
+        fadeIntervalRef.current = setInterval(() => {
+            currentStep++;
+            if (currentStep <= steps && audioRef.current) {
+                audioRef.current.volume = Math.max(initialVolume - (volumeStep * currentStep), 0);
+                
+                if (currentStep >= steps) {
+                    clearInterval(fadeIntervalRef.current);
+                    setIsFading(false);
+                    if (callback) callback();
+                }
+            } else {
+                clearInterval(fadeIntervalRef.current);
+                setIsFading(false);
+                if (callback) callback();
+            }
+        }, stepTime);
+    };
+
+    // Clear fade interval on unmount
+    useEffect(() => {
+        return () => {
+            if (fadeIntervalRef.current) {
+                clearInterval(fadeIntervalRef.current);
+            }
+        };
+    }, []);
 
     // Handle video load
     const handleVideoLoad = () => {
@@ -100,10 +197,29 @@ const MediaBackground = ({
     const handleAudioLoad = () => {
         setIsAudioLoaded(true);
         setAudioError(false);
-        if (audioRef.current && backgroundAudio?.autoplay) {
-            audioRef.current.volume = backgroundAudio.volume || 0.3;
-            audioRef.current.play().catch(console.log);
-            setIsAudioPlaying(true);
+        if (audioRef.current) {
+            // Start with volume at 0 for fade in effect
+            audioRef.current.volume = 0;
+            // Always try to play immediately, regardless of autoplay setting
+            audioRef.current
+                .play()
+                .then(() => {
+                    console.log(
+                        "Audio autoplay successful:",
+                        backgroundAudio?.title || "fallback audio"
+                    );
+                    setIsAudioPlaying(true);
+                    // Fade in the audio
+                    fadeIn(2000); // 2 second fade in
+                })
+                .catch((error) => {
+                    console.log(
+                        "Audio autoplay blocked by browser policy:",
+                        error.message
+                    );
+                    console.log("Audio will be available for manual play");
+                    setIsAudioPlaying(false);
+                });
         }
         if (onMediaLoad) {
             onMediaLoad({ type: "audio", loaded: true });
@@ -119,15 +235,77 @@ const MediaBackground = ({
         }
     };
 
-    // Toggle audio playback
+    // Handle first user interaction to enable autoplay
+    const handleFirstInteraction = () => {
+        if (
+            !userHasInteracted &&
+            audioRef.current &&
+            !isAudioPlaying
+        ) {
+            setUserHasInteracted(true);
+            // Start with volume at 0 for fade in effect
+            audioRef.current.volume = 0;
+            audioRef.current
+                .play()
+                .then(() => {
+                    console.log(
+                        "Audio started after user interaction:",
+                        backgroundAudio?.title || "fallback audio"
+                    );
+                    setIsAudioPlaying(true);
+                    // Fade in the audio
+                    fadeIn(2000); // 2 second fade in
+                })
+                .catch((error) => {
+                    console.log(
+                        "Audio failed even after user interaction:",
+                        error.message
+                    );
+                });
+        }
+    };
+
+    // Add global click listener to enable autoplay after user interaction
+    useEffect(() => {
+        if (isAudioLoaded && !userHasInteracted && !isAudioPlaying) {
+            const enableAutoplayOnInteraction = () => {
+                handleFirstInteraction();
+                // Remove listener after first interaction
+                document.removeEventListener(
+                    "click",
+                    enableAutoplayOnInteraction
+                );
+            };
+
+            document.addEventListener("click", enableAutoplayOnInteraction);
+
+            return () => {
+                document.removeEventListener(
+                    "click",
+                    enableAutoplayOnInteraction
+                );
+            };
+        }
+    }, [isAudioLoaded, userHasInteracted, isAudioPlaying]);
+
+    // Toggle audio playback with fade effects
     const toggleAudio = () => {
         if (audioRef.current) {
             if (isAudioPlaying) {
-                audioRef.current.pause();
-                setIsAudioPlaying(false);
+                // Fade out before pausing
+                fadeOut(1000, () => {
+                    if (audioRef.current) {
+                        audioRef.current.pause();
+                        setIsAudioPlaying(false);
+                    }
+                });
             } else {
-                audioRef.current.play().catch(console.log);
-                setIsAudioPlaying(true);
+                // Start with volume at 0 and fade in
+                audioRef.current.volume = 0;
+                audioRef.current.play().then(() => {
+                    setIsAudioPlaying(true);
+                    fadeIn(1000); // 1 second fade in for manual toggle
+                }).catch(console.log);
             }
         }
     };
@@ -173,12 +351,14 @@ const MediaBackground = ({
     const getAudioProps = () => {
         const defaultProps = {
             loop: true,
+            muted: false, // Don't mute by default
         };
 
         if (backgroundAudio) {
             return {
                 ...defaultProps,
                 loop: backgroundAudio.loop,
+                muted: backgroundAudio.muted, // Use backend muted setting
             };
         }
 
@@ -191,7 +371,7 @@ const MediaBackground = ({
             {!audioOnly && (
                 <video
                     ref={videoRef}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover pointer-events-none"
                     onLoadedData={handleVideoLoad}
                     onError={handleVideoError}
                     {...getVideoProps()}
@@ -201,16 +381,18 @@ const MediaBackground = ({
                 </video>
             )}
 
-            {/* Background Audio */}
-            <audio
-                ref={audioRef}
-                onLoadedData={handleAudioLoad}
-                onError={handleAudioError}
-                {...getAudioProps()}
-            >
-                <source src={getAudioSource()} type="audio/mpeg" />
-                Your browser does not support the audio tag.
-            </audio>
+            {/* Background Audio - Only render if not disabled */}
+            {!disableAudio && (
+                <audio
+                    ref={audioRef}
+                    onLoadedData={handleAudioLoad}
+                    onError={handleAudioError}
+                    {...getAudioProps()}
+                >
+                    <source src={getAudioSource()} type="audio/mpeg" />
+                    Your browser does not support the audio tag.
+                </audio>
+            )}
 
             {/* Overlay */}
             {overlay && <div className="absolute inset-0 bg-black/20" />}
@@ -248,22 +430,56 @@ const MediaBackground = ({
                 ((!audioOnly && isVideoLoaded) || isAudioLoaded) && (
                     <div
                         id={controlsId}
-                        className="fixed top-24 right-8 z-50 flex gap-2"
+                        className="fixed top-24 right-8 z-[99999] flex gap-2"
                     >
-                        {/* Audio Control */}
-                        {isAudioLoaded && (
+                        {/* Audio Control - Only show if not disabled */}
+                        {!disableAudio && isAudioLoaded && (
                             <motion.button
                                 onClick={toggleAudio}
-                                className="bg-black/30 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/50 transition-colors"
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
+                                disabled={isFading}
+                                className={`bg-black/30 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/50 transition-colors relative ${
+                                    !userHasInteracted && !isAudioPlaying
+                                        ? "ring-2 ring-yellow-400 ring-opacity-75 animate-pulse"
+                                        : ""
+                                } ${isFading ? "opacity-50 cursor-not-allowed" : ""}`}
+                                whileHover={{ scale: isFading ? 1 : 1.1 }}
+                                whileTap={{ scale: isFading ? 1 : 0.9 }}
                                 title={
-                                    isAudioPlaying ? "Mute Audio" : "Play Audio"
+                                    isFading
+                                        ? "Audio transitioning..."
+                                        : !userHasInteracted && !isAudioPlaying
+                                        ? "Click to enable audio"
+                                        : isAudioPlaying
+                                        ? "Fade out audio"
+                                        : "Fade in audio"
                                 }
                             >
                                 <span className="text-lg">
-                                    {isAudioPlaying ? "🔊" : "🔇"}
+                                    {isFading ? "🎵" : isAudioPlaying ? "🔊" : "🔇"}
                                 </span>
+                                {/* Notification dot for pending autoplay */}
+                                {!userHasInteracted && !isAudioPlaying && !isFading && (
+                                    <motion.span
+                                        animate={{ scale: [1, 1.2, 1] }}
+                                        transition={{
+                                            duration: 1,
+                                            repeat: Infinity,
+                                        }}
+                                        className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full"
+                                    />
+                                )}
+                                {/* Fade indicator */}
+                                {isFading && (
+                                    <motion.span
+                                        animate={{ rotate: 360 }}
+                                        transition={{
+                                            duration: 1,
+                                            repeat: Infinity,
+                                            ease: "linear",
+                                        }}
+                                        className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full"
+                                    />
+                                )}
                             </motion.button>
                         )}
 
@@ -282,9 +498,25 @@ const MediaBackground = ({
                     </div>
                 )}
 
+            {/* Debug Info (only in development) */}
+            {process.env.NODE_ENV === "development" && !disableAudio && isAudioLoaded && (
+                <div className="fixed bottom-4 left-4 z-50 bg-black/80 text-white px-3 py-2 rounded text-xs max-w-sm">
+                    <div>Audio: {backgroundAudio?.title || "Fallback"}</div>
+                    <div>Status: {isFading ? "Fading..." : isAudioPlaying ? "Playing" : "Stopped"}</div>
+                    <div>
+                        Autoplay: Always ON
+                    </div>
+                    <div>Muted: {backgroundAudio?.muted ? "YES" : "NO"}</div>
+                    <div>Volume: {backgroundAudio?.volume || "default"}</div>
+                    <div>
+                        User Interaction: {userHasInteracted ? "YES" : "NO"}
+                    </div>
+                </div>
+            )}
+
             {/* Error indicator */}
             {videoError && audioError && (
-                <div className="absolute bottom-4 left-4 z-50 bg-red-500/80 text-white px-3 py-1 rounded text-sm">
+                <div className="absolute bottom-4 right-4 z-50 bg-red-500/80 text-white px-3 py-1 rounded text-sm">
                     Media loading failed, using defaults
                 </div>
             )}

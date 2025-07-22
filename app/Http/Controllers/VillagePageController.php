@@ -9,6 +9,7 @@ use App\Models\Place;
 use App\Models\Image;
 use App\Models\ExternalLink;
 use App\Models\Category;
+use App\Models\Sme;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -39,7 +40,7 @@ class VillagePageController extends Controller
             ->get();
 
         // Enhanced Places data with service/product distinction
-        // Tourism Places = Places that offer services (category type: "service") 
+        // Tourism Places = Places that offer services (category type: "service")
         // SME Places = Places that offer products (category type: "product")
         $featuredPlaces = Place::where('village_id', $village->id)
             ->with([
@@ -489,6 +490,112 @@ class VillagePageController extends Controller
                 'place' => $request->get('place', ''),
                 'type' => $request->get('type', ''),
             ],
+        ]);
+    }
+
+    public function smes(Request $request)
+    {
+        $village = $request->attributes->get('village');
+
+        $query = Sme::whereHas('community', function ($q) use ($village) {
+            $q->where('village_id', $village->id);
+        })
+            ->where('is_active', true)
+            ->with([
+                'community',
+                'place',
+                'offers' => function ($query) {
+                    $query->where('is_active', true)->take(3);
+                }
+            ]);
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('owner_name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->get('type'));
+        }
+
+        if ($request->filled('place')) {
+            $query->where('place_id', $request->get('place'));
+        }
+
+        // Sorting
+        $sort = $request->get('sort', 'featured');
+        switch ($sort) {
+            case 'name':
+                $query->orderBy('name');
+                break;
+            case 'newest':
+                $query->latest();
+                break;
+            case 'verified':
+                $query->orderBy('is_verified', 'desc');
+                break;
+            default: // featured
+                $query->orderBy('is_verified', 'desc')->orderBy('name');
+                break;
+        }
+
+        $smes = $query->paginate(12);
+
+        // Get available places for filtering
+        $places = Place::where('village_id', $village->id)
+            ->whereHas('smes', function ($query) {
+                $query->where('is_active', true);
+            })
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        return Inertia::render('Village/SMEs/Index', [
+            'village' => $village,
+            'smes' => $smes,
+            'places' => $places,
+            'filters' => [
+                'search' => $request->get('search', ''),
+                'type' => $request->get('type', ''),
+                'place' => $request->get('place', ''),
+                'sort' => $sort,
+            ],
+        ]);
+    }
+
+    public function smeShow(Request $request)
+    {
+        $slug = last(explode('/', $request->getRequestUri()));
+        $village = $request->attributes->get('village');
+
+        $sme = Sme::whereHas('community', function ($q) use ($village) {
+            $q->where('village_id', $village->id);
+        })
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->with([
+                'community',
+                'place.category',
+                'offers' => function ($query) {
+                    $query->where('is_active', true)
+                        ->with(['category', 'tags', 'images'])
+                        ->orderBy('is_featured', 'desc')
+                        ->orderBy('name');
+                },
+                'images' => function ($query) {
+                    $query->orderBy('sort_order');
+                }
+            ])
+            ->firstOrFail();
+
+        return Inertia::render('Village/SMEs/Show', [
+            'village' => $village,
+            'sme' => $sme,
         ]);
     }
 }

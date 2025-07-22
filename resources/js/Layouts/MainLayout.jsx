@@ -27,6 +27,7 @@ export default function MainLayout({ children, title = "", description = "" }) {
         const baseItems = [
             { name: "Home", href: "/", icon: "🏠" },
             { name: "Places", href: "/places", icon: "📍" },
+            { name: "Businesses", href: "/smes", icon: "🏢" },
             { name: "Products", href: "/products", icon: "🛍️" },
             { name: "Articles", href: "/articles", icon: "📖" },
             { name: "Gallery", href: "/gallery", icon: "📸" },

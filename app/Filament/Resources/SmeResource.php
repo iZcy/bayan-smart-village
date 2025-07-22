@@ -89,6 +89,89 @@ class SmeResource extends Resource
                         Forms\Components\Toggle::make('is_active')
                             ->default(true),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Offers Management')
+                    ->schema([
+                        Forms\Components\Repeater::make('offers')
+                            ->relationship()
+                            ->schema([
+                                Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
+                                Forms\Components\TextInput::make('slug')
+                                    ->required(),
+                                Forms\Components\Textarea::make('description'),
+                                Forms\Components\TextInput::make('price')
+                                    ->numeric()
+                                    ->prefix('IDR'),
+                                Forms\Components\Toggle::make('is_active')
+                                    ->default(true),
+                                
+                                // E-commerce Links Repeater
+                                Forms\Components\Repeater::make('ecommerceLinks')
+                                    ->relationship()
+                                    ->schema([
+                                        Forms\Components\Select::make('platform')
+                                            ->options([
+                                                'tokopedia' => 'Tokopedia',
+                                                'shopee' => 'Shopee',
+                                                'tiktok_shop' => 'TikTok Shop',
+                                                'bukalapak' => 'Bukalapak',
+                                                'blibli' => 'Blibli',
+                                                'lazada' => 'Lazada',
+                                                'instagram' => 'Instagram',
+                                                'whatsapp' => 'WhatsApp',
+                                                'website' => 'Website',
+                                                'other' => 'Other',
+                                            ])
+                                            ->required(),
+                                        Forms\Components\TextInput::make('store_name'),
+                                        Forms\Components\TextInput::make('product_url')
+                                            ->required()
+                                            ->url(),
+                                        Forms\Components\TextInput::make('price_on_platform')
+                                            ->numeric()
+                                            ->prefix('IDR'),
+                                        Forms\Components\Toggle::make('is_active')
+                                            ->default(true),
+                                    ])
+                                    ->columns(2)
+                                    ->collapsed()
+                                    ->itemLabel(fn (array $state): ?string => $state['platform'] ?? null)
+                                    ->addActionLabel('Add E-commerce Link'),
+
+                                // Offer Images Repeater  
+                                Forms\Components\Repeater::make('images')
+                                    ->relationship()
+                                    ->schema([
+                                        Forms\Components\FileUpload::make('image_url')
+                                            ->label('Product Image')
+                                            ->image()
+                                            ->disk('public')
+                                            ->directory('products/gallery')
+                                            ->visibility('public')
+                                            ->maxSize(5120)
+                                            ->imagePreviewHeight(200)
+                                            ->required(),
+                                        Forms\Components\TextInput::make('alt_text'),
+                                        Forms\Components\TextInput::make('sort_order')
+                                            ->numeric()
+                                            ->default(0),
+                                        Forms\Components\Toggle::make('is_primary')
+                                            ->default(false),
+                                    ])
+                                    ->columns(2)
+                                    ->collapsed()
+                                    ->itemLabel(fn (array $state): ?string => $state['alt_text'] ?? 'Image')
+                                    ->addActionLabel('Add Product Image'),
+                            ])
+                            ->columns(2)
+                            ->collapsed()
+                            ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
+                            ->addActionLabel('Add Offer'),
+                    ])
+                    ->collapsible(),
             ]);
     }
 

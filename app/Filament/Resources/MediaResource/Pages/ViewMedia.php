@@ -61,31 +61,6 @@ class ViewMedia extends ViewRecord
                             }),
                     ])->columns(2),
 
-                Infolists\Components\Section::make('File Details')
-                    ->schema([
-                        Infolists\Components\TextEntry::make('file_url')
-                            ->label('File URL')
-                            ->url(
-                                fn($record) => $record->file_url,
-                            )
-                            ->openUrlInNewTab()
-                            ->copyable(),
-                        Infolists\Components\TextEntry::make('thumbnail_url')
-                            ->label('Thumbnail URL')
-                            ->url(
-                                fn($record) => $record->thumbnail_url,
-                            )
-                            ->openUrlInNewTab()
-                            ->copyable()
-                            ->visible(fn($record) => $record->type === 'video' && $record->thumbnail_url),
-                        Infolists\Components\TextEntry::make('formatted_duration')
-                            ->label('Duration'),
-                        Infolists\Components\TextEntry::make('mime_type')
-                            ->label('MIME Type'),
-                        Infolists\Components\TextEntry::make('formatted_file_size')
-                            ->label('File Size'),
-                    ])->columns(3),
-
                 Infolists\Components\Section::make('Associations')
                     ->schema([
                         Infolists\Components\TextEntry::make('village.name')

@@ -40,7 +40,7 @@ const ProductCard = ({ product, index, village }) => {
 
     const badges = [
         {
-            content: product.availability?.replace("_", " ").toUpperCase(),
+            content: product.availability?.replaceAll("_", " ").toUpperCase(),
             className: `px-2 py-1 rounded-full text-xs font-medium text-white ${getAvailabilityColor()}`,
             position: "top-4 left-4",
         },

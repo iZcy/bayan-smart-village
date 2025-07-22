@@ -1,14 +1,14 @@
 // resources/js/Pages/Village/Products/Show.jsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Head, Link } from "@inertiajs/react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import MainLayout from "@/Layouts/MainLayout";
 import MediaBackground from "@/Components/MediaBackground";
 import HeroSection from "@/Components/HeroSection";
-import { ProductCard } from "@/Components/Cards/Index";
+import { ProductCard, ArticleCard } from "@/Components/Cards/Index";
 
-const ProductShowPage = ({ village, product, relatedProducts }) => {
+const ProductShowPage = ({ village, product, relatedProducts, relatedStories }) => {
     const { scrollY } = useScroll();
 
     // Parallax effects
@@ -20,6 +20,111 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
         threshold: 0.3,
         triggerOnce: true,
     });
+
+    // Image gallery state
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+    const [isHovering, setIsHovering] = useState(false);
+    const slideshowIntervalRef = useRef(null);
+
+    // Prepare all product images (primary + additional)
+    const allImages = [
+        ...(product.primary_image_url ? [{ 
+            image_url: product.primary_image_url, 
+            caption: product.name,
+            is_primary: true 
+        }] : []),
+        ...(product.images || []).map(img => ({ 
+            image_url: img.image_url, 
+            caption: img.caption || `${product.name} - Image`,
+            is_primary: false 
+        }))
+    ];
+
+    // Start slideshow
+    const startSlideshow = () => {
+        if (allImages.length > 1 && !isLightboxOpen && !isHovering) {
+            if (slideshowIntervalRef.current) {
+                clearInterval(slideshowIntervalRef.current);
+            }
+            slideshowIntervalRef.current = setInterval(() => {
+                setCurrentImageIndex((prevIndex) => 
+                    (prevIndex + 1) % allImages.length
+                );
+            }, 5000);
+        }
+    };
+
+    // Stop slideshow
+    const stopSlideshow = () => {
+        if (slideshowIntervalRef.current) {
+            clearInterval(slideshowIntervalRef.current);
+            slideshowIntervalRef.current = null;
+        }
+    };
+
+    // Auto slideshow effect - controlled by hover and lightbox state
+    useEffect(() => {
+        if (allImages.length > 1 && !isLightboxOpen && !isHovering) {
+            startSlideshow();
+        } else {
+            stopSlideshow();
+        }
+
+        return () => stopSlideshow();
+    }, [allImages.length, isHovering, isLightboxOpen]);
+
+    // Image navigation functions
+    const openLightbox = (index = currentImageIndex) => {
+        setCurrentImageIndex(index);
+        setIsLightboxOpen(true);
+        // Slideshow will be automatically stopped by useEffect
+    };
+
+    const closeLightbox = () => {
+        setIsLightboxOpen(false);
+        // Slideshow will be automatically restarted by useEffect
+    };
+
+    const navigateImage = (direction) => {
+        if (direction === "next") {
+            setCurrentImageIndex((prevIndex) => 
+                (prevIndex + 1) % allImages.length
+            );
+        } else {
+            setCurrentImageIndex((prevIndex) => 
+                prevIndex === 0 ? allImages.length - 1 : prevIndex - 1
+            );
+        }
+    };
+
+    // Manual navigation (resets slideshow timer)
+    const handleManualNavigation = (direction) => {
+        navigateImage(direction);
+        // Slideshow will be automatically restarted by useEffect with fresh 5-second timer
+        if (!isLightboxOpen && !isHovering) {
+            startSlideshow();
+        }
+    };
+
+    // Utility function to format platform names properly
+    const formatPlatformName = (platform) => {
+        const platformMap = {
+            'tokopedia': 'Tokopedia',
+            'shopee': 'Shopee',
+            'instagram': 'Instagram',
+            'whatsapp': 'WhatsApp',
+            'tiktok': 'TikTok',
+            'facebook': 'Facebook',
+            'twitter': 'Twitter',
+            'youtube': 'YouTube',
+            'website': 'Website',
+            'email': 'Email'
+        };
+        return platformMap[platform?.toLowerCase()] || 
+               platform?.charAt(0).toUpperCase() + platform?.slice(1).toLowerCase() || 
+               platform;
+    };
 
     const getDisplayPrice = () => {
         if (product.price) {
@@ -40,10 +145,17 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
         return "Contact for price";
     };
 
-    const handleLinkClick = async (linkId) => {
+    const handleLinkClick = async (link) => {
         try {
+            // If no product_url, fallback to direct navigation
+            if (!link.product_url) {
+                console.warn('No product URL found for link:', link.platform);
+                return;
+            }
+
+            // Track the click
             const response = await fetch(
-                `/products/${product.id}/links/${linkId}/click`,
+                `/products/${product.id}/links/${link.id}/click`,
                 {
                     method: "POST",
                     headers: {
@@ -58,9 +170,16 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
             if (response.ok) {
                 const data = await response.json();
                 window.open(data.redirect_url, "_blank");
+            } else {
+                // Fallback: open the URL directly if tracking fails
+                window.open(link.product_url, "_blank");
             }
         } catch (error) {
             console.error("Error tracking link click:", error);
+            // Fallback: open the URL directly if tracking fails
+            if (link.product_url) {
+                window.open(link.product_url, "_blank");
+            }
         }
     };
 
@@ -75,6 +194,7 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                 enableControls={true}
                 blur={true}
                 audioOnly={true}
+                disableAudio={true}
                 controlsId="product-media-controls"
                 fallbackVideo="/video/videobackground.mp4"
                 fallbackAudio="/audio/sasakbacksong.mp3"
@@ -138,7 +258,7 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                             }`}
                         >
                             {product.availability
-                                ?.replace("_", " ")
+                                ?.replaceAll("_", " ")
                                 .toUpperCase()}
                         </span>
 
@@ -152,11 +272,11 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                         </div>
                     </div>
 
-                    {/* View Details Button */}
+                    {/* View Details Button - Article Style */}
                     <motion.button
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.8, delay: 2 }}
+                        transition={{ duration: 0.8, delay: 2.2 }}
                         onClick={() => {
                             document
                                 .getElementById("content")
@@ -219,52 +339,224 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                             {/* Product Images */}
                             <motion.div
                                 initial={{ opacity: 0, x: -50 }}
-                                animate={
-                                    contentInView ? { opacity: 1, x: 0 } : {}
-                                }
+                                animate={contentInView ? { opacity: 1, x: 0 } : {}}
                                 transition={{ duration: 0.8, delay: 0.2 }}
                             >
                                 <div className="sticky top-20">
-                                    <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-4">
-                                        {product.primary_image_url ? (
-                                            <img
-                                                src={product.primary_image_url}
-                                                alt={product.name}
-                                                className="w-full h-full object-cover"
-                                            />
+                                    {/* Main Image Display */}
+                                    <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-4 relative">
+                                        {allImages.length > 0 ? (
+                                            <div 
+                                                className="w-full h-full cursor-pointer group"
+                                                onClick={() => openLightbox(currentImageIndex)}
+                                                onMouseEnter={() => setIsHovering(true)}
+                                                onMouseLeave={() => setIsHovering(false)}
+                                            >
+                                                {/* Main Image with AnimatePresence */}
+                                                <div className="relative w-full h-full overflow-hidden">
+                                                    <AnimatePresence mode="wait">
+                                                        <motion.img
+                                                            key={currentImageIndex}
+                                                            src={allImages[currentImageIndex].image_url}
+                                                            alt={allImages[currentImageIndex].caption}
+                                                            className="w-full h-full object-cover"
+                                                            initial={{ opacity: 0, scale: 1.1 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            exit={{ opacity: 0, scale: 0.95 }}
+                                                            transition={{ 
+                                                                duration: 0.6, 
+                                                                ease: [0.4, 0, 0.2, 1]
+                                                            }}
+                                                            whileHover={{ 
+                                                                scale: 1.05,
+                                                                transition: { duration: 0.5, ease: "easeOut" }
+                                                            }}
+                                                        />
+                                                    </AnimatePresence>
+                                                </div>
+                                                
+                                                {/* Animated Hover Overlay */}
+                                                <motion.div 
+                                                    className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex items-center justify-center"
+                                                    initial={{ opacity: 0 }}
+                                                    whileHover={{ opacity: 1 }}
+                                                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                                                >
+                                                    <motion.div 
+                                                        className="text-white text-center"
+                                                        initial={{ y: 20, opacity: 0 }}
+                                                        whileHover={{ y: 0, opacity: 1 }}
+                                                        transition={{ duration: 0.3, ease: "easeOut", delay: 0.1 }}
+                                                    >
+                                                        <motion.div 
+                                                            className="text-2xl mb-1"
+                                                            whileHover={{ scale: 1.1 }}
+                                                            transition={{ duration: 0.2 }}
+                                                        >
+                                                            🔍
+                                                        </motion.div>
+                                                        <div className="text-sm font-medium">Click to enlarge</div>
+                                                    </motion.div>
+                                                </motion.div>
+
+                                                {/* Animated Navigation Controls */}
+                                                {allImages.length > 1 && (
+                                                    <>
+                                                        {/* Previous Button */}
+                                                        <motion.button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleManualNavigation("prev");
+                                                            }}
+                                                            className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-700"
+                                                            initial={{ opacity: 0, x: -10 }}
+                                                            animate={{ 
+                                                                opacity: isHovering ? 1 : 0,
+                                                                x: isHovering ? 0 : -10
+                                                            }}
+                                                            whileHover={{ 
+                                                                scale: 1.1,
+                                                                backgroundColor: "rgba(255, 255, 255, 1)",
+                                                                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+                                                            }}
+                                                            transition={{ duration: 0.2, ease: "easeOut" }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                        >
+                                                            <motion.svg 
+                                                                className="w-5 h-5" 
+                                                                fill="none" 
+                                                                stroke="currentColor" 
+                                                                viewBox="0 0 24 24"
+                                                                whileHover={{ x: -1 }}
+                                                                transition={{ duration: 0.2 }}
+                                                            >
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                                            </motion.svg>
+                                                        </motion.button>
+
+                                                        {/* Next Button */}
+                                                        <motion.button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleManualNavigation("next");
+                                                            }}
+                                                            className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-700"
+                                                            initial={{ opacity: 0, x: 10 }}
+                                                            animate={{ 
+                                                                opacity: isHovering ? 1 : 0,
+                                                                x: isHovering ? 0 : 10
+                                                            }}
+                                                            whileHover={{ 
+                                                                scale: 1.1,
+                                                                backgroundColor: "rgba(255, 255, 255, 1)",
+                                                                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+                                                            }}
+                                                            transition={{ duration: 0.2, ease: "easeOut" }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                        >
+                                                            <motion.svg 
+                                                                className="w-5 h-5" 
+                                                                fill="none" 
+                                                                stroke="currentColor" 
+                                                                viewBox="0 0 24 24"
+                                                                whileHover={{ x: 1 }}
+                                                                transition={{ duration: 0.2 }}
+                                                            >
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                            </motion.svg>
+                                                        </motion.button>
+
+                                                        {/* Animated Image Counter */}
+                                                        <motion.div 
+                                                            className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium"
+                                                            key={currentImageIndex}
+                                                            initial={{ scale: 0.8, opacity: 0.8 }}
+                                                            animate={{ scale: 1, opacity: 1 }}
+                                                            transition={{ duration: 0.2, ease: "easeOut" }}
+                                                        >
+                                                            {currentImageIndex + 1} / {allImages.length}
+                                                        </motion.div>
+                                                    </>
+                                                )}
+                                            </div>
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                                <span className="text-6xl">
-                                                    📦
-                                                </span>
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
+                                                <div className="text-center">
+                                                    <div className="text-6xl mb-2">📦</div>
+                                                    <div className="text-sm text-gray-500">No image available</div>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Additional images */}
-                                    {product.images &&
-                                        product.images.length > 0 && (
-                                            <div className="grid grid-cols-4 gap-2">
-                                                {product.images
-                                                    .slice(0, 4)
-                                                    .map((image, index) => (
-                                                        <div
-                                                            key={index}
-                                                            className="aspect-square bg-gray-100 rounded-lg overflow-hidden"
-                                                        >
-                                                            <img
-                                                                src={
-                                                                    image.image_url
-                                                                }
-                                                                alt={`${
-                                                                    product.name
-                                                                } ${index + 1}`}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        </div>
-                                                    ))}
-                                            </div>
-                                        )}
+                                    {/* Animated Thumbnail Gallery */}
+                                    {allImages.length > 1 && (
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {allImages.slice(0, 4).map((image, index) => (
+                                                <motion.div
+                                                    key={index}
+                                                    className={`aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer border-2 ${
+                                                        currentImageIndex === index 
+                                                            ? 'border-blue-500 shadow-md' 
+                                                            : 'border-gray-200'
+                                                    }`}
+                                                    onClick={() => {
+                                                        setCurrentImageIndex(index);
+                                                        // Reset slideshow timer with fresh 5-second interval
+                                                        if (!isLightboxOpen && !isHovering) {
+                                                            startSlideshow();
+                                                        }
+                                                    }}
+                                                    whileHover={{ 
+                                                        scale: 1.05,
+                                                        borderColor: currentImageIndex === index ? "#3b82f6" : "#93c5fd"
+                                                    }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    animate={{
+                                                        borderColor: currentImageIndex === index ? "#3b82f6" : "#e5e7eb",
+                                                        boxShadow: currentImageIndex === index 
+                                                            ? "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
+                                                            : "0 0 0 0 rgba(0, 0, 0, 0)"
+                                                    }}
+                                                    transition={{ 
+                                                        type: "spring", 
+                                                        stiffness: 300, 
+                                                        damping: 20 
+                                                    }}
+                                                >
+                                                    <motion.img
+                                                        src={image.image_url}
+                                                        alt={image.caption}
+                                                        className="w-full h-full object-cover"
+                                                        animate={{
+                                                            opacity: currentImageIndex === index ? 1 : 0.7
+                                                        }}
+                                                        whileHover={{ opacity: 1 }}
+                                                        transition={{ duration: 0.2 }}
+                                                    />
+                                                    {/* Active indicator */}
+                                                    {currentImageIndex === index && (
+                                                        <motion.div 
+                                                            className="absolute inset-0 bg-blue-500/10"
+                                                            initial={{ opacity: 0 }}
+                                                            animate={{ opacity: 1 }}
+                                                            transition={{ duration: 0.2 }}
+                                                        />
+                                                    )}
+                                                </motion.div>
+                                            ))}
+                                            {/* More images indicator */}
+                                            {allImages.length > 4 && (
+                                                <motion.div 
+                                                    className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 text-xs font-medium border-2 border-gray-200"
+                                                    whileHover={{ scale: 1.05, borderColor: "#9ca3af" }}
+                                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                                >
+                                                    +{allImages.length - 4} more
+                                                </motion.div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
 
@@ -388,7 +680,7 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                                                             key={link.id}
                                                             onClick={() =>
                                                                 handleLinkClick(
-                                                                    link.id
+                                                                    link
                                                                 )
                                                             }
                                                             className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-lg transition-all duration-300 bg-white hover:bg-blue-50 group"
@@ -419,7 +711,7 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                                                                 <div className="text-left">
                                                                     <div className="font-medium text-gray-900">
                                                                         {link.platform_display_name ||
-                                                                            link.platform}
+                                                                            formatPlatformName(link.platform)}
                                                                     </div>
                                                                     {link.store_name && (
                                                                         <div className="text-sm text-gray-500">
@@ -541,7 +833,162 @@ const ProductShowPage = ({ village, product, relatedProducts }) => {
                     </div>
                 </section>
             )}
+
+            {/* Related Stories */}
+            {relatedStories && relatedStories.length > 0 && (
+                <section className="py-20 bg-gray-900 text-white relative">
+                    <div className="absolute inset-0 backdrop-blur-sm" />
+                    <div className="container mx-auto px-6 relative z-10">
+                        <motion.h2
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8 }}
+                            className="text-3xl font-bold text-center mb-12 text-white"
+                        >
+                            Stories about {product.name}
+                        </motion.h2>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {relatedStories.map((story, index) => (
+                                <div
+                                    key={story.id}
+                                    className="[&_*]:text-white [&_*]:border-white/30"
+                                >
+                                    <ArticleCard
+                                        article={story}
+                                        index={index}
+                                        village={village}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {/* Lightbox Modal */}
+            {isLightboxOpen && (
+                <ProductLightboxModal
+                    images={allImages}
+                    currentIndex={currentImageIndex}
+                    onClose={closeLightbox}
+                    onNavigate={navigateImage}
+                />
+            )}
         </MainLayout>
+    );
+};
+
+// Product Lightbox Modal Component
+const ProductLightboxModal = ({ images, currentIndex, onClose, onNavigate }) => {
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") onClose();
+            if (e.key === "ArrowLeft") onNavigate("prev");
+            if (e.key === "ArrowRight") onNavigate("next");
+        };
+
+        document.addEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.removeEventListener("keydown", handleKeyDown);
+            document.body.style.overflow = "unset";
+        };
+    }, [onClose, onNavigate]);
+
+    const currentImage = images[currentIndex];
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            onClick={onClose}
+        >
+            <div className="relative max-w-7xl max-h-full">
+                {/* Close Button */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
+                >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                {/* Navigation Buttons */}
+                {images.length > 1 && (
+                    <>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onNavigate("prev");
+                            }}
+                            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onNavigate("next");
+                            }}
+                            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </>
+                )}
+
+                {/* Image */}
+                <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="relative"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <AnimatePresence mode="wait">
+                        <motion.img
+                            key={currentIndex}
+                            src={currentImage.image_url}
+                            alt={currentImage.caption}
+                            className="max-w-full max-h-[80vh] object-contain mx-auto rounded-lg shadow-2xl"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.3 }}
+                        />
+                    </AnimatePresence>
+
+                    {/* Image Info */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6 rounded-b-lg">
+                        <div className="flex items-center justify-between text-white">
+                            <div>
+                                <div className="text-lg font-semibold mb-1">
+                                    {currentImage.caption}
+                                </div>
+                                {currentImage.is_primary && (
+                                    <div className="text-sm text-blue-300 mb-2">
+                                        ⭐ Primary Image
+                                    </div>
+                                )}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                                {currentIndex + 1} / {images.length}
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        </motion.div>
     );
 };
 

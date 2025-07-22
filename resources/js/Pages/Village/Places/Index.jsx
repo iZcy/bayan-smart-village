@@ -139,7 +139,7 @@ const PlacesPage = ({ village, places, categories = [], filters = {} }) => {
                 <div className="absolute inset-0 bg-black/40 z-5"></div>
 
                 {/* Hero Content */}
-                <div className="absolute inset-0 flex items-center justify-center text-center z-20">
+                <div className="absolute inset-0 flex items-center justify-center text-center z-20 flex-col gap-4">
                     <div className="max-w-4xl px-6">
                         <motion.h1
                             initial={{ opacity: 0, y: 50 }}
@@ -172,30 +172,35 @@ const PlacesPage = ({ village, places, categories = [], filters = {} }) => {
                             className="max-w-4xl mx-auto relative z-25"
                         />
                     </div>
-                </div>
 
-                {/* Scroll Indicator */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 2, duration: 1 }}
-                    className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white z-30"
-                >
+                    {/* Scroll Indicator */}
                     <motion.div
-                        animate={{ y: [0, 10, 0] }}
-                        transition={{ repeat: Infinity, duration: 2 }}
-                        className="flex flex-col items-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 2, duration: 1 }}
+                        className="transform text-white z-30"
                     >
-                        <span className="text-sm mb-2">Scroll to explore</span>
-                        <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
-                            <motion.div
-                                animate={{ y: [0, 12, 0] }}
-                                transition={{ repeat: Infinity, duration: 2 }}
-                                className="w-1 h-3 bg-white/70 rounded-full mt-2"
-                            />
-                        </div>
+                        <motion.div
+                            animate={{ y: [0, 10, 0] }}
+                            transition={{ repeat: Infinity, duration: 2 }}
+                            className="flex flex-col items-center"
+                        >
+                            <span className="text-sm mb-2">
+                                Scroll to explore
+                            </span>
+                            <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
+                                <motion.div
+                                    animate={{ y: [0, 12, 0] }}
+                                    transition={{
+                                        repeat: Infinity,
+                                        duration: 2,
+                                    }}
+                                    className="w-1 h-3 bg-white/70 rounded-full mt-2"
+                                />
+                            </div>
+                        </motion.div>
                     </motion.div>
-                </motion.div>
+                </div>
             </section>
 
             {/* Places Grid Section */}

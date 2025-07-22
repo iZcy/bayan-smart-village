@@ -15,7 +15,7 @@ const ImageCard = ({
                 <img
                     src={imageUrl}
                     alt={title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-in-out"
                 />
             ) : (
                 <div
@@ -28,7 +28,7 @@ const ImageCard = ({
             )}
 
             {/* Overlay */}
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/80 transition-colors duration-300" />
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-all duration-500 ease-in-out" />
 
             {/* Badges */}
             {badges.map((badge, index) => (

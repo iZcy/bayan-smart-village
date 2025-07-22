@@ -300,12 +300,21 @@ class MediaResource extends Resource
                             ->badge(),
                         Infolists\Components\TextEntry::make('file_url')
                             ->url(
-                                fn($record) => $record->file_url,
-                            ),
+                                fn($record) => $record->public_url,
+                            )
+                            ->openUrlInNewTab(),
+                        
+                        // Media Preview Section
+                        Infolists\Components\ViewEntry::make('media_preview')
+                            ->label('Media Preview')
+                            ->view('filament.resources.media.infolist.media-preview')
+                            ->columnSpanFull(),
+                        
                         Infolists\Components\TextEntry::make('thumbnail_url')
                             ->url(
-                                fn($record) => $record->thumbnail_url,
+                                fn($record) => $record->thumbnail_public_url,
                             )
+                            ->openUrlInNewTab()
                             ->visible(fn($record) => $record->type === 'video'),
                     ])->columns(2),
 

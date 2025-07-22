@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class Media extends Model
@@ -78,8 +79,45 @@ class Media extends Model
             return null;
         }
 
-        $baseUrl = Storage::disk('public')->url('');
-        return str_replace($baseUrl, '', $this->file_url);
+        // Handle both old format (/video/file.mp4) and new format (media/file.mp4)
+        $filePath = $this->file_url;
+
+        // If the path starts with a slash, it's the old format - remove the slash
+        if (str_starts_with($filePath, '/')) {
+            $filePath = ltrim($filePath, '/');
+        }
+
+        // If the path doesn't start with 'media/', it's an old format - add media prefix
+        if (!str_starts_with($filePath, 'media/')) {
+            $filePath = 'media/' . $filePath;
+        }
+
+        return $filePath;
+    }
+
+    /**
+     * Get the public URL for the media file
+     */
+    public function getPublicUrlAttribute(): ?string
+    {
+        if (!$this->file_url) {
+            return null;
+        }
+
+        // Handle both old format (/video/file.mp4) and new format (media/file.mp4)
+        $filePath = $this->file_url;
+
+        // If the path starts with a slash, it's the old format - remove the slash
+        if (str_starts_with($filePath, '/')) {
+            $filePath = ltrim($filePath, '/');
+        }
+
+        // If the path doesn't start with 'media/', it's an old format - add media prefix
+        if (!str_starts_with($filePath, 'media/')) {
+            $filePath = 'media/' . $filePath;
+        }
+
+        return Storage::disk('public')->url($filePath);
     }
 
     public function getThumbnailPathAttribute(): ?string
@@ -88,8 +126,45 @@ class Media extends Model
             return null;
         }
 
-        $baseUrl = Storage::disk('public')->url('');
-        return str_replace($baseUrl, '', $this->thumbnail_url);
+        // Handle both old format (/thumbnails/file.jpg) and new format (media/thumbnails/file.jpg)
+        $thumbnailPath = $this->thumbnail_url;
+
+        // If the path starts with a slash, it's the old format - remove the slash
+        if (str_starts_with($thumbnailPath, '/')) {
+            $thumbnailPath = ltrim($thumbnailPath, '/');
+        }
+
+        // If the path doesn't start with 'media/', it's an old format - add media prefix
+        if (!str_starts_with($thumbnailPath, 'media/')) {
+            $thumbnailPath = 'media/' . $thumbnailPath;
+        }
+
+        return $thumbnailPath;
+    }
+
+    /**
+     * Get the public URL for the thumbnail file
+     */
+    public function getThumbnailPublicUrlAttribute(): ?string
+    {
+        if (!$this->thumbnail_url) {
+            return null;
+        }
+
+        // Handle both old format (/thumbnails/file.jpg) and new format (media/thumbnails/file.jpg)
+        $thumbnailPath = $this->thumbnail_url;
+
+        // If the path starts with a slash, it's the old format - remove the slash
+        if (str_starts_with($thumbnailPath, '/')) {
+            $thumbnailPath = ltrim($thumbnailPath, '/');
+        }
+
+        // If the path doesn't start with 'media/', it's an old format - add media prefix
+        if (!str_starts_with($thumbnailPath, 'media/')) {
+            $thumbnailPath = 'media/' . $thumbnailPath;
+        }
+
+        return Storage::disk('public')->url($thumbnailPath);
     }
 
     public function getFileInfoAttribute(): ?array
@@ -223,7 +298,7 @@ class Media extends Model
                 }
             }
         } catch (\Exception $e) {
-            \Log::warning('Could not extract media duration: ' . $e->getMessage());
+            Log::warning('Could not extract media duration: ' . $e->getMessage());
         }
 
         return null;

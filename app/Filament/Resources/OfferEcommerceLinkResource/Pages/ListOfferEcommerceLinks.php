@@ -14,7 +14,7 @@ class ListOfferEcommerceLinks extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            // Actions\CreateAction::make(), // Disabled - creation handled via SME resource
         ];
     }
 }

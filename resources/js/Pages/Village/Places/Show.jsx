@@ -9,7 +9,7 @@ import {
 import { useInView } from "react-intersection-observer";
 import MainLayout from "@/Layouts/MainLayout";
 import MediaBackground from "@/Components/MediaBackground";
-import { BaseCard } from "@/Components/Cards/Index";
+import { BaseCard, ArticleCard } from "@/Components/Cards/Index";
 
 // Lightbox Modal Component
 const LightboxModal = ({
@@ -49,8 +49,18 @@ const LightboxModal = ({
                     onClick={onClose}
                     className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
                 >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                        />
                     </svg>
                 </button>
 
@@ -64,8 +74,18 @@ const LightboxModal = ({
                             }}
                             className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
                         >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            <svg
+                                className="w-6 h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 19l-7-7 7-7"
+                                />
                             </svg>
                         </button>
                         <button
@@ -75,8 +95,18 @@ const LightboxModal = ({
                             }}
                             className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
                         >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            <svg
+                                className="w-6 h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                />
                             </svg>
                         </button>
                     </>
@@ -104,7 +134,9 @@ const LightboxModal = ({
                                     </div>
                                 )}
                                 <div className="text-sm text-gray-400">
-                                    {new Date(image.created_at).toLocaleDateString("en-US", {
+                                    {new Date(
+                                        image.created_at
+                                    ).toLocaleDateString("en-US", {
                                         year: "numeric",
                                         month: "long",
                                         day: "numeric",
@@ -124,7 +156,7 @@ const LightboxModal = ({
 
 export default function PlaceShowPage({ village, place, placeContext }) {
     const { scrollY } = useScroll();
-    
+
     // Gallery lightbox state
     const [selectedImage, setSelectedImage] = useState(null);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -152,16 +184,20 @@ export default function PlaceShowPage({ village, place, placeContext }) {
 
     const navigateImage = (direction) => {
         if (!place.images || place.images.length === 0) return;
-        
-        const currentIndex = place.images.findIndex(img => img.id === selectedImage.id);
+
+        const currentIndex = place.images.findIndex(
+            (img) => img.id === selectedImage.id
+        );
         let newIndex;
-        
+
         if (direction === "prev") {
-            newIndex = currentIndex === 0 ? place.images.length - 1 : currentIndex - 1;
+            newIndex =
+                currentIndex === 0 ? place.images.length - 1 : currentIndex - 1;
         } else {
-            newIndex = currentIndex === place.images.length - 1 ? 0 : currentIndex + 1;
+            newIndex =
+                currentIndex === place.images.length - 1 ? 0 : currentIndex + 1;
         }
-        
+
         setSelectedImage(place.images[newIndex]);
     };
 
@@ -176,6 +212,7 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                 enableControls={true}
                 blur={true}
                 audioOnly={true}
+                disableAudio={true}
                 controlsId="place-media-controls"
                 fallbackVideo="/video/videobackground.mp4"
                 fallbackAudio="/audio/sasakbacksong.mp3"
@@ -200,18 +237,24 @@ export default function PlaceShowPage({ village, place, placeContext }) {
             >
                 <div className="relative z-10 text-center max-w-5xl mx-auto px-6 py-20">
                     {/* Breadcrumb */}
-                    <motion.nav 
+                    <motion.nav
                         className="mb-8"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.2 }}
                     >
                         <div className="flex items-center justify-center space-x-2 text-white/70">
-                            <Link href="/" className="hover:text-white transition-colors">
+                            <Link
+                                href="/"
+                                className="hover:text-white transition-colors"
+                            >
                                 {village.name}
                             </Link>
                             <span>/</span>
-                            <Link href="/places" className="hover:text-white transition-colors">
+                            <Link
+                                href="/places"
+                                className="hover:text-white transition-colors"
+                            >
                                 Places
                             </Link>
                             <span>/</span>
@@ -238,8 +281,8 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                     >
                         {place.category && (
                             <span className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 rounded-full text-white font-semibold text-lg">
-                                {placeContext.is_service_place && "🏛️"} 
-                                {placeContext.is_product_place && "🏪"} 
+                                {placeContext.is_service_place && "🏛️"}
+                                {placeContext.is_product_place && "🏪"}
                                 {place.category.name}
                             </span>
                         )}
@@ -248,7 +291,10 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                         </span>
                         {placeContext.business_count > 0 && (
                             <span className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white">
-                                🏢 {placeContext.business_count} {placeContext.business_count === 1 ? 'Business' : 'Businesses'}
+                                🏢 {placeContext.business_count}{" "}
+                                {placeContext.business_count === 1
+                                    ? "Business"
+                                    : "Businesses"}
                             </span>
                         )}
                     </motion.div>
@@ -260,47 +306,60 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.9 }}
                     >
-                        {place.description}
+                        {place.description && place.description.length > 200
+                            ? `${place.description.substring(0, 200)}...`
+                            : place.description}
                     </motion.p>
 
-                    {/* Action Buttons */}
-                    <motion.div
-                        className="flex flex-col sm:flex-row gap-4 items-center justify-center"
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 1.1 }}
+                    {/* Explore Details Button - Article Style */}
+                    <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8, delay: 2.2 }}
+                        onClick={() => {
+                            document
+                                .getElementById("details")
+                                .scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className="group inline-flex items-center px-8 py-4 bg-white/10 backdrop-blur-md text-white rounded-full hover:bg-white/20 transition-all duration-300 border border-white/30"
                     >
-                        <button
-                            onClick={() => {
-                                document.getElementById("details").scrollIntoView({ behavior: "smooth" });
-                            }}
-                            className="px-8 py-4 bg-white/10 backdrop-blur-md text-white rounded-full hover:bg-white/20 transition-all duration-300 border border-white/30 font-semibold"
+                        Explore Details
+                        <svg
+                            className="w-5 h-5 ml-2 group-hover:translate-y-1 transition-transform duration-300"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                         >
-                            Explore Details
-                        </button>
-                        {place.latitude && place.longitude && (
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                            />
+                        </svg>
+                    </motion.button>
+
+                    {/* Secondary Location Button */}
+                    {place.latitude && place.longitude && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: 2.5 }}
+                            className="mt-4"
+                        >
                             <button
                                 onClick={() => {
-                                    document.getElementById("location").scrollIntoView({ behavior: "smooth" });
+                                    document
+                                        .getElementById("location")
+                                        .scrollIntoView({ behavior: "smooth" });
                                 }}
-                                className="px-8 py-4 bg-blue-600/80 backdrop-blur-md text-white rounded-full hover:bg-blue-600 transition-all duration-300 font-semibold"
+                                className="px-6 py-3 bg-blue-600/80 backdrop-blur-md text-white rounded-full hover:bg-blue-600 transition-all duration-300 text-sm font-medium"
                             >
-                                View Location
+                                📍 View Location
                             </button>
-                        )}
-                    </motion.div>
+                        </motion.div>
+                    )}
                 </div>
-
-                {/* Scroll indicator */}
-                <motion.div
-                    className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-                    animate={{ y: [0, 10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                >
-                    <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
-                        <div className="w-1 h-3 bg-white/50 rounded-full mt-2" />
-                    </div>
-                </motion.div>
             </motion.section>
 
             {/* Main Content */}
@@ -322,13 +381,17 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                                     {(place.address || place.phone_number) && (
                                         <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-2xl p-8">
                                             <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                                                <span className="text-3xl mr-3">📞</span>
+                                                <span className="text-3xl mr-3">
+                                                    📞
+                                                </span>
                                                 Contact & Location
                                             </h3>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 {place.phone_number && (
                                                     <div>
-                                                        <h4 className="font-semibold text-gray-700 mb-2">Phone</h4>
+                                                        <h4 className="font-semibold text-gray-700 mb-2">
+                                                            Phone
+                                                        </h4>
                                                         <a
                                                             href={`tel:${place.phone_number}`}
                                                             className="text-blue-600 hover:text-blue-700 transition-colors font-medium text-lg"
@@ -339,8 +402,12 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                                                 )}
                                                 {place.address && (
                                                     <div>
-                                                        <h4 className="font-semibold text-gray-700 mb-2">Address</h4>
-                                                        <p className="text-gray-600 leading-relaxed">{place.address}</p>
+                                                        <h4 className="font-semibold text-gray-700 mb-2">
+                                                            Address
+                                                        </h4>
+                                                        <p className="text-gray-600 leading-relaxed">
+                                                            {place.address}
+                                                        </p>
                                                     </div>
                                                 )}
                                             </div>
@@ -348,51 +415,161 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                                     )}
 
                                     {/* Custom Fields - Dynamic based on place type */}
-                                    {place.custom_fields && Object.keys(place.custom_fields).length > 0 && (
-                                        <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-8">
-                                            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                                                <span className="text-3xl mr-3">ℹ️</span>
-                                                {placeContext.is_service_place ? "Visitor Information" : "Details"}
-                                            </h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                {Object.entries(place.custom_fields).map(([key, value]) => (
-                                                    <div key={key} className="bg-white/50 rounded-lg p-4">
-                                                        <h4 className="font-semibold text-gray-700 capitalize mb-2">
-                                                            {key.replace(/_/g, " ")}
-                                                        </h4>
-                                                        <p className="text-gray-800">{value}</p>
-                                                    </div>
-                                                ))}
+                                    {place.custom_fields &&
+                                        Object.keys(place.custom_fields)
+                                            .length > 0 && (
+                                            <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-8">
+                                                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                                    <span className="text-3xl mr-3">
+                                                        ℹ️
+                                                    </span>
+                                                    {placeContext.is_service_place
+                                                        ? "Visitor Information"
+                                                        : "Details"}
+                                                </h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    {Object.entries(
+                                                        place.custom_fields
+                                                    ).map(([key, value]) => (
+                                                        <div
+                                                            key={key}
+                                                            className="bg-white/50 rounded-lg p-4"
+                                                        >
+                                                            <h4 className="font-semibold text-gray-700 capitalize mb-2">
+                                                                {key.replace(
+                                                                    /_/g,
+                                                                    " "
+                                                                )}
+                                                            </h4>
+                                                            {Array.isArray(
+                                                                value
+                                                            ) ? (
+                                                                <ul className="text-gray-800 space-y-1">
+                                                                    {value.map(
+                                                                        (
+                                                                            item,
+                                                                            index
+                                                                        ) => (
+                                                                            <li
+                                                                                key={
+                                                                                    index
+                                                                                }
+                                                                                className="flex items-start"
+                                                                            >
+                                                                                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                                                                                <span>
+                                                                                    {
+                                                                                        item
+                                                                                    }
+                                                                                </span>
+                                                                            </li>
+                                                                        )
+                                                                    )}
+                                                                </ul>
+                                                            ) : typeof value ===
+                                                                  "object" &&
+                                                              value !== null ? (
+                                                                <div className="text-gray-800 space-y-2">
+                                                                    {Object.entries(
+                                                                        value
+                                                                    ).map(
+                                                                        ([
+                                                                            subKey,
+                                                                            subValue,
+                                                                        ]) => (
+                                                                            <div
+                                                                                key={
+                                                                                    subKey
+                                                                                }
+                                                                                className="text-sm"
+                                                                            >
+                                                                                <span className="font-medium capitalize">
+                                                                                    {subKey.replace(
+                                                                                        /_/g,
+                                                                                        " "
+                                                                                    )}
+
+                                                                                    :{" "}
+                                                                                </span>
+                                                                                <span>
+                                                                                    {Array.isArray(
+                                                                                        subValue
+                                                                                    )
+                                                                                        ? subValue.join(
+                                                                                              ", "
+                                                                                          )
+                                                                                        : subValue}
+                                                                                </span>
+                                                                            </div>
+                                                                        )
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-gray-800">
+                                                                    {value}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
 
                                     {/* Statistics */}
-                                    {(placeContext.business_count > 0 || placeContext.product_count > 0) && (
+                                    {(placeContext.business_count > 0 ||
+                                        placeContext.product_count > 0) && (
                                         <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8">
                                             <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                                                <span className="text-3xl mr-3">📊</span>
+                                                <span className="text-3xl mr-3">
+                                                    📊
+                                                </span>
                                                 What's Here
                                             </h3>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                                 <div className="text-center">
-                                                    <div className="text-3xl font-bold text-purple-600">{placeContext.business_count}</div>
-                                                    <div className="text-gray-600 font-medium">Businesses</div>
+                                                    <div className="text-3xl font-bold text-purple-600">
+                                                        {
+                                                            placeContext.business_count
+                                                        }
+                                                    </div>
+                                                    <div className="text-gray-600 font-medium">
+                                                        Businesses
+                                                    </div>
                                                 </div>
                                                 <div className="text-center">
-                                                    <div className="text-3xl font-bold text-pink-600">{placeContext.product_count}</div>
-                                                    <div className="text-gray-600 font-medium">Products</div>
+                                                    <div className="text-3xl font-bold text-pink-600">
+                                                        {
+                                                            placeContext.product_count
+                                                        }
+                                                    </div>
+                                                    <div className="text-gray-600 font-medium">
+                                                        Products
+                                                    </div>
                                                 </div>
                                                 {place.images && (
                                                     <div className="text-center">
-                                                        <div className="text-3xl font-bold text-green-600">{place.images.length}</div>
-                                                        <div className="text-gray-600 font-medium">Photos</div>
+                                                        <div className="text-3xl font-bold text-green-600">
+                                                            {
+                                                                place.images
+                                                                    .length
+                                                            }
+                                                        </div>
+                                                        <div className="text-gray-600 font-medium">
+                                                            Photos
+                                                        </div>
                                                     </div>
                                                 )}
                                                 {place.articles && (
                                                     <div className="text-center">
-                                                        <div className="text-3xl font-bold text-blue-600">{place.articles.length}</div>
-                                                        <div className="text-gray-600 font-medium">Stories</div>
+                                                        <div className="text-3xl font-bold text-blue-600">
+                                                            {
+                                                                place.articles
+                                                                    .length
+                                                            }
+                                                        </div>
+                                                        <div className="text-gray-600 font-medium">
+                                                            Stories
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
@@ -402,15 +579,21 @@ export default function PlaceShowPage({ village, place, placeContext }) {
 
                                 {/* Map Section */}
                                 {place.latitude && place.longitude && (
-                                    <div id="location" className="lg:sticky lg:top-20 self-start">
+                                    <div
+                                        id="location"
+                                        className="lg:sticky lg:top-20 self-start"
+                                    >
                                         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
                                             <div className="p-6 bg-gradient-to-r from-blue-600 to-purple-600">
                                                 <h3 className="text-xl font-bold text-white mb-2 flex items-center">
-                                                    <span className="text-2xl mr-2">🗺️</span>
+                                                    <span className="text-2xl mr-2">
+                                                        🗺️
+                                                    </span>
                                                     Location Map
                                                 </h3>
                                                 <p className="text-blue-100 text-sm">
-                                                    {place.latitude}, {place.longitude}
+                                                    {place.latitude},{" "}
+                                                    {place.longitude}
                                                 </p>
                                             </div>
                                             <div className="aspect-square">
@@ -472,20 +655,37 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                                     >
                                         <img
                                             src={image.image_url}
-                                            alt={image.caption || `Gallery image ${index + 1}`}
+                                            alt={
+                                                image.caption ||
+                                                `Gallery image ${index + 1}`
+                                            }
                                             className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
                                         />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                                             <div className="text-white text-center">
-                                                <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                                <svg
+                                                    className="w-8 h-8 mx-auto mb-2"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                                                    />
                                                 </svg>
-                                                <p className="text-sm font-medium">View Full Size</p>
+                                                <p className="text-sm font-medium">
+                                                    View Full Size
+                                                </p>
                                             </div>
                                         </div>
                                         {image.caption && (
                                             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                                                <p className="text-white text-sm font-medium">{image.caption}</p>
+                                                <p className="text-white text-sm font-medium">
+                                                    {image.caption}
+                                                </p>
                                             </div>
                                         )}
                                     </motion.div>
@@ -520,7 +720,9 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                                         }}
                                         viewport={{ once: true }}
                                     >
-                                        <Link href={`/products?sme=${sme.slug}`}>
+                                        <Link
+                                            href={`/smes/${sme.slug}`}
+                                        >
                                             <BaseCard
                                                 className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                                                 hoverEffects={true}
@@ -534,7 +736,9 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                                                         />
                                                     ) : (
                                                         <div className="w-full h-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-                                                            <span className="text-4xl text-white">🏪</span>
+                                                            <span className="text-4xl text-white">
+                                                                🏪
+                                                            </span>
                                                         </div>
                                                     )}
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -549,15 +753,28 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                                                     <div className="flex items-center justify-between">
                                                         {sme.contact_phone && (
                                                             <div className="flex items-center text-sm text-gray-500">
-                                                                <span className="mr-1">📞</span>
-                                                                <span>{sme.contact_phone}</span>
+                                                                <span className="mr-1">
+                                                                    📞
+                                                                </span>
+                                                                <span>
+                                                                    {
+                                                                        sme.contact_phone
+                                                                    }
+                                                                </span>
                                                             </div>
                                                         )}
-                                                        {sme.offers && sme.offers.length > 0 && (
-                                                            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                                                                {sme.offers.length} Products
-                                                            </span>
-                                                        )}
+                                                        {sme.offers &&
+                                                            sme.offers.length >
+                                                                0 && (
+                                                                <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                                                    {
+                                                                        sme
+                                                                            .offers
+                                                                            .length
+                                                                    }{" "}
+                                                                    Products
+                                                                </span>
+                                                            )}
                                                     </div>
                                                 </div>
                                             </BaseCard>
@@ -594,7 +811,9 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                                         }}
                                         viewport={{ once: true }}
                                     >
-                                        <Link href={`/articles/${article.slug}`}>
+                                        <Link
+                                            href={`/articles/${article.slug}`}
+                                        >
                                             <BaseCard
                                                 className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
                                                 hoverEffects={true}
@@ -607,8 +826,10 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                                         />
                                                     ) : (
-                                                        <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-                                                            <span className="text-4xl text-white">📖</span>
+                                                        <div className="w-full h-full bg-gradient-to-br from-slate-500 to-gray-600 flex items-center justify-center">
+                                                            <span className="text-4xl text-white">
+                                                                📰
+                                                            </span>
                                                         </div>
                                                     )}
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -618,10 +839,19 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                                                         {article.title}
                                                     </h3>
                                                     <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed h-[68px] overflow-hidden">
-                                                        {article.content?.replace(/<[^>]*>/g, "").substring(0, 120)}...
+                                                        {article.content?.replace(/<[^>]*>/g, "").substring(0, 150)}...
                                                     </p>
-                                                    <div className="text-xs text-gray-500">
-                                                        {new Date(article.published_at || article.created_at).toLocaleDateString()}
+                                                    <div className="flex items-center justify-between text-sm text-gray-500">
+                                                        <time dateTime={article.created_at}>
+                                                            {new Date(article.created_at).toLocaleDateString("en-US", {
+                                                                year: "numeric",
+                                                                month: "long",
+                                                                day: "numeric",
+                                                            })}
+                                                        </time>
+                                                        <span className="group-hover:text-blue-600 transition-colors duration-300">
+                                                            Read more →
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </BaseCard>
@@ -641,7 +871,11 @@ export default function PlaceShowPage({ village, place, placeContext }) {
                         image={selectedImage}
                         onClose={closeLightbox}
                         onNavigate={navigateImage}
-                        currentIndex={place.images?.findIndex(img => img.id === selectedImage.id) || 0}
+                        currentIndex={
+                            place.images?.findIndex(
+                                (img) => img.id === selectedImage.id
+                            ) || 0
+                        }
                         totalImages={place.images?.length || 0}
                     />
                 )}

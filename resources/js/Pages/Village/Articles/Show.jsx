@@ -37,6 +37,7 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
                 enableControls={true}
                 audioOnly={true}
                 blur={true}
+                disableAudio={true}
                 controlsId="article-media-controls"
                 fallbackVideo="/video/videobackground.mp4"
                 fallbackAudio="/audio/sasakbacksong.mp3"

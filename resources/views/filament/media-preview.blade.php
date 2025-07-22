@@ -5,14 +5,14 @@
       <video controls preload="metadata" @if ($record->autoplay) autoplay @endif
         @if ($record->loop) loop @endif @if ($record->muted) muted @endif
         volume="{{ $record->volume ?? 0.3 }}" class="w-full max-w-2xl rounded-lg shadow-lg" style="max-height: 400px;">
-        <source src="{{ $record->file_url }}" type="{{ $record->mime_type ?? 'video/mp4' }}">
+        <source src="{{ $record->public_url }}" type="{{ $record->mime_type ?? 'video/mp4' }}">
         Your browser does not support the video tag.
       </video>
 
       @if ($record->thumbnail_url)
         <div class="mt-2">
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Thumbnail:</p>
-          <img src="{{ $record->thumbnail_url }}" alt="Video thumbnail" class="max-w-xs rounded-lg shadow-sm">
+          <img src="{{ $record->thumbnail_public_url }}" alt="Video thumbnail" class="max-w-xs rounded-lg shadow-sm">
         </div>
       @endif
     </div>
@@ -21,7 +21,7 @@
       <audio controls preload="metadata" @if ($record->autoplay) autoplay @endif
         @if ($record->loop) loop @endif @if ($record->muted) muted @endif
         volume="{{ $record->volume ?? 0.3 }}" class="w-full max-w-xl">
-        <source src="{{ $record->file_url }}" type="{{ $record->mime_type ?? 'audio/mpeg' }}">
+        <source src="{{ $record->public_url }}" type="{{ $record->mime_type ?? 'audio/mpeg' }}">
         Your browser does not support the audio tag.
       </audio>
     </div>
@@ -92,9 +92,9 @@
     <div class="space-y-1 text-sm">
       <p class="text-gray-600 dark:text-gray-400">
         <strong>URL:</strong>
-        <a href="{{ $record->file_url }}" target="_blank"
+        <a href="{{ $record->public_url }}" target="_blank"
           class="text-blue-600 dark:text-blue-400 hover:underline break-all">
-          {{ $record->file_url }}
+          {{ $record->public_url }}
         </a>
       </p>
 

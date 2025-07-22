@@ -8,6 +8,7 @@ use App\Models\User;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class CreateMedia extends CreateRecord
 {
@@ -70,6 +71,14 @@ class CreateMedia extends CreateRecord
         // If this media is set as featured, unfeatured others in the same context
         if ($data['is_featured'] ?? false) {
             $this->unfeaturedOthersInContext($record);
+        }
+
+        // Update file info (duration, mime_type, file_size) after creation
+        try {
+            $record->updateFileInfo();
+        } catch (\Exception $e) {
+            // Log error but don't fail the creation
+            Log::warning('Failed to update file info for media ' . $record->id . ': ' . $e->getMessage());
         }
 
         return $record;

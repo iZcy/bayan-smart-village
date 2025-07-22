@@ -179,7 +179,7 @@ const Home = ({
     const [isSMEInteracting, setIsSMEInteracting] = useState(false);
     const [interactionTimeout, setInteractionTimeout] = useState(null);
     const [mediaLoaded, setMediaLoaded] = useState(false);
-    
+
     // Gallery lightbox state
     const [selectedImage, setSelectedImage] = useState(null);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -198,16 +198,24 @@ const Home = ({
 
     const navigateImage = (direction) => {
         if (!featuredImages || featuredImages.length === 0) return;
-        
-        const currentIndex = featuredImages.findIndex(img => img.id === selectedImage.id);
+
+        const currentIndex = featuredImages.findIndex(
+            (img) => img.id === selectedImage.id
+        );
         let newIndex;
-        
+
         if (direction === "prev") {
-            newIndex = currentIndex === 0 ? featuredImages.length - 1 : currentIndex - 1;
+            newIndex =
+                currentIndex === 0
+                    ? featuredImages.length - 1
+                    : currentIndex - 1;
         } else {
-            newIndex = currentIndex === featuredImages.length - 1 ? 0 : currentIndex + 1;
+            newIndex =
+                currentIndex === featuredImages.length - 1
+                    ? 0
+                    : currentIndex + 1;
         }
-        
+
         setSelectedImage(featuredImages[newIndex]);
     };
 
@@ -328,17 +336,34 @@ const Home = ({
         <MainLayout title={`Welcome to ${village?.name}`}>
             <Head title={`${village?.name} - Smart Village`} />
 
-            {/* Dynamic Media Background */}
+            {/* Audio Controls - MediaBackground for Audio Only */}
             <MediaBackground
                 context="home"
                 village={village}
                 enableControls={true}
+                audioOnly={true}
+                controlsId="home-media-controls"
                 onMediaLoad={handleMediaLoad}
                 fallbackVideo="/video/videobackground.mp4"
-                fallbackAudio="/audio/sasakbacksong.mp4"
+                fallbackAudio="/audio/sasakbacksong.mp3"
             />
 
-            {/* Enhanced Color Overlay - Restored from previous version */}
+            {/* Video Background - Separate Fixed Background */}
+            <div className="fixed inset-0 bg-cover bg-center z-0">
+                <video
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                >
+                    <source src="/video/videobackground.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                </video>
+                <div className="absolute inset-0 bg-black/30" />
+            </div>
+
+            {/* Enhanced Color Overlay for sections */}
             <motion.div
                 className="fixed inset-0 z-5 pointer-events-none"
                 style={{ background: colorOverlay }}
@@ -1705,7 +1730,11 @@ const Home = ({
                         image={selectedImage}
                         onClose={closeLightbox}
                         onNavigate={navigateImage}
-                        currentIndex={featuredImages?.findIndex(img => img.id === selectedImage.id) || 0}
+                        currentIndex={
+                            featuredImages?.findIndex(
+                                (img) => img.id === selectedImage.id
+                            ) || 0
+                        }
                         totalImages={featuredImages?.length || 0}
                     />
                 )}

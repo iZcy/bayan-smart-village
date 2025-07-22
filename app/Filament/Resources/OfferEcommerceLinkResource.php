@@ -19,8 +19,8 @@ class OfferEcommerceLinkResource extends Resource
 {
     protected static ?string $model = OfferEcommerceLink::class;
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
-    protected static ?string $navigationGroup = 'Business';
-    protected static ?int $navigationSort = 5;
+    protected static ?string $navigationGroup = 'View Only';
+    protected static ?int $navigationSort = 100;
     protected static ?string $label = 'E-commerce Links';
     protected static ?string $pluralLabel = 'E-commerce Links';
 
@@ -34,7 +34,8 @@ class OfferEcommerceLinkResource extends Resource
                             ->relationship('offer', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->disabled(), // Disabled to prevent editing affiliation
                         Forms\Components\Select::make('platform')
                             ->options([
                                 'tokopedia' => 'Tokopedia',
@@ -186,7 +187,7 @@ class OfferEcommerceLinkResource extends Resource
     {
         return [
             'index' => Pages\ListOfferEcommerceLinks::route('/'),
-            'create' => Pages\CreateOfferEcommerceLink::route('/create'),
+            // 'create' => Pages\CreateOfferEcommerceLink::route('/create'), // Disabled creation
             'view' => Pages\ViewOfferEcommerceLink::route('/{record}'),
             'edit' => Pages\EditOfferEcommerceLink::route('/{record}/edit'),
         ];

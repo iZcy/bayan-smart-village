@@ -8,6 +8,16 @@ const FilterControls = ({
     selectedCategory,
     setSelectedCategory,
     categories = [],
+    // New separate filter props
+    selectedPlace,
+    setSelectedPlace,
+    places = [],
+    selectedCommunity,
+    setSelectedCommunity,
+    communities = [],
+    selectedSme,
+    setSelectedSme,
+    smes = [],
     sortBy,
     setSortBy,
     additionalFilters = [],
@@ -18,11 +28,14 @@ const FilterControls = ({
     const handleClearFilters = () => {
         if (setSearchTerm) setSearchTerm("");
         if (setSelectedCategory) setSelectedCategory("");
+        if (setSelectedPlace) setSelectedPlace("");
+        if (setSelectedCommunity) setSelectedCommunity("");
+        if (setSelectedSme) setSelectedSme("");
         if (setSortBy) setSortBy("newest");
     };
 
     const hasActiveFilters =
-        searchTerm || selectedCategory || (sortBy && sortBy !== "newest");
+        searchTerm || selectedCategory || selectedPlace || selectedCommunity || selectedSme || (sortBy && sortBy !== "newest");
 
     return (
         <motion.div
@@ -61,7 +74,7 @@ const FilterControls = ({
                     </div>
                 </div>
 
-                {/* Category Filter */}
+                {/* Category Filter - Legacy support */}
                 {categories && categories.length > 0 && (
                     <div className="min-w-[160px]">
                         <select
@@ -82,6 +95,87 @@ const FilterControls = ({
                                     className="text-black"
                                 >
                                     {category.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {/* Place Filter */}
+                {places && places.length > 0 && (
+                    <div className="min-w-[140px]">
+                        <select
+                            value={selectedPlace}
+                            onChange={(e) =>
+                                setSelectedPlace &&
+                                setSelectedPlace(e.target.value)
+                            }
+                            className="w-full h-12 px-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
+                        >
+                            <option value="" className="text-black">
+                                All Places
+                            </option>
+                            {places.map((place) => (
+                                <option
+                                    key={place.id}
+                                    value={place.id}
+                                    className="text-black"
+                                >
+                                    📍 {place.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {/* Community Filter */}
+                {communities && communities.length > 0 && (
+                    <div className="min-w-[150px]">
+                        <select
+                            value={selectedCommunity}
+                            onChange={(e) =>
+                                setSelectedCommunity &&
+                                setSelectedCommunity(e.target.value)
+                            }
+                            className="w-full h-12 px-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
+                        >
+                            <option value="" className="text-black">
+                                All Communities
+                            </option>
+                            {communities.map((community) => (
+                                <option
+                                    key={community.id}
+                                    value={community.id}
+                                    className="text-black"
+                                >
+                                    👥 {community.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {/* SME Filter */}
+                {smes && smes.length > 0 && (
+                    <div className="min-w-[130px]">
+                        <select
+                            value={selectedSme}
+                            onChange={(e) =>
+                                setSelectedSme &&
+                                setSelectedSme(e.target.value)
+                            }
+                            className="w-full h-12 px-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
+                        >
+                            <option value="" className="text-black">
+                                All SMEs
+                            </option>
+                            {smes.map((sme) => (
+                                <option
+                                    key={sme.id}
+                                    value={sme.id}
+                                    className="text-black"
+                                >
+                                    🏪 {sme.name}
                                 </option>
                             ))}
                         </select>
@@ -203,6 +297,63 @@ const FilterControls = ({
                                 onClick={() =>
                                     setSelectedCategory &&
                                     setSelectedCategory("")
+                                }
+                                className="ml-2 hover:text-white"
+                            >
+                                ×
+                            </button>
+                        </span>
+                    )}
+                    {selectedPlace && (
+                        <span className="inline-flex items-center px-3 py-1 bg-emerald-500/20 text-emerald-200 rounded-full text-sm">
+                            Place:{" "}
+                            {
+                                places.find(
+                                    (p) => p.id === selectedPlace
+                                )?.name
+                            }
+                            <button
+                                onClick={() =>
+                                    setSelectedPlace &&
+                                    setSelectedPlace("")
+                                }
+                                className="ml-2 hover:text-white"
+                            >
+                                ×
+                            </button>
+                        </span>
+                    )}
+                    {selectedCommunity && (
+                        <span className="inline-flex items-center px-3 py-1 bg-cyan-500/20 text-cyan-200 rounded-full text-sm">
+                            Community:{" "}
+                            {
+                                communities.find(
+                                    (c) => c.id === selectedCommunity
+                                )?.name
+                            }
+                            <button
+                                onClick={() =>
+                                    setSelectedCommunity &&
+                                    setSelectedCommunity("")
+                                }
+                                className="ml-2 hover:text-white"
+                            >
+                                ×
+                            </button>
+                        </span>
+                    )}
+                    {selectedSme && (
+                        <span className="inline-flex items-center px-3 py-1 bg-orange-500/20 text-orange-200 rounded-full text-sm">
+                            SME:{" "}
+                            {
+                                smes.find(
+                                    (s) => s.id === selectedSme
+                                )?.name
+                            }
+                            <button
+                                onClick={() =>
+                                    setSelectedSme &&
+                                    setSelectedSme("")
                                 }
                                 className="ml-2 hover:text-white"
                             >

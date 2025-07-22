@@ -19,8 +19,8 @@ class OfferImageResource extends Resource
 {
     protected static ?string $model = OfferImage::class;
     protected static ?string $navigationIcon = 'heroicon-o-camera';
-    protected static ?string $navigationGroup = 'Business';
-    protected static ?int $navigationSort = 6;
+    protected static ?string $navigationGroup = 'View Only';
+    protected static ?int $navigationSort = 101;
     protected static ?string $label = 'Offer Images';
 
     public static function form(Form $form): Form
@@ -33,7 +33,8 @@ class OfferImageResource extends Resource
                             ->relationship('offer', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->disabled(), // Disabled to prevent editing affiliation
                         // Updated: Use FileUpload for image
                         Forms\Components\FileUpload::make('image_url')
                             ->label('Product Image')
@@ -118,7 +119,7 @@ class OfferImageResource extends Resource
     {
         return [
             'index' => Pages\ListOfferImages::route('/'),
-            'create' => Pages\CreateOfferImage::route('/create'),
+            // 'create' => Pages\CreateOfferImage::route('/create'), // Disabled creation
             'view' => Pages\ViewOfferImage::route('/{record}'),
             'edit' => Pages\EditOfferImage::route('/{record}/edit'),
         ];
