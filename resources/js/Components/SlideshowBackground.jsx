@@ -74,10 +74,10 @@ const SlideshowBackground = ({
         <div className={`fixed inset-0 z-0 ${className}`}>
             {/* Slideshow Background */}
             <div className="absolute inset-0">
-                <AnimatePresence mode="wait">
+                <AnimatePresence>
                     <motion.div
                         key={`slide-${currentSlide}-${images[currentSlide]?.id || currentSlide}`}
-                        initial={{ opacity: 0, scale: 1.1 }}
+                        initial={{ opacity: 0, scale: 1.05 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 1.1 }}
                         transition={{
@@ -100,16 +100,22 @@ const SlideshowBackground = ({
                             // Individual slide fallback
                             <div className={`w-full h-full bg-gradient-to-br ${placeholderConfig.gradient} flex items-center justify-center`}>
                                 <motion.div
-                                    animate={{
-                                        rotate: [0, 10, -10, 0],
-                                        scale: [1, 1.2, 1],
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ 
+                                        opacity: 0.4,
+                                        scale: 1,
+                                        rotate: [0, 5, -5, 0],
                                     }}
                                     transition={{
-                                        duration: 3,
-                                        repeat: Infinity,
-                                        ease: "easeInOut",
+                                        opacity: { duration: transitionDuration * 0.5 },
+                                        scale: { duration: transitionDuration * 0.5 },
+                                        rotate: {
+                                            duration: 4,
+                                            repeat: Infinity,
+                                            ease: "easeInOut",
+                                        }
                                     }}
-                                    className="text-6xl text-white opacity-30"
+                                    className="text-6xl text-white"
                                 >
                                     {placeholderConfig.icon}
                                 </motion.div>
@@ -140,25 +146,31 @@ const SlideshowBackground = ({
             )}
 
             {/* Slide Information Overlay (Optional) */}
-            {images[currentSlide]?.title && (
-                <motion.div
-                    key={`info-${currentSlide}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                    className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-center z-25 max-w-2xl px-6"
-                >
-                    <h3 className="text-white text-lg font-semibold mb-1 drop-shadow-lg">
-                        {images[currentSlide].title}
-                    </h3>
-                    {images[currentSlide].subtitle && (
-                        <p className="text-white/80 text-sm drop-shadow-md">
-                            {images[currentSlide].subtitle}
-                        </p>
-                    )}
-                </motion.div>
-            )}
+            <AnimatePresence>
+                {images[currentSlide]?.title && (
+                    <motion.div
+                        key={`info-${currentSlide}`}
+                        initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -30, scale: 0.9 }}
+                        transition={{ 
+                            duration: transitionDuration * 0.6,
+                            delay: transitionDuration * 0.2,
+                            ease: "easeOut"
+                        }}
+                        className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-center z-25 max-w-2xl px-6"
+                    >
+                        <h3 className="text-white text-lg font-semibold mb-1 drop-shadow-lg">
+                            {images[currentSlide].title}
+                        </h3>
+                        {images[currentSlide].subtitle && (
+                            <p className="text-white/80 text-sm drop-shadow-md">
+                                {images[currentSlide].subtitle}
+                            </p>
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
