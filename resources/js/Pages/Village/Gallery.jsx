@@ -1,6 +1,6 @@
 // resources/js/Pages/Village/Gallery.jsx (Updated with Media)
 import React, { useState, useEffect, useRef } from "react";
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import {
     motion,
     AnimatePresence,
@@ -158,6 +158,25 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
                 parallax={true}
                 scrollY={{ useTransform: (scrollY) => scrollY }}
             >
+                {/* Breadcrumb */}
+                <motion.nav
+                    className="mb-8"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                >
+                    <div className="flex items-center justify-center space-x-2 text-white/70">
+                        <Link
+                            href="/"
+                            className="hover:text-white transition-colors"
+                        >
+                            {village.name}
+                        </Link>
+                        <span>/</span>
+                        <span className="text-white">Gallery</span>
+                    </div>
+                </motion.nav>
+
                 <FilterControls
                     searchTerm={searchTerm}
                     setSearchTerm={setSearchTerm}

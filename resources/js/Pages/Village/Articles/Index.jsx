@@ -1,6 +1,6 @@
 // resources/js/Pages/Articles/Index.jsx
 import React, { useState, useEffect } from "react";
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import {
     motion,
     AnimatePresence,
@@ -257,6 +257,25 @@ const ArticlesPage = ({ village, articles, filters = {} }) => {
                 {/* Hero Content */}
                 <div className="absolute inset-0 flex items-center justify-center text-center z-20 flex-col gap-4">
                     <div className="max-w-4xl px-6">
+                        {/* Breadcrumb */}
+                        <motion.nav
+                            className="mb-8"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: 0.2 }}
+                        >
+                            <div className="flex items-center justify-center space-x-2 text-white/70">
+                                <Link
+                                    href="/"
+                                    className="hover:text-white transition-colors"
+                                >
+                                    {village.name}
+                                </Link>
+                                <span>/</span>
+                                <span className="text-white">Articles</span>
+                            </div>
+                        </motion.nav>
+
                         <motion.h1
                             initial={{ opacity: 0, y: 50 }}
                             animate={{ opacity: 1, y: 0 }}

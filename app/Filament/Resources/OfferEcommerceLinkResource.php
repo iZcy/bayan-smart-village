@@ -19,7 +19,7 @@ class OfferEcommerceLinkResource extends Resource
 {
     protected static ?string $model = OfferEcommerceLink::class;
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
-    protected static ?string $navigationGroup = 'View Only';
+    protected static ?string $navigationGroup = 'Develop';
     protected static ?int $navigationSort = 100;
     protected static ?string $label = 'E-commerce Links';
     protected static ?string $pluralLabel = 'E-commerce Links';

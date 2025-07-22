@@ -30,129 +30,221 @@ class OfferResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Basic Information')
-                    ->schema([
-                        Forms\Components\Select::make('sme_id')
-                            ->relationship('sme', 'name')
-                            ->required()
-                            ->searchable()
-                            ->preload()
-                            ->options(function () {
-                                $user = User::find(Auth::id());
-                                return $user->getAccessibleSmes()->pluck('name', 'id');
-                            }),
-                        Forms\Components\Select::make('category_id')
-                            ->relationship('category', 'name')
-                            ->required()
-                            ->searchable()
-                            ->preload()
-                            ->options(function () {
-                                $user = User::find(Auth::id());
-                                if ($user->isSuperAdmin()) {
-                                    return Category::pluck('name', 'id');
-                                }
+                Forms\Components\Wizard::make([
+                    Forms\Components\Wizard\Step::make('Basic Information')
+                        ->description('Essential product details')
+                        ->schema([
+                            Forms\Components\Select::make('sme_id')
+                                ->relationship('sme', 'name')
+                                ->required()
+                                ->searchable()
+                                ->preload()
+                                ->options(function () {
+                                    $user = User::find(Auth::id());
+                                    return $user->getAccessibleSmes()->pluck('name', 'id');
+                                }),
+                            Forms\Components\Select::make('category_id')
+                                ->relationship('category', 'name')
+                                ->required()
+                                ->searchable()
+                                ->preload()
+                                ->options(function () {
+                                    $user = User::find(Auth::id());
+                                    if ($user->isSuperAdmin()) {
+                                        return Category::pluck('name', 'id');
+                                    }
 
-                                $villageIds = $user->getAccessibleVillages()->pluck('id');
-                                return Category::whereIn('village_id', $villageIds)->pluck('name', 'id');
-                            }),
-                        Forms\Components\TextInput::make('name')
-                            ->required()
-                            ->maxLength(255)
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
-                        Forms\Components\TextInput::make('slug')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\Textarea::make('description')
-                            ->rows(4),
-                        Forms\Components\TextInput::make('short_description')
-                            ->maxLength(500),
-                    ])->columns(2),
+                                    $villageIds = $user->getAccessibleVillages()->pluck('id');
+                                    return Category::whereIn('village_id', $villageIds)->pluck('name', 'id');
+                                }),
+                            Forms\Components\TextInput::make('name')
+                                ->required()
+                                ->maxLength(255)
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
+                            Forms\Components\TextInput::make('slug')
+                                ->required()
+                                ->maxLength(255),
+                            Forms\Components\Textarea::make('description')
+                                ->rows(4)
+                                ->columnSpanFull(),
+                            Forms\Components\TextInput::make('short_description')
+                                ->maxLength(500)
+                                ->columnSpanFull(),
+                        ])->columns(2),
 
-                Forms\Components\Section::make('Pricing')
-                    ->schema([
-                        Forms\Components\TextInput::make('price')
-                            ->numeric()
-                            ->prefix('IDR'),
-                        Forms\Components\TextInput::make('price_unit')
-                            ->maxLength(50),
-                        Forms\Components\TextInput::make('price_range_min')
-                            ->numeric()
-                            ->prefix('IDR'),
-                        Forms\Components\TextInput::make('price_range_max')
-                            ->numeric()
-                            ->prefix('IDR'),
-                    ])->columns(2),
+                    Forms\Components\Wizard\Step::make('Pricing & Availability')
+                        ->description('Set pricing and availability details')
+                        ->schema([
+                            Forms\Components\TextInput::make('price')
+                                ->numeric()
+                                ->prefix('IDR'),
+                            Forms\Components\TextInput::make('price_unit')
+                                ->maxLength(50),
+                            Forms\Components\TextInput::make('price_range_min')
+                                ->numeric()
+                                ->prefix('IDR'),
+                            Forms\Components\TextInput::make('price_range_max')
+                                ->numeric()
+                                ->prefix('IDR'),
+                            Forms\Components\Select::make('availability')
+                                ->options([
+                                    'available' => 'Available',
+                                    'out_of_stock' => 'Out of Stock',
+                                    'seasonal' => 'Seasonal',
+                                    'on_demand' => 'On Demand',
+                                ])
+                                ->default('available'),
+                            Forms\Components\TagsInput::make('seasonal_availability')
+                                ->placeholder('Add months (e.g., January, February)')
+                                ->columnSpanFull(),
+                            Forms\Components\TextInput::make('production_time')
+                                ->maxLength(100),
+                            Forms\Components\TextInput::make('minimum_order')
+                                ->numeric()
+                                ->default(1),
+                        ])->columns(2),
 
-                Forms\Components\Section::make('Availability & Details')
-                    ->schema([
-                        Forms\Components\Select::make('availability')
-                            ->options([
-                                'available' => 'Available',
-                                'out_of_stock' => 'Out of Stock',
-                                'seasonal' => 'Seasonal',
-                                'on_demand' => 'On Demand',
-                            ])
-                            ->default('available'),
-                        Forms\Components\TagsInput::make('seasonal_availability')
-                            ->placeholder('Add months (e.g., January, February)'),
-                        // Updated: Use FileUpload for primary image
-                        Forms\Components\FileUpload::make('primary_image_url')
-                            ->label('Primary Product Image')
-                            ->image()
-                            ->disk('public')
-                            ->directory('products')
-                            ->visibility('public')
-                            ->maxSize(5120) // 5MB
-                            ->imageResizeMode('cover')
-                            ->imageCropAspectRatio('1:1')
-                            ->imageResizeTargetWidth(600)
-                            ->imageResizeTargetHeight(600)
-                            ->columnSpanFull(),
-                        Forms\Components\TextInput::make('production_time')
-                            ->maxLength(100),
-                        Forms\Components\TextInput::make('minimum_order')
-                            ->numeric()
-                            ->default(1),
-                    ])->columns(2),
+                    Forms\Components\Wizard\Step::make('Images')
+                        ->description('Upload primary image and additional gallery images')
+                        ->schema([
+                            Forms\Components\FileUpload::make('primary_image_url')
+                                ->label('Primary Product Image')
+                                ->image()
+                                ->disk('public')
+                                ->directory('products')
+                                ->visibility('public')
+                                ->maxSize(5120) // 5MB
+                                ->imageResizeMode('cover')
+                                ->imageCropAspectRatio('1:1')
+                                ->imageResizeTargetWidth(600)
+                                ->imageResizeTargetHeight(600)
+                                ->required()
+                                ->columnSpanFull(),
+                            
+                            Forms\Components\Repeater::make('images')
+                                ->relationship()
+                                ->label('Additional Images')
+                                ->schema([
+                                    Forms\Components\FileUpload::make('image_url')
+                                        ->label('Product Image')
+                                        ->image()
+                                        ->disk('public')
+                                        ->directory('products/gallery')
+                                        ->visibility('public')
+                                        ->maxSize(5120)
+                                        ->imagePreviewHeight(200)
+                                        ->required(),
+                                    Forms\Components\TextInput::make('alt_text')
+                                        ->maxLength(255),
+                                    Forms\Components\TextInput::make('sort_order')
+                                        ->numeric()
+                                        ->default(0),
+                                    Forms\Components\Toggle::make('is_primary')
+                                        ->default(false),
+                                ])
+                                ->columns(2)
+                                ->collapsed()
+                                ->itemLabel(fn (array $state): ?string => $state['alt_text'] ?? 'Image')
+                                ->addActionLabel('Add Additional Image')
+                                ->columnSpanFull(),
+                        ]),
 
-                Forms\Components\Section::make('Product Specifications')
-                    ->schema([
-                        Forms\Components\TagsInput::make('materials'),
-                        Forms\Components\TagsInput::make('colors'),
-                        Forms\Components\TagsInput::make('sizes'),
-                        Forms\Components\TagsInput::make('features'),
-                        Forms\Components\TagsInput::make('certification'),
-                    ])->columns(2),
+                    Forms\Components\Wizard\Step::make('Specifications')
+                        ->description('Product specifications and features')
+                        ->schema([
+                            Forms\Components\TagsInput::make('materials')
+                                ->placeholder('Add materials (e.g., Cotton, Wood, Metal)'),
+                            Forms\Components\TagsInput::make('colors')
+                                ->placeholder('Add colors (e.g., Red, Blue, Green)'),
+                            Forms\Components\TagsInput::make('sizes')
+                                ->placeholder('Add sizes (e.g., Small, Medium, Large)'),
+                            Forms\Components\TagsInput::make('features')
+                                ->placeholder('Add features (e.g., Waterproof, Handmade)'),
+                            Forms\Components\TagsInput::make('certification')
+                                ->placeholder('Add certifications (e.g., ISO, Halal)')
+                                ->columnSpanFull(),
+                        ])->columns(2),
 
-                Forms\Components\Section::make('Tags')
-                    ->schema([
-                        Forms\Components\Select::make('tags')
-                            ->relationship('tags', 'name')
-                            ->multiple()
-                            ->searchable()
-                            ->preload()
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('name')
-                                    ->required()
-                                    ->live(onBlur: true)
-                                    ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
-                                Forms\Components\TextInput::make('slug')
-                                    ->required(),
-                            ]),
-                    ]),
+                    Forms\Components\Wizard\Step::make('E-commerce Links')
+                        ->description('Add links to e-commerce platforms')
+                        ->schema([
+                            Forms\Components\Repeater::make('ecommerceLinks')
+                                ->relationship()
+                                ->schema([
+                                    Forms\Components\Select::make('platform')
+                                        ->options([
+                                            'tokopedia' => 'Tokopedia',
+                                            'shopee' => 'Shopee',
+                                            'tiktok_shop' => 'TikTok Shop',
+                                            'bukalapak' => 'Bukalapak',
+                                            'blibli' => 'Blibli',
+                                            'lazada' => 'Lazada',
+                                            'instagram' => 'Instagram',
+                                            'whatsapp' => 'WhatsApp',
+                                            'website' => 'Website',
+                                            'other' => 'Other',
+                                        ])
+                                        ->required(),
+                                    Forms\Components\TextInput::make('store_name')
+                                        ->maxLength(255),
+                                    Forms\Components\TextInput::make('product_url')
+                                        ->required()
+                                        ->url()
+                                        ->columnSpanFull(),
+                                    Forms\Components\TextInput::make('price_on_platform')
+                                        ->numeric()
+                                        ->prefix('IDR'),
+                                    Forms\Components\TextInput::make('sort_order')
+                                        ->numeric()
+                                        ->default(0),
+                                    Forms\Components\Toggle::make('is_verified')
+                                        ->default(false),
+                                    Forms\Components\Toggle::make('is_active')
+                                        ->default(true),
+                                ])
+                                ->columns(2)
+                                ->collapsed()
+                                ->itemLabel(fn (array $state): ?string => $state['platform'] ?? null)
+                                ->addActionLabel('Add E-commerce Link')
+                                ->columnSpanFull(),
+                        ]),
 
-                Forms\Components\Section::make('Settings')
-                    ->schema([
-                        Forms\Components\Toggle::make('is_featured')
-                            ->default(false),
-                        Forms\Components\Toggle::make('is_active')
-                            ->default(true),
-                        Forms\Components\TextInput::make('view_count')
-                            ->numeric()
-                            ->default(0)
-                            ->disabled(),
-                    ])->columns(3),
+                    Forms\Components\Wizard\Step::make('Tags & Settings')
+                        ->description('Add tags and configure settings')
+                        ->schema([
+                            Forms\Components\Select::make('tags')
+                                ->relationship('tags', 'name')
+                                ->multiple()
+                                ->searchable()
+                                ->preload()
+                                ->createOptionForm([
+                                    Forms\Components\TextInput::make('name')
+                                        ->required()
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
+                                    Forms\Components\TextInput::make('slug')
+                                        ->required(),
+                                ])
+                                ->columnSpanFull(),
+                            Forms\Components\Toggle::make('is_featured')
+                                ->label('Featured Product')
+                                ->helperText('Featured products appear prominently on the website')
+                                ->default(false),
+                            Forms\Components\Toggle::make('is_active')
+                                ->label('Active')
+                                ->helperText('Active products are visible to customers')
+                                ->default(true),
+                            Forms\Components\TextInput::make('view_count')
+                                ->label('View Count')
+                                ->numeric()
+                                ->default(0)
+                                ->disabled()
+                                ->helperText('This is automatically updated'),
+                        ])->columns(2),
+                ])
+                ->columnSpanFull()
+                ->persistStepInQueryString()
             ]);
     }
 

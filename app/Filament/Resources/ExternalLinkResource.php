@@ -81,7 +81,7 @@ class ExternalLinkResource extends Resource
                     Forms\Components\TextInput::make('slug')
                         ->required()
                         ->maxLength(255)
-                        ->live(onBlur: true)
+                        ->live()
                         ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
                     Forms\Components\TextInput::make('icon')
                         ->maxLength(255)
@@ -96,41 +96,98 @@ class ExternalLinkResource extends Resource
                         ->relationship('village', 'name')
                         ->searchable()
                         ->preload()
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function (callable $set) {
+                            // Reset all dependent fields when village changes
+                            $set('community_id', null);
+                            $set('sme_id', null);
+                        })
                         ->options(function () {
                             $user = User::find(Auth::id());
                             return $user->getAccessibleVillages()->pluck('name', 'id');
                         }),
+                    
                     Forms\Components\Select::make('community_id')
                         ->relationship('community', 'name')
                         ->searchable()
                         ->preload()
-                        ->options(function () {
-                            $user = User::find(Auth::id());
-                            return $user->getAccessibleCommunities()->pluck('name', 'id');
-                        }),
+                        ->live()
+                        ->afterStateUpdated(function (callable $set) {
+                            // Reset SME when community changes
+                            $set('sme_id', null);
+                        })
+                        ->options(function (callable $get) {
+                            $villageId = $get('village_id');
+                            if (!$villageId) {
+                                return [];
+                            }
+                            return \App\Models\Community::where('village_id', $villageId)->pluck('name', 'id');
+                        })
+                        ->disabled(fn (callable $get): bool => !$get('village_id')),
+                    
                     Forms\Components\Select::make('sme_id')
                         ->relationship('sme', 'name')
                         ->searchable()
                         ->preload()
-                        ->options(function () {
-                            $user = User::find(Auth::id());
-                            return $user->getAccessibleSmes()->pluck('name', 'id');
-                        }),
+                        ->options(function (callable $get) {
+                            $communityId = $get('community_id');
+                            if (!$communityId) {
+                                return [];
+                            }
+                            return \App\Models\Sme::where('community_id', $communityId)->pluck('name', 'id');
+                        })
+                        ->disabled(fn (callable $get): bool => !$get('community_id')),
                 ])->columns(3),
 
             Forms\Components\Section::make('Settings')
                 ->schema([
-                    Forms\Components\TextInput::make('sort_order')
-                        ->numeric()
-                        ->default(0),
                     Forms\Components\Toggle::make('is_active')
                         ->default(true),
                     Forms\Components\DateTimePicker::make('expires_at'),
-                    Forms\Components\TextInput::make('click_count')
-                        ->numeric()
-                        ->default(0)
-                        ->disabled(),
                 ])->columns(2),
+
+            Forms\Components\Section::make('QR Code Preview')
+                ->schema([
+                    // QR Code Preview
+                    Forms\Components\View::make('filament.infolists.qr-code')
+                        ->viewData(function (callable $get) {
+                            $slug = $get('slug');
+                            $villageId = $get('village_id');
+                            
+                            if (!$slug) {
+                                return [
+                                    'url' => null,
+                                    'label' => 'QR Code Preview',
+                                    'description' => 'Enter a slug to generate QR code',
+                                    'size' => 200
+                                ];
+                            }
+                            
+                            $baseDomain = config('app.domain', 'kecamatanbayan.id');
+                            $protocol = config('smartvillage.url.protocol', 'https');
+                            
+                            $url = '';
+                            if ($villageId) {
+                                $village = \App\Models\Village::find($villageId);
+                                if ($village) {
+                                    $url = "{$protocol}://{$village->slug}.{$baseDomain}/l/{$slug}";
+                                }
+                            } else {
+                                $url = "{$protocol}://{$baseDomain}/l/{$slug}";
+                            }
+                            
+                            return [
+                                'url' => $url,
+                                'label' => 'Short Link QR Code',
+                                'description' => 'Scan this QR code to access the external link',
+                                'size' => 200
+                            ];
+                        })
+                        ->columnSpanFull(),
+                ])
+                ->collapsible()
+                ->collapsed(false),
         ]);
     }
 
@@ -225,6 +282,37 @@ class ExternalLinkResource extends Resource
                         Infolists\Components\TextEntry::make('expires_at')
                             ->dateTime(),
                     ])->columns(2),
+
+                Infolists\Components\Section::make('QR Code')
+                    ->schema([
+                        // QR Code Display
+                        Infolists\Components\ViewEntry::make('qr_code')
+                            ->label('Short Link QR Code')
+                            ->view('filament.infolists.qr-code')
+                            ->viewData(function ($record) {
+                                $baseDomain = config('app.domain', 'kecamatanbayan.id');
+                                $protocol = config('smartvillage.url.protocol', 'https');
+                                
+                                $url = '';
+                                if ($record->village_id && $record->village) {
+                                    $url = "{$protocol}://{$record->village->slug}.{$baseDomain}/l/{$record->slug}";
+                                } else {
+                                    $url = "{$protocol}://{$baseDomain}/l/{$record->slug}";
+                                }
+                                
+                                $label = "Short Link: {$record->label}";
+                                $description = "Scan this QR code to access: {$record->url}";
+                                
+                                return [
+                                    'url' => $url,
+                                    'label' => $label,
+                                    'description' => $description,
+                                    'size' => 250
+                                ];
+                            })
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible(),
             ]);
     }
 

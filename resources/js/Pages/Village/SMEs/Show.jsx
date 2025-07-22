@@ -543,8 +543,8 @@ export default function SMEShowPage({ village, sme }) {
                     </section>
                 )}
 
-                {/* Products/Services Section - Only show for product SMEs */}
-                {sme.type === 'product' && sme.offers && sme.offers.length > 0 && (
+                {/* Products/Services Section */}
+                {sme.offers && sme.offers.length > 0 && (
                     <section className="py-20">
                         <div className="container mx-auto px-6">
                             <motion.h2
@@ -553,13 +553,13 @@ export default function SMEShowPage({ village, sme }) {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.8 }}
                             >
-                                Our Products
+                                Our {sme.type === 'product' ? 'Products' : 'Services'}
                             </motion.h2>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-7xl mx-auto">
-                                {sme.offers.map((product, index) => (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                                {sme.offers.map((offer, index) => (
                                     <motion.div
-                                        key={product.id}
+                                        key={offer.id}
                                         initial={{ opacity: 0, y: 50 }}
                                         whileInView={{ opacity: 1, y: 0 }}
                                         transition={{
@@ -568,11 +568,67 @@ export default function SMEShowPage({ village, sme }) {
                                         }}
                                         viewport={{ once: true }}
                                     >
-                                        <ProductCard
-                                            product={product}
-                                            index={index}
-                                            village={village}
-                                        />
+                                        <Link href={`/products/${offer.slug}`}>
+                                            <BaseCard
+                                                className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+                                                hoverEffects={true}
+                                            >
+                                                <div className="relative h-48 overflow-hidden">
+                                                    {offer.images && offer.images.length > 0 ? (
+                                                        <img
+                                                            src={offer.images[0].image_url}
+                                                            alt={offer.name}
+                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                                        />
+                                                    ) : (
+                                                        <div className={`w-full h-full bg-gradient-to-br ${
+                                                            sme.type === 'product' 
+                                                                ? 'from-green-400 to-blue-500'
+                                                                : 'from-blue-400 to-purple-500'
+                                                        } flex items-center justify-center`}>
+                                                            <span className="text-4xl text-white">
+                                                                {sme.type === 'product' ? '📦' : '⚙️'}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                                                    
+                                                    {/* Price Badge */}
+                                                    {offer.price && (
+                                                        <div className="absolute top-3 right-3">
+                                                            <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-gray-900 rounded-full text-sm font-semibold">
+                                                                Rp {offer.price.toLocaleString('id-ID')}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                
+                                                <div className="p-6">
+                                                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-green-600 transition-colors line-clamp-1">
+                                                        {offer.name}
+                                                    </h3>
+                                                    
+                                                    <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed h-[68px] overflow-hidden">
+                                                        {offer.description}
+                                                    </p>
+                                                    
+                                                    <div className="flex items-center justify-between">
+                                                        {offer.category_name && (
+                                                            <div className="flex items-center text-sm text-gray-500">
+                                                                <span className="mr-1">🏷️</span>
+                                                                <span className="truncate">{offer.category_name}</span>
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {offer.ecommerce_links && offer.ecommerce_links.length > 0 && (
+                                                            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                                                {offer.ecommerce_links.length} Store{offer.ecommerce_links.length > 1 ? 's' : ''}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </BaseCard>
+                                        </Link>
                                     </motion.div>
                                 ))}
                             </div>

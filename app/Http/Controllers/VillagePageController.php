@@ -415,8 +415,11 @@ class VillagePageController extends Controller
                             }
                         ]);
                 },
-                'articles' => function ($query) {
-                    $query->where('is_published', true)->latest('published_at')->take(3);
+                'articles' => function ($query) use ($village) {
+                    $query->where('is_published', true)
+                        ->where('village_id', $village->id)
+                        ->latest('published_at')
+                        ->take(3);
                 }
             ])
             ->firstOrFail();

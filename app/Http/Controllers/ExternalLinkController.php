@@ -83,7 +83,7 @@ class ExternalLinkController extends Controller
     /**
      * Redirect to external link and track clicks
      */
-    public function redirect(Request $request, string $slug)
+    public function redirect(Request $request, string $village, string $slug)
     {
         Log::info('ExternalLink redirect called', [
             'slug' => $slug,

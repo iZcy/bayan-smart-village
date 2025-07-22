@@ -95,9 +95,6 @@ class ImageResource extends Resource
                             ->maxLength(255),
                         Forms\Components\TextInput::make('alt_text')
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('sort_order')
-                            ->numeric()
-                            ->default(0),
                         Forms\Components\Toggle::make('is_featured')
                             ->default(false),
                     ])->columns(2),
@@ -108,38 +105,62 @@ class ImageResource extends Resource
                             ->relationship('village', 'name')
                             ->searchable()
                             ->preload()
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (callable $set) {
+                                // Reset all dependent fields when village changes
+                                $set('community_id', null);
+                                $set('sme_id', null);
+                                $set('place_id', null);
+                            })
                             ->options(function () {
                                 $user = User::find(Auth::id());
                                 return $user->getAccessibleVillages()->pluck('name', 'id');
                             }),
+                        
                         Forms\Components\Select::make('community_id')
                             ->relationship('community', 'name')
                             ->searchable()
                             ->preload()
-                            ->options(function () {
-                                $user = User::find(Auth::id());
-                                return $user->getAccessibleCommunities()->pluck('name', 'id');
-                            }),
+                            ->live()
+                            ->afterStateUpdated(function (callable $set) {
+                                // Reset SME when community changes
+                                $set('sme_id', null);
+                            })
+                            ->options(function (callable $get) {
+                                $villageId = $get('village_id');
+                                if (!$villageId) {
+                                    return [];
+                                }
+                                return \App\Models\Community::where('village_id', $villageId)->pluck('name', 'id');
+                            })
+                            ->disabled(fn (callable $get): bool => !$get('village_id')),
+                        
                         Forms\Components\Select::make('sme_id')
                             ->relationship('sme', 'name')
                             ->searchable()
                             ->preload()
-                            ->options(function () {
-                                $user = User::find(Auth::id());
-                                return $user->getAccessibleSmes()->pluck('name', 'id');
-                            }),
+                            ->options(function (callable $get) {
+                                $communityId = $get('community_id');
+                                if (!$communityId) {
+                                    return [];
+                                }
+                                return \App\Models\Sme::where('community_id', $communityId)->pluck('name', 'id');
+                            })
+                            ->disabled(fn (callable $get): bool => !$get('community_id')),
+                        
                         Forms\Components\Select::make('place_id')
                             ->relationship('place', 'name')
                             ->searchable()
                             ->preload()
-                            ->options(function () {
-                                $user = User::find(Auth::id());
-                                if ($user->isSuperAdmin()) {
-                                    return \App\Models\Place::pluck('name', 'id');
+                            ->options(function (callable $get) {
+                                $villageId = $get('village_id');
+                                if (!$villageId) {
+                                    return [];
                                 }
-                                $villageIds = $user->getAccessibleVillages()->pluck('id');
-                                return \App\Models\Place::whereIn('village_id', $villageIds)->pluck('name', 'id');
-                            }),
+                                return \App\Models\Place::where('village_id', $villageId)->pluck('name', 'id');
+                            })
+                            ->disabled(fn (callable $get): bool => !$get('village_id')),
                     ])->columns(2),
             ]);
     }

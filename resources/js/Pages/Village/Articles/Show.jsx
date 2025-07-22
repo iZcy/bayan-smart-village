@@ -56,124 +56,169 @@ const ArticleShowPage = ({ village, article, relatedArticles }) => {
             </div>
 
             {/* Hero Section */}
-            <HeroSection
-                title={article.title}
-                subtitle={
-                    article.content?.replace(/<[^>]*>/g, "").substring(0, 150) +
-                        "..." || "A story from our village"
-                }
-                backgroundGradient="from-transparent to-transparent"
-                parallax={true}
-                scrollY={{ useTransform: useTransform }}
+            <motion.section
+                className="relative min-h-screen flex items-center justify-center"
+                style={{ y: heroY, opacity: heroOpacity }}
             >
-                {/* Article meta in hero - Better Layout */}
-                <motion.div
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1, delay: 1.5 }}
-                    className="flex flex-col items-center gap-6 mt-8 max-w-2xl mx-auto"
-                >
-                    {/* Category Tags */}
-                    <div className="flex flex-wrap items-center justify-center gap-3">
-                        {article.place && (
-                            <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
-                                📍 {article.place.name}
-                            </span>
-                        )}
-                        {article.community && (
-                            <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
-                                👥 {article.community.name}
-                            </span>
-                        )}
-                        {article.sme && (
-                            <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
-                                🏪 {article.sme.name}
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Article Meta Info */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
+                <div className="relative z-10 text-center max-w-5xl mx-auto px-6 py-20">
+                    {/* Breadcrumb */}
+                    <motion.nav
+                        className="mb-8"
+                        initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 1, delay: 1.8 }}
-                        className="flex flex-col sm:flex-row items-center gap-4 text-white/90"
+                        transition={{ duration: 0.8, delay: 0.2 }}
                     >
-                        <time
-                            dateTime={
-                                article.published_at || article.created_at
-                            }
-                            className="flex items-center bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full"
-                        >
-                            <svg
-                                className="w-4 h-4 mr-2"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                        <div className="flex items-center justify-center space-x-2 text-white/70">
+                            <Link
+                                href="/"
+                                className="hover:text-white transition-colors"
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                            </svg>
-                            {new Date(
-                                article.published_at || article.created_at
-                            ).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                            })}
-                        </time>
-
-                        <span className="flex items-center bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-                            <svg
-                                className="w-4 h-4 mr-2"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                                {village.name}
+                            </Link>
+                            <span>/</span>
+                            <Link
+                                href="/articles"
+                                className="hover:text-white transition-colors"
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                            </svg>
-                            {getReadingTime()} min read
-                        </span>
-                    </motion.div>
+                                Articles
+                            </Link>
+                            <span>/</span>
+                            <span className="text-white">{article.title}</span>
+                        </div>
+                    </motion.nav>
 
-                    {/* Read Story Button */}
-                    <motion.button
+                    {/* Article Title */}
+                    <motion.h1
+                        className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-blue-200 to-green-200 bg-clip-text text-transparent"
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.8, delay: 2.2 }}
-                        onClick={() => {
-                            document
-                                .getElementById("content")
-                                .scrollIntoView({ behavior: "smooth" });
-                        }}
-                        className="group inline-flex items-center px-8 py-4 bg-white/10 backdrop-blur-md text-white rounded-full hover:bg-white/20 transition-all duration-300 border border-white/30"
+                        transition={{ duration: 1, delay: 0.5 }}
                     >
-                        Read Story
-                        <svg
-                            className="w-5 h-5 ml-2 group-hover:translate-y-1 transition-transform duration-300"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        {article.title}
+                    </motion.h1>
+
+                    {/* Article Subtitle */}
+                    <motion.p
+                        className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto leading-relaxed mb-12"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.9 }}
+                    >
+                        {article.content
+                            ?.replace(/<[^>]*>/g, "")
+                            .substring(0, 150) + "..." ||
+                            "A story from our village"}
+                    </motion.p>
+
+                    {/* Article meta in hero - Better Layout */}
+                    <div
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 1, delay: 1.5 }}
+                        className="flex flex-col items-center gap-6 mt-8 max-w-2xl mx-auto"
+                    >
+                        {/* Category Tags */}
+                        <div className="flex flex-wrap items-center justify-center gap-3">
+                            {article.place && (
+                                <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
+                                    📍 {article.place.name}
+                                </span>
+                            )}
+                            {article.community && (
+                                <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
+                                    👥 {article.community.name}
+                                </span>
+                            )}
+                            {article.sme && (
+                                <span className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
+                                    🏪 {article.sme.name}
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Article Meta Info */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 1, delay: 1.8 }}
+                            className="flex flex-col sm:flex-row items-center gap-4 text-white/90"
                         >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                            />
-                        </svg>
-                    </motion.button>
-                </motion.div>
-            </HeroSection>
+                            <time
+                                dateTime={
+                                    article.published_at || article.created_at
+                                }
+                                className="flex items-center bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full"
+                            >
+                                <svg
+                                    className="w-4 h-4 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                    />
+                                </svg>
+                                {new Date(
+                                    article.published_at || article.created_at
+                                ).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                })}
+                            </time>
+
+                            <span className="flex items-center bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+                                <svg
+                                    className="w-4 h-4 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                </svg>
+                                {getReadingTime()} min read
+                            </span>
+                        </motion.div>
+
+                        {/* Read Story Button */}
+                        <motion.button
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.8, delay: 2.2 }}
+                            onClick={() => {
+                                document
+                                    .getElementById("content")
+                                    .scrollIntoView({ behavior: "smooth" });
+                            }}
+                            className="group inline-flex items-center px-8 py-4 bg-white/10 backdrop-blur-md text-white rounded-full hover:bg-white/20 transition-all duration-300 border border-white/30"
+                        >
+                            Read Story
+                            <svg
+                                className="w-5 h-5 ml-2 group-hover:translate-y-1 transition-transform duration-300"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                                />
+                            </svg>
+                        </motion.button>
+                    </div>
+                </div>
+            </motion.section>
 
             {/* Article Content */}
             <section id="content" className="relative py-20 bg-white">

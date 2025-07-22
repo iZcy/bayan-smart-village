@@ -19,7 +19,7 @@ class OfferImageResource extends Resource
 {
     protected static ?string $model = OfferImage::class;
     protected static ?string $navigationIcon = 'heroicon-o-camera';
-    protected static ?string $navigationGroup = 'View Only';
+    protected static ?string $navigationGroup = 'Develop';
     protected static ?int $navigationSort = 101;
     protected static ?string $label = 'Offer Images';
 

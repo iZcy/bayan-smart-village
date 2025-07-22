@@ -23,7 +23,7 @@ class MediaResource extends Resource
 {
     protected static ?string $model = Media::class;
     protected static ?string $navigationIcon = 'heroicon-o-play';
-    protected static ?string $navigationGroup = 'Content';
+    protected static ?string $navigationGroup = 'Develop';
     protected static ?int $navigationSort = 4;
 
     public static function getEloquentQuery(): Builder
@@ -303,13 +303,13 @@ class MediaResource extends Resource
                                 fn($record) => $record->public_url,
                             )
                             ->openUrlInNewTab(),
-                        
+
                         // Media Preview Section
                         Infolists\Components\ViewEntry::make('media_preview')
                             ->label('Media Preview')
                             ->view('filament.resources.media.infolist.media-preview')
                             ->columnSpanFull(),
-                        
+
                         Infolists\Components\TextEntry::make('thumbnail_url')
                             ->url(
                                 fn($record) => $record->thumbnail_public_url,

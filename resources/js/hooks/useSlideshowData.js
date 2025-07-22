@@ -76,6 +76,14 @@ export const useSlideshowData = (data = [], config = {}) => {
                         : "Village story",
                 }));
 
+            case 'smes':
+                return processedData.map((sme) => ({
+                    id: sme.id,
+                    image_url: sme.logo_url,
+                    title: sme.name,
+                    subtitle: sme.type === 'product' ? 'Local Business' : 'Service Provider',
+                }));
+
             case 'gallery':
                 return processedData.map((image) => ({
                     id: image.id,
@@ -134,6 +142,18 @@ export const slideshowConfigs = {
             gradient: "from-blue-600 to-purple-700",
             icon: "📖",
             text: "No stories to tell"
+        }
+    },
+    
+    smes: {
+        type: 'smes',
+        limit: 5,
+        interval: 6000,
+        transitionDuration: 1.5,
+        placeholderConfig: {
+            gradient: "from-orange-600 to-amber-700",
+            icon: "🏢",
+            text: "No businesses to showcase"
         }
     },
     
