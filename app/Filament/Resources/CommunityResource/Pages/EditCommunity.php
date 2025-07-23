@@ -18,4 +18,16 @@ class EditCommunity extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $record = $this->getRecord();
+        
+        // Handle logo_url - get raw database value instead of accessor URL
+        if ($record && $record->logo_url) {
+            $data['logo_url'] = $record->getRawOriginal('logo_url');
+        }
+
+        return $data;
+    }
 }

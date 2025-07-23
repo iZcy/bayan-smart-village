@@ -28,7 +28,7 @@ export default function SMEsIndex({ village, smes }) {
     // Color overlay for SMEs sections - multiple scroll points for footer visibility
     const colorOverlay = useTransform(
         scrollY,
-        [0, 500, 900, 1300],
+        [0, 800, 1600, 2400],
         [
             "linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.5))", // Hero - darker for better card visibility
             "linear-gradient(to bottom, rgba(251,146,60,0.7), rgba(249,115,22,0.8))", // SMEs Grid - orange, darker for better card visibility
@@ -64,7 +64,7 @@ export default function SMEsIndex({ village, smes }) {
 
             {/* Enhanced Color Overlay */}
             <motion.div
-                className="fixed inset-0 z-0 pointer-events-none"
+                className="fixed inset-0 z-5 pointer-events-none"
                 style={{ background: colorOverlay }}
             />
 
@@ -190,10 +190,8 @@ export default function SMEsIndex({ village, smes }) {
                 </div>
             </section>
 
-            {/* Main Content */}
-            <div className="relative bg-transparent">
-                {/* Businesses Section */}
-                <section id="businesses" className="py-20">
+            {/* Businesses Section */}
+            <section id="businesses" className="min-h-screen relative overflow-hidden py-20 z-10">
                     <div className="container mx-auto px-6">
                         <motion.div
                             ref={contentRef}
@@ -261,7 +259,7 @@ export default function SMEsIndex({ village, smes }) {
                                     >
                                         <Link href={`/smes/${sme.slug}`}>
                                             <BaseCard
-                                                className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+                                                className="bg-black/20 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20"
                                                 hoverEffects={true}
                                             >
                                                 <div className="relative h-48 overflow-hidden">
@@ -289,8 +287,8 @@ export default function SMEsIndex({ village, smes }) {
                                                             className={`px-2 py-1 rounded-full text-xs font-medium ${
                                                                 sme.type ===
                                                                 "product"
-                                                                    ? "bg-green-500 text-white"
-                                                                    : "bg-blue-500 text-white"
+                                                                    ? "bg-orange-500/20 text-orange-300 border border-orange-500/30"
+                                                                    : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                                                             }`}
                                                         >
                                                             {sme.type ===
@@ -302,17 +300,17 @@ export default function SMEsIndex({ village, smes }) {
                                                 </div>
 
                                                 <div className="p-6">
-                                                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-1">
+                                                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-300 transition-colors line-clamp-1">
                                                         {sme.name}
                                                     </h3>
 
-                                                    <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed h-[68px] overflow-hidden">
+                                                    <p className="text-gray-300 text-sm mb-4 line-clamp-3 leading-relaxed h-[68px] overflow-hidden">
                                                         {sme.description}
                                                     </p>
 
                                                     <div className="flex items-center justify-between">
                                                         {sme.contact_phone && (
-                                                            <div className="flex items-center text-sm text-gray-500">
+                                                            <div className="flex items-center text-sm text-gray-400">
                                                                 <span className="mr-1">
                                                                     📞
                                                                 </span>
@@ -327,7 +325,7 @@ export default function SMEsIndex({ village, smes }) {
                                                         {sme.offers &&
                                                             sme.offers.length >
                                                                 0 && (
-                                                                <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                                                <span className="inline-block px-3 py-1 bg-white/10 text-gray-300 rounded-full text-xs font-medium">
                                                                     {
                                                                         sme
                                                                             .offers
@@ -355,14 +353,14 @@ export default function SMEsIndex({ village, smes }) {
                                     className="text-center py-16"
                                 >
                                     <div className="text-6xl mb-4">🏢</div>
-                                    <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                                    <h3 className="text-2xl font-bold text-white mb-2">
                                         No{" "}
                                         {selectedType === "all"
                                             ? ""
                                             : selectedType}{" "}
                                         businesses found
                                     </h3>
-                                    <p className="text-gray-600">
+                                    <p className="text-gray-400">
                                         {selectedType === "all"
                                             ? `There are no businesses registered in ${village.name} yet.`
                                             : `There are no ${selectedType} businesses in ${village.name} yet.`}
@@ -372,7 +370,6 @@ export default function SMEsIndex({ village, smes }) {
                         </motion.div>
                     </div>
                 </section>
-            </div>
         </MainLayout>
     );
 }

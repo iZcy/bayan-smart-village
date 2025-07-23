@@ -355,9 +355,58 @@ export default function SMEShowPage({ village, sme }) {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                                 {/* Business Information */}
                                 <div className="lg:col-span-2 space-y-8">
-                                    {/* Contact & Location Info */}
+                                    {/* Business Overview */}
+                                    <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-2xl p-8">
+                                        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                            <span className="text-3xl mr-3">🏢</span>
+                                            Business Overview
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {sme.owner_name && (
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-700 mb-2 flex items-center">
+                                                        <span className="mr-2">👤</span>
+                                                        Owner
+                                                    </h4>
+                                                    <p className="text-gray-800 font-medium text-lg">
+                                                        {sme.owner_name}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {sme.is_verified && (
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-700 mb-2 flex items-center">
+                                                        <span className="mr-2">🎯</span>
+                                                        Status
+                                                    </h4>
+                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                                        <span className="mr-1">✓</span>
+                                                        Verified Business
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {sme.place && (
+                                                <div className="md:col-span-2">
+                                                    <h4 className="font-semibold text-gray-700 mb-2 flex items-center">
+                                                        <span className="mr-2">📍</span>
+                                                        Location
+                                                    </h4>
+                                                    <p className="text-gray-600 leading-relaxed">
+                                                        <span className="font-medium">{sme.place.name}</span>
+                                                        {sme.place.category && (
+                                                            <span className="ml-2 text-sm text-gray-500">
+                                                                ({sme.place.category.name})
+                                                            </span>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Contact Information */}
                                     {(sme.contact_address || sme.contact_phone || sme.contact_email) && (
-                                        <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-2xl p-8">
+                                        <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-8">
                                             <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                                                 <span className="text-3xl mr-3">📞</span>
                                                 Contact Information
@@ -365,33 +414,42 @@ export default function SMEShowPage({ village, sme }) {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 {sme.contact_phone && (
                                                     <div>
-                                                        <h4 className="font-semibold text-gray-700 mb-2">
+                                                        <h4 className="font-semibold text-gray-700 mb-2 flex items-center">
+                                                            <span className="mr-2">📱</span>
                                                             Phone
                                                         </h4>
                                                         <a
                                                             href={`tel:${sme.contact_phone}`}
-                                                            className="text-blue-600 hover:text-blue-700 transition-colors font-medium text-lg"
+                                                            className="text-blue-600 hover:text-blue-700 transition-colors font-medium text-lg inline-flex items-center"
                                                         >
                                                             {sme.contact_phone}
+                                                            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                            </svg>
                                                         </a>
                                                     </div>
                                                 )}
                                                 {sme.contact_email && (
                                                     <div>
-                                                        <h4 className="font-semibold text-gray-700 mb-2">
+                                                        <h4 className="font-semibold text-gray-700 mb-2 flex items-center">
+                                                            <span className="mr-2">✉️</span>
                                                             Email
                                                         </h4>
                                                         <a
                                                             href={`mailto:${sme.contact_email}`}
-                                                            className="text-blue-600 hover:text-blue-700 transition-colors font-medium"
+                                                            className="text-blue-600 hover:text-blue-700 transition-colors font-medium inline-flex items-center"
                                                         >
                                                             {sme.contact_email}
+                                                            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                            </svg>
                                                         </a>
                                                     </div>
                                                 )}
                                                 {sme.contact_address && (
                                                     <div className="md:col-span-2">
-                                                        <h4 className="font-semibold text-gray-700 mb-2">
+                                                        <h4 className="font-semibold text-gray-700 mb-2 flex items-center">
+                                                            <span className="mr-2">🏠</span>
                                                             Address
                                                         </h4>
                                                         <p className="text-gray-600 leading-relaxed">
@@ -403,16 +461,45 @@ export default function SMEShowPage({ village, sme }) {
                                         </div>
                                     )}
 
+                                    {/* Business Hours */}
+                                    {sme.business_hours && (
+                                        <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-2xl p-8">
+                                            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                                <span className="text-3xl mr-3">🕒</span>
+                                                Business Hours
+                                            </h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => {
+                                                    const dayData = sme.business_hours[day];
+                                                    if (!dayData) return null;
+                                                    
+                                                    return (
+                                                        <div key={day} className="flex justify-between items-center py-2 px-4 bg-white rounded-lg border border-gray-100">
+                                                            <span className="font-medium text-gray-800">{day}</span>
+                                                            <span className={`text-sm font-medium ${
+                                                                dayData.closed 
+                                                                    ? 'text-red-600 bg-red-50 px-2 py-1 rounded'
+                                                                    : 'text-green-600'
+                                                            }`}>
+                                                                {dayData.closed ? 'Closed' : `${dayData.open || '09:00'} - ${dayData.close || '17:00'}`}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Statistics */}
                                     {sme.offers && sme.offers.length > 0 && (
-                                        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8">
+                                        <div className="bg-gradient-to-br from-orange-50 to-pink-50 rounded-2xl p-8">
                                             <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                                                 <span className="text-3xl mr-3">📊</span>
                                                 What We Offer
                                             </h3>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                                 <div className="text-center">
-                                                    <div className="text-3xl font-bold text-purple-600">
+                                                    <div className="text-3xl font-bold text-orange-600">
                                                         {sme.offers.length}
                                                     </div>
                                                     <div className="text-gray-600 font-medium">
@@ -429,6 +516,22 @@ export default function SMEShowPage({ village, sme }) {
                                                         </div>
                                                     </div>
                                                 )}
+                                                <div className="text-center">
+                                                    <div className="text-3xl font-bold text-purple-600">
+                                                        {sme.community?.name ? '✓' : '—'}
+                                                    </div>
+                                                    <div className="text-gray-600 font-medium text-sm">
+                                                        Community Member
+                                                    </div>
+                                                </div>
+                                                <div className="text-center">
+                                                    <div className="text-3xl font-bold text-blue-600">
+                                                        {sme.is_verified ? '🏆' : '⭐'}
+                                                    </div>
+                                                    <div className="text-gray-600 font-medium text-sm">
+                                                        {sme.is_verified ? 'Verified' : 'Standard'}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -543,6 +646,64 @@ export default function SMEShowPage({ village, sme }) {
                     </section>
                 )}
 
+                {/* Related Articles Section */}
+                {sme.articles && sme.articles.length > 0 && (
+                    <section className="py-20 bg-gray-50">
+                        <div className="container mx-auto px-6">
+                            <motion.h2
+                                className="text-4xl font-bold text-center mb-16 text-gray-900"
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.8 }}
+                            >
+                                Latest News & Updates
+                            </motion.h2>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                                {sme.articles.map((article, index) => (
+                                    <motion.div
+                                        key={article.id}
+                                        initial={{ opacity: 0, y: 50 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        transition={{
+                                            duration: 0.6,
+                                            delay: index * 0.1,
+                                        }}
+                                        viewport={{ once: true }}
+                                        className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                                    >
+                                        <Link href={`/articles/${article.slug}`}>
+                                            {article.featured_image_url && (
+                                                <div className="aspect-video overflow-hidden">
+                                                    <img
+                                                        src={article.featured_image_url}
+                                                        alt={article.title}
+                                                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="p-6">
+                                                <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
+                                                    {article.title}
+                                                </h3>
+                                                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                                                    {article.excerpt || article.content?.substring(0, 150) + '...'}
+                                                </p>
+                                                <div className="flex items-center justify-between text-sm text-gray-500">
+                                                    <span>{new Date(article.published_at).toLocaleDateString()}</span>
+                                                    <span className="text-blue-600 hover:text-blue-700 font-medium">
+                                                        Read more →
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                )}
+
                 {/* Products/Services Section */}
                 {sme.offers && sme.offers.length > 0 && (
                     <section className="py-20">
@@ -574,9 +735,9 @@ export default function SMEShowPage({ village, sme }) {
                                                 hoverEffects={true}
                                             >
                                                 <div className="relative h-48 overflow-hidden">
-                                                    {offer.images && offer.images.length > 0 ? (
+                                                    {offer.primary_image_url ? (
                                                         <img
-                                                            src={offer.images[0].image_url}
+                                                            src={offer.primary_image_url}
                                                             alt={offer.name}
                                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                                         />

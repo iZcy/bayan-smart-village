@@ -78,11 +78,147 @@ class SmeResource extends Resource
                         Forms\Components\TextInput::make('contact_phone'),
                         Forms\Components\TextInput::make('contact_email')
                             ->email(),
-                        Forms\Components\TextInput::make('logo_url')
-                            ->url(),
-                        Forms\Components\KeyValue::make('business_hours')
-                            ->keyLabel('Day')
-                            ->valueLabel('Hours'),
+                        Forms\Components\FileUpload::make('logo_url')
+                            ->label('SME Logo')
+                            ->image()
+                            ->disk('public')
+                            ->directory('sme/logos')
+                            ->visibility('public')
+                            ->maxSize(5120) // 5MB
+                            ->imageResizeMode('cover')
+                            ->imageCropAspectRatio('1:1')
+                            ->imageResizeTargetWidth(300)
+                            ->imageResizeTargetHeight(300)
+                            ->downloadable()
+                            ->openable()
+                            ->deletable()
+                            ->previewable()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                            ->columnSpanFull(),
+                        Forms\Components\Section::make('Business Hours')
+                            ->schema([
+                                Forms\Components\Grid::make(4)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('business_hours.Sunday.open')
+                                            ->label('Sunday Open')
+                                            ->type('time')
+                                            ->required()
+                                            ->default('09:00'),
+                                        Forms\Components\TextInput::make('business_hours.Sunday.close') 
+                                            ->label('Sunday Close')
+                                            ->type('time')
+                                            ->required()
+                                            ->default('17:00'),
+                                        Forms\Components\Toggle::make('business_hours.Sunday.closed')
+                                            ->label('Sunday Closed')
+                                            ->default(false),
+                                        Forms\Components\Placeholder::make('sunday_label')
+                                            ->label('')
+                                            ->content(''),
+                                            
+                                        Forms\Components\TextInput::make('business_hours.Monday.open')
+                                            ->label('Monday Open')
+                                            ->type('time')
+                                            ->required()
+                                            ->default('09:00'),
+                                        Forms\Components\TextInput::make('business_hours.Monday.close')
+                                            ->label('Monday Close')
+                                            ->type('time')
+                                            ->required()
+                                            ->default('17:00'),
+                                        Forms\Components\Toggle::make('business_hours.Monday.closed')
+                                            ->label('Monday Closed')
+                                            ->default(false),
+                                        Forms\Components\Placeholder::make('monday_label')
+                                            ->label('')
+                                            ->content(''),
+                                            
+                                        Forms\Components\TextInput::make('business_hours.Tuesday.open')
+                                            ->label('Tuesday Open')
+                                            ->type('time')
+                                            ->required()
+                                            ->default('09:00'),
+                                        Forms\Components\TextInput::make('business_hours.Tuesday.close')
+                                            ->label('Tuesday Close') 
+                                            ->type('time')
+                                            ->required()
+                                            ->default('17:00'),
+                                        Forms\Components\Toggle::make('business_hours.Tuesday.closed')
+                                            ->label('Tuesday Closed')
+                                            ->default(false),
+                                        Forms\Components\Placeholder::make('tuesday_label')
+                                            ->label('')
+                                            ->content(''),
+                                            
+                                        Forms\Components\TextInput::make('business_hours.Wednesday.open')
+                                            ->label('Wednesday Open')
+                                            ->type('time')
+                                            ->required()
+                                            ->default('09:00'),
+                                        Forms\Components\TextInput::make('business_hours.Wednesday.close')
+                                            ->label('Wednesday Close')
+                                            ->type('time')
+                                            ->required()
+                                            ->default('17:00'),
+                                        Forms\Components\Toggle::make('business_hours.Wednesday.closed')
+                                            ->label('Wednesday Closed')
+                                            ->default(false),
+                                        Forms\Components\Placeholder::make('wednesday_label')
+                                            ->label('')
+                                            ->content(''),
+                                            
+                                        Forms\Components\TextInput::make('business_hours.Thursday.open')
+                                            ->label('Thursday Open')
+                                            ->type('time')
+                                            ->required()
+                                            ->default('09:00'),
+                                        Forms\Components\TextInput::make('business_hours.Thursday.close')
+                                            ->label('Thursday Close')
+                                            ->type('time')
+                                            ->required() 
+                                            ->default('17:00'),
+                                        Forms\Components\Toggle::make('business_hours.Thursday.closed')
+                                            ->label('Thursday Closed')
+                                            ->default(false),
+                                        Forms\Components\Placeholder::make('thursday_label')
+                                            ->label('')
+                                            ->content(''),
+                                            
+                                        Forms\Components\TextInput::make('business_hours.Friday.open')
+                                            ->label('Friday Open')
+                                            ->type('time')
+                                            ->required()
+                                            ->default('09:00'),
+                                        Forms\Components\TextInput::make('business_hours.Friday.close')
+                                            ->label('Friday Close')
+                                            ->type('time')
+                                            ->required()
+                                            ->default('17:00'),
+                                        Forms\Components\Toggle::make('business_hours.Friday.closed')
+                                            ->label('Friday Closed')
+                                            ->default(false),
+                                        Forms\Components\Placeholder::make('friday_label')
+                                            ->label('')
+                                            ->content(''),
+                                            
+                                        Forms\Components\TextInput::make('business_hours.Saturday.open')
+                                            ->label('Saturday Open')
+                                            ->type('time')
+                                            ->required()
+                                            ->default('09:00'),
+                                        Forms\Components\TextInput::make('business_hours.Saturday.close')
+                                            ->label('Saturday Close')
+                                            ->type('time')
+                                            ->required()
+                                            ->default('17:00'),
+                                        Forms\Components\Toggle::make('business_hours.Saturday.closed')
+                                            ->label('Saturday Closed')
+                                            ->default(false),
+                                        Forms\Components\Placeholder::make('saturday_label')
+                                            ->label('')
+                                            ->content(''),
+                                    ])
+                            ]),
                         Forms\Components\Toggle::make('is_verified')
                             ->default(false)
                             ->visible(fn() => !User::find(Auth::id())->isSmeAdmin()), // SME admins can't verify themselves
@@ -90,94 +226,13 @@ class SmeResource extends Resource
                             ->default(true),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Offers Management')
-                    ->schema([
-                        Forms\Components\Repeater::make('offers')
-                            ->relationship()
-                            ->schema([
-                                Forms\Components\TextInput::make('name')
-                                    ->required()
-                                    ->live(onBlur: true)
-                                    ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
-                                Forms\Components\TextInput::make('slug')
-                                    ->required(),
-                                Forms\Components\Textarea::make('description'),
-                                Forms\Components\TextInput::make('price')
-                                    ->numeric()
-                                    ->prefix('IDR'),
-                                Forms\Components\Toggle::make('is_active')
-                                    ->default(true),
-                                
-                                // E-commerce Links Repeater
-                                Forms\Components\Repeater::make('ecommerceLinks')
-                                    ->relationship()
-                                    ->schema([
-                                        Forms\Components\Select::make('platform')
-                                            ->options([
-                                                'tokopedia' => 'Tokopedia',
-                                                'shopee' => 'Shopee',
-                                                'tiktok_shop' => 'TikTok Shop',
-                                                'bukalapak' => 'Bukalapak',
-                                                'blibli' => 'Blibli',
-                                                'lazada' => 'Lazada',
-                                                'instagram' => 'Instagram',
-                                                'whatsapp' => 'WhatsApp',
-                                                'website' => 'Website',
-                                                'other' => 'Other',
-                                            ])
-                                            ->required(),
-                                        Forms\Components\TextInput::make('store_name'),
-                                        Forms\Components\TextInput::make('product_url')
-                                            ->required()
-                                            ->url(),
-                                        Forms\Components\TextInput::make('price_on_platform')
-                                            ->numeric()
-                                            ->prefix('IDR'),
-                                        Forms\Components\Toggle::make('is_active')
-                                            ->default(true),
-                                    ])
-                                    ->columns(2)
-                                    ->collapsed()
-                                    ->itemLabel(fn (array $state): ?string => $state['platform'] ?? null)
-                                    ->addActionLabel('Add E-commerce Link'),
-
-                                // Offer Images Repeater  
-                                Forms\Components\Repeater::make('images')
-                                    ->relationship()
-                                    ->schema([
-                                        Forms\Components\FileUpload::make('image_url')
-                                            ->label('Product Image')
-                                            ->image()
-                                            ->disk('public')
-                                            ->directory('products/gallery')
-                                            ->visibility('public')
-                                            ->maxSize(5120)
-                                            ->imagePreviewHeight(200)
-                                            ->required(),
-                                        Forms\Components\TextInput::make('alt_text'),
-                                        Forms\Components\TextInput::make('sort_order')
-                                            ->numeric()
-                                            ->default(0),
-                                        Forms\Components\Toggle::make('is_primary')
-                                            ->default(false),
-                                    ])
-                                    ->columns(2)
-                                    ->collapsed()
-                                    ->itemLabel(fn (array $state): ?string => $state['alt_text'] ?? 'Image')
-                                    ->addActionLabel('Add Product Image'),
-                            ])
-                            ->columns(2)
-                            ->collapsed()
-                            ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
-                            ->addActionLabel('Add Offer'),
-                    ])
-                    ->collapsible(),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\ImageColumn::make('logo_url')
                     ->label('Logo')
@@ -256,7 +311,30 @@ class SmeResource extends Resource
                         Infolists\Components\TextEntry::make('owner_name'),
                         Infolists\Components\TextEntry::make('contact_phone'),
                         Infolists\Components\TextEntry::make('contact_email'),
-                        Infolists\Components\KeyValueEntry::make('business_hours'),
+                        Infolists\Components\TextEntry::make('business_hours')
+                            ->label('Business Hours')
+                            ->formatStateUsing(function ($state) {
+                                if (!$state) return 'Not set';
+                                
+                                $orderedDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                                $formatted = [];
+                                
+                                foreach ($orderedDays as $day) {
+                                    if (isset($state[$day])) {
+                                        $dayData = $state[$day];
+                                        if (isset($dayData['closed']) && $dayData['closed']) {
+                                            $formatted[] = "{$day}: Closed";
+                                        } else {
+                                            $open = $dayData['open'] ?? '09:00';
+                                            $close = $dayData['close'] ?? '17:00';
+                                            $formatted[] = "{$day}: {$open} - {$close}";
+                                        }
+                                    }
+                                }
+                                
+                                return implode("\n", $formatted);
+                            })
+                            ->columnSpanFull(),
                         Infolists\Components\IconEntry::make('is_verified')
                             ->boolean(),
                         Infolists\Components\IconEntry::make('is_active')

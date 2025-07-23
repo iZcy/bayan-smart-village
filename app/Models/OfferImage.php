@@ -1,23 +1,25 @@
 <?php
 
 // Model: OfferImage.php
+
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasImageUrls;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OfferImage extends Model
 {
-    use HasUuids, HasFactory;
+    use HasFactory, HasImageUrls, HasUuids;
 
     protected $fillable = [
         'offer_id',
         'image_url',
         'alt_text',
         'sort_order',
-        'is_primary'
+        'is_primary',
     ];
 
     protected $casts = [
@@ -47,14 +49,14 @@ class OfferImage extends Model
     }
 
     /**
-     * Boot method to handle primary image logic
+     * Boot method to handle primary image logic and auto-sorting
      */
     protected static function boot()
     {
         parent::boot();
 
         static::saving(function ($offerImage) {
-            // If this image is being set as primary, unset other primary images for the same offer
+            // If this is being set as primary, ensure no other images for this offer are primary
             if ($offerImage->is_primary) {
                 static::where('offer_id', $offerImage->offer_id)
                     ->where('id', '!=', $offerImage->id)

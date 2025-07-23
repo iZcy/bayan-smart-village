@@ -3,6 +3,7 @@
 // app/Models/Image.php - Updated with file handling
 namespace App\Models;
 
+use App\Traits\HasImageUrls;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Image extends Model
 {
-    use HasUuids, HasFactory;
+    use HasUuids, HasFactory, HasImageUrls;
 
     protected $fillable = [
         'village_id',

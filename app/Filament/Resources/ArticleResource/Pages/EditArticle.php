@@ -18,4 +18,16 @@ class EditArticle extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $record = $this->getRecord();
+        
+        // Handle cover image - get raw database value instead of accessor URL
+        if ($record && $record->cover_image_url) {
+            $data['cover_image_url'] = $record->getRawOriginal('cover_image_url');
+        }
+
+        return $data;
+    }
 }

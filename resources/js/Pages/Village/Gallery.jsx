@@ -1,6 +1,6 @@
 // resources/js/Pages/Village/Gallery.jsx (Updated with Media)
 import React, { useState, useEffect, useRef } from "react";
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
 import {
     motion,
     AnimatePresence,
@@ -23,12 +23,14 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
     const filterData = filters || {};
     const placeData = places || [];
 
-    const [filteredImages, setFilteredImages] = useState(imageData);
     const [selectedPlace, setSelectedPlace] = useState(filterData.place || "");
     const [searchTerm, setSearchTerm] = useState(filterData.search || "");
     const [selectedImage, setSelectedImage] = useState(null);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     const { scrollY } = useScroll();
+
+    // Use imageData directly since filtering is done server-side
+    const filteredImages = imageData;
 
     // Prepare slideshow data using the custom hook
     const slideshowImages = useSlideshowData(imageData, slideshowConfigs.gallery);
@@ -46,31 +48,22 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
         ]
     );
 
+    // Server-side filtering with debounce
     useEffect(() => {
-        let filtered = imageData;
+        const timeoutId = setTimeout(() => {
+            const params = {};
+            if (searchTerm) params.search = searchTerm;
+            if (selectedPlace) params.place = selectedPlace;
 
-        // Filter by search
-        if (searchTerm) {
-            filtered = filtered.filter(
-                (image) =>
-                    image.caption
-                        ?.toLowerCase()
-                        .includes(searchTerm.toLowerCase()) ||
-                    image.place?.name
-                        ?.toLowerCase()
-                        .includes(searchTerm.toLowerCase())
-            );
-        }
+            router.get(window.location.pathname, params, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }, 300);
 
-        // Filter by place
-        if (selectedPlace) {
-            filtered = filtered.filter(
-                (image) => image.place?.id === selectedPlace
-            );
-        }
-
-        setFilteredImages(filtered);
-    }, [searchTerm, selectedPlace, imageData]);
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm, selectedPlace]);
 
     const openLightbox = (image) => {
         setSelectedImage(image);
@@ -100,28 +93,6 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
         setSelectedImage(filteredImages[newIndex]);
     };
 
-    // Place filter component
-    const placeFilterComponent = (
-        <select
-            value={selectedPlace}
-            onChange={(e) => setSelectedPlace(e.target.value)}
-            className="px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50"
-        >
-            <option value="" className="text-black">
-                All Places
-            </option>
-            {placeData?.map((place) => (
-                <option key={place.id} value={place.id} className="text-black">
-                    {place.name}
-                </option>
-            ))}
-        </select>
-    );
-
-    const handleClearFilters = () => {
-        setSearchTerm("");
-        setSelectedPlace("");
-    };
 
     return (
         <MainLayout title="Gallery">
@@ -151,45 +122,92 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
                 placeholderConfig={slideshowConfigs.gallery.placeholderConfig}
             />
             {/* Hero Section */}
-            <HeroSection
-                title="Village Gallery"
-                subtitle={`Capturing moments and memories from ${village?.name}`}
-                backgroundGradient="from-transparent to-transparent"
-                parallax={true}
-                scrollY={{ useTransform: (scrollY) => scrollY }}
-            >
-                {/* Breadcrumb */}
-                <motion.nav
-                    className="mb-8"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                >
-                    <div className="flex items-center justify-center space-x-2 text-white/70">
-                        <Link
-                            href="/"
-                            className="hover:text-white transition-colors"
-                        >
-                            {village.name}
-                        </Link>
-                        <span>/</span>
-                        <span className="text-white">Gallery</span>
-                    </div>
-                </motion.nav>
+            <section className="relative h-screen overflow-hidden z-10">
+                {/* Content overlay for readability */}
+                <div className="absolute inset-0 bg-black/40 z-5"></div>
 
-                <FilterControls
-                    searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                    selectedCategory={selectedPlace}
-                    setSelectedCategory={setSelectedPlace}
-                    categories={placeData}
-                    additionalFilters={[{ component: placeFilterComponent }]}
-                    searchPlaceholder="Search gallery..."
-                    className="max-w-3xl mx-auto"
-                />
-            </HeroSection>
+                {/* Hero Content */}
+                <div className="absolute inset-0 flex items-center justify-center text-center z-20 flex-col gap-4">
+                    <div className="max-w-4xl px-6">
+                        {/* Breadcrumb */}
+                        <motion.nav
+                            className="mb-8"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: 0.2 }}
+                        >
+                            <div className="flex items-center justify-center space-x-2 text-white/70">
+                                <Link
+                                    href="/"
+                                    className="hover:text-white transition-colors"
+                                >
+                                    {village.name}
+                                </Link>
+                                <span>/</span>
+                                <span className="text-white">Gallery</span>
+                            </div>
+                        </motion.nav>
+
+                        <motion.h1
+                            initial={{ opacity: 0, y: 50 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 1, delay: 0.5 }}
+                            className="text-6xl md:text-8xl font-bold text-white mb-6"
+                        >
+                            Village Gallery
+                        </motion.h1>
+                        <motion.p
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 1, delay: 1 }}
+                            className="text-xl md:text-2xl text-gray-300 mb-8"
+                        >
+                            Capturing moments and memories from {village?.name}
+                        </motion.p>
+
+                        <FilterControls
+                            searchTerm={searchTerm}
+                            setSearchTerm={setSearchTerm}
+                            selectedPlace={selectedPlace}
+                            setSelectedPlace={setSelectedPlace}
+                            places={placeData}
+                            searchPlaceholder="Search gallery..."
+                            className="max-w-4xl mx-auto relative z-25"
+                            showSortBy={false}
+                        />
+                    </div>
+
+                    {/* Scroll Indicator */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 2, duration: 1 }}
+                        className="transform text-white z-30"
+                    >
+                        <motion.div
+                            animate={{ y: [0, 10, 0] }}
+                            transition={{ repeat: Infinity, duration: 2 }}
+                            className="flex flex-col items-center"
+                        >
+                            <span className="text-sm mb-2">
+                                Scroll to explore
+                            </span>
+                            <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
+                                <motion.div
+                                    animate={{ y: [0, 12, 0] }}
+                                    transition={{
+                                        repeat: Infinity,
+                                        duration: 2,
+                                    }}
+                                    className="w-1 h-3 bg-white/70 rounded-full mt-2"
+                                />
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                </div>
+            </section>
             {/* Gallery Grid Section */}
-            <section className="py-20 relative overflow-hidden">
+            <section className="min-h-screen relative overflow-hidden py-20 z-10">
                 {/* Background blur overlay */}
                 <div className="absolute inset-0 backdrop-blur-sm" />
                 <div className="container mx-auto px-6 relative z-10">

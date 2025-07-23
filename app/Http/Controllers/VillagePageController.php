@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Village;
 use App\Models\Article;
+use App\Models\Category;
+use App\Models\Image;
 use App\Models\Offer;
 use App\Models\Place;
-use App\Models\Image;
-use App\Models\ExternalLink;
-use App\Models\Category;
 use App\Models\Sme;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -34,7 +32,7 @@ class VillagePageController extends Controller
         })
             ->where('is_active', true)
             ->where('is_featured', true)
-            ->with(['sme.community', 'category', 'tags'])
+            ->with(['sme.community', 'category', 'tags', 'images', 'primaryImage'])
             ->latest()
             ->take(6)
             ->get();
@@ -54,7 +52,7 @@ class VillagePageController extends Controller
                         ->with(['offers' => function ($offerQuery) {
                             $offerQuery->where('is_active', true)->take(3);
                         }]);
-                }
+                },
             ])
             ->whereHas('category') // Only places with categories
             ->latest()
@@ -122,7 +120,7 @@ class VillagePageController extends Controller
                 'tourism_places_count' => $featuredPlaces->where('category.type', 'service')->count(),
                 'sme_places_count' => $featuredPlaces->where('category.type', 'product')->count(),
                 'total_places_count' => $featuredPlaces->count(),
-            ]
+            ],
         ]);
     }
 
@@ -244,7 +242,7 @@ class VillagePageController extends Controller
                 $query->orderBy('is_featured', 'desc')->latest();
         }
 
-        $products = $query->with(['sme.community', 'category', 'tags'])
+        $products = $query->with(['sme.community', 'category', 'tags', 'images', 'primaryImage'])
             ->paginate(12);
 
         // Get available categories for filter
@@ -285,12 +283,10 @@ class VillagePageController extends Controller
                 'sme.community',
                 'category',
                 'tags',
-                'images' => function ($query) {
-                    $query->orderBy('sort_order');
-                },
+                'additionalImages',
                 'ecommerceLinks' => function ($query) {
                     $query->where('is_active', true)->orderBy('sort_order');
-                }
+                },
             ])
             ->firstOrFail();
 
@@ -331,7 +327,7 @@ class VillagePageController extends Controller
                         ->withCount(['offers' => function ($offerQuery) {
                             $offerQuery->where('is_active', true);
                         }]);
-                }
+                },
             ]);
 
         // Apply filters if provided
@@ -379,15 +375,15 @@ class VillagePageController extends Controller
                     'label' => 'Tourism & Services',
                     'description' => 'Hotels, restaurants, tour guides, and other service providers',
                     'icon' => '🏞️',
-                    'count' => $places->where('category.type', 'service')->count()
+                    'count' => $places->where('category.type', 'service')->count(),
                 ],
                 'product' => [
                     'label' => 'Product Businesses',
                     'description' => 'Shops, craft centers, markets, and product manufacturers',
                     'icon' => '🏪',
-                    'count' => $places->where('category.type', 'product')->count()
-                ]
-            ]
+                    'count' => $places->where('category.type', 'product')->count(),
+                ],
+            ],
         ]);
     }
 
@@ -412,7 +408,7 @@ class VillagePageController extends Controller
                                 $offerQuery->where('is_active', true)
                                     ->orderBy('is_featured', 'desc')
                                     ->take(6);
-                            }
+                            },
                         ]);
                 },
                 'articles' => function ($query) use ($village) {
@@ -420,7 +416,7 @@ class VillagePageController extends Controller
                         ->where('village_id', $village->id)
                         ->latest('published_at')
                         ->take(3);
-                }
+                },
             ])
             ->firstOrFail();
 
@@ -461,7 +457,8 @@ class VillagePageController extends Controller
         }
 
         if ($request->filled('place')) {
-            $query->where('place_id', $request->get('place'));
+            $placeId = $request->get('place');
+            $query->where('place_id', $placeId);
         }
 
         if ($request->filled('type')) {
@@ -473,21 +470,34 @@ class VillagePageController extends Controller
 
         $images = $query->orderBy('sort_order')->paginate(24);
 
-        // Get available places for filtering, grouped by type
-        $places = Place::where('village_id', $village->id)
-            ->whereHas('images')
-            ->with('category')
-            ->select('id', 'name', 'category_id')
-            ->get()
-            ->groupBy(function ($place) {
-                return $place->category?->type ?? 'other';
-            });
+        // Get available places for filtering - only places that actually have images with non-null place_id
+        $places = collect(); // Empty collection initially
+
+        // Check if any images have place associations
+        $hasPlaceAssociations = Image::where('village_id', $village->id)
+            ->whereNotNull('place_id')
+            ->exists();
+
+        if ($hasPlaceAssociations) {
+            $places = Place::where('village_id', $village->id)
+                ->whereHas('images', function ($q) use ($village) {
+                    $q->where('village_id', $village->id)
+                        ->whereNotNull('place_id');
+                })
+                ->with('category')
+                ->select('id', 'name', 'category_id')
+                ->get();
+        }
+
+        $groupedPlaces = $places->groupBy(function ($place) {
+            return $place->category?->type ?? 'other';
+        });
 
         return Inertia::render('Village/Gallery', [
             'village' => $village,
             'images' => $images,
-            'places' => $places->flatten(), // For the filter dropdown
-            'placeGroups' => $places, // Grouped for organized display
+            'places' => $places, // For the filter dropdown (no need to flatten since we're not grouping)
+            'placeGroups' => $groupedPlaces, // Grouped for organized display
             'filters' => [
                 'search' => $request->get('search', ''),
                 'place' => $request->get('place', ''),
@@ -509,7 +519,7 @@ class VillagePageController extends Controller
                 'place',
                 'offers' => function ($query) {
                     $query->where('is_active', true)->take(3);
-                }
+                },
             ]);
 
         // Apply filters
@@ -586,13 +596,19 @@ class VillagePageController extends Controller
                 'place.category',
                 'offers' => function ($query) {
                     $query->where('is_active', true)
-                        ->with(['category', 'tags', 'images'])
+                        ->with(['category', 'tags', 'images', 'primaryImage', 'ecommerceLinks'])
                         ->orderBy('is_featured', 'desc')
                         ->orderBy('name');
                 },
                 'images' => function ($query) {
                     $query->orderBy('sort_order');
-                }
+                },
+                'externalLinks',
+                'articles' => function ($query) {
+                    $query->where('is_published', true)
+                        ->orderBy('published_at', 'desc')
+                        ->take(5);
+                },
             ])
             ->firstOrFail();
 

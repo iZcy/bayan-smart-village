@@ -67,6 +67,11 @@ class VillageResource extends Resource
                             ->imageCropAspectRatio('16:9')
                             ->imageResizeTargetWidth(1200)
                             ->imageResizeTargetHeight(675)
+                            ->downloadable()
+                            ->openable()
+                            ->deletable()
+                            ->previewable()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
                             ->columnSpanFull(),
                     ])->columns(2),
 
@@ -104,6 +109,7 @@ class VillageResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')
                     ->label('Image')

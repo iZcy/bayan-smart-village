@@ -42,9 +42,8 @@ const ArticleCard = ({ article, index, village }) => {
                     {article.title}
                 </h3>
 
-                <p className="text-white/70 text-sm line-clamp-3 mb-4 leading-relaxed h-[68px] overflow-hidden">
-                    {article.content?.replace(/<[^>]*>/g, "").substring(0, 150)}
-                    ...
+                <p className="text-white/70 text-sm mb-4 leading-relaxed line-clamp-3">
+                    {article.content?.replace(/<[^>]*>/g, "")}
                 </p>
 
                 <div className="flex items-center justify-between text-sm text-gray-400">

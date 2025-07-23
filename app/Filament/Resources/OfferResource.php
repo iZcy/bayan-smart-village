@@ -1,29 +1,32 @@
 <?php
 
 // Updated app/Filament/Resources/OfferResource.php
+
 namespace App\Filament\Resources;
 
-use App\Models\Sme;
-use Filament\Forms;
-use Filament\Tables;
-use App\Models\Offer;
-use Filament\Infolists;
+use App\Filament\Resources\OfferResource\Pages;
 use App\Models\Category;
+use App\Models\Offer;
+use App\Models\User;
+use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Tables\Table;
-use Illuminate\Support\Str;
+use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
-use App\Filament\Resources\OfferResource\Pages;
-use App\Models\User;
+use Filament\Tables;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class OfferResource extends Resource
 {
     protected static ?string $model = Offer::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-gift';
+
     protected static ?string $navigationGroup = 'Business';
+
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
@@ -41,6 +44,7 @@ class OfferResource extends Resource
                                 ->preload()
                                 ->options(function () {
                                     $user = User::find(Auth::id());
+
                                     return $user->getAccessibleSmes()->pluck('name', 'id');
                                 }),
                             Forms\Components\Select::make('category_id')
@@ -55,13 +59,14 @@ class OfferResource extends Resource
                                     }
 
                                     $villageIds = $user->getAccessibleVillages()->pluck('id');
+
                                     return Category::whereIn('village_id', $villageIds)->pluck('name', 'id');
                                 }),
                             Forms\Components\TextInput::make('name')
                                 ->required()
                                 ->maxLength(255)
                                 ->live(onBlur: true)
-                                ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
+                                ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug($state))),
                             Forms\Components\TextInput::make('slug')
                                 ->required()
                                 ->maxLength(255),
@@ -106,48 +111,109 @@ class OfferResource extends Resource
                         ])->columns(2),
 
                     Forms\Components\Wizard\Step::make('Images')
-                        ->description('Upload primary image and additional gallery images')
+                        ->description('Upload primary image and additional product images')
                         ->schema([
-                            Forms\Components\FileUpload::make('primary_image_url')
-                                ->label('Primary Product Image')
-                                ->image()
-                                ->disk('public')
-                                ->directory('products')
-                                ->visibility('public')
-                                ->maxSize(5120) // 5MB
-                                ->imageResizeMode('cover')
-                                ->imageCropAspectRatio('1:1')
-                                ->imageResizeTargetWidth(600)
-                                ->imageResizeTargetHeight(600)
-                                ->required()
-                                ->columnSpanFull(),
-                            
-                            Forms\Components\Repeater::make('images')
-                                ->relationship()
-                                ->label('Additional Images')
+                            Forms\Components\Section::make('Primary Image')
+                                ->description('This will be the main image displayed for your product')
                                 ->schema([
-                                    Forms\Components\FileUpload::make('image_url')
-                                        ->label('Product Image')
+                                    Forms\Components\FileUpload::make('primary_image_url')
+                                        ->label('Primary Product Image')
                                         ->image()
                                         ->disk('public')
-                                        ->directory('products/gallery')
+                                        ->directory('products/primary')
                                         ->visibility('public')
                                         ->maxSize(5120)
                                         ->imagePreviewHeight(200)
+                                        ->downloadable()
+                                        ->openable()
+                                        ->deletable()
+                                        ->previewable()
+                                        ->acceptedFileTypes(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'])
+                                        ->dehydrateStateUsing(function ($state) {
+                                            if (! $state) {
+                                                return $state;
+                                            }
+                                            if (is_array($state)) {
+                                                return $state;
+                                            } // Handle multiple files case
+
+                                            return str_starts_with($state, 'http') ? $state : config('app.url').'/storage/'.$state;
+                                        })
+                                        ->afterStateHydrated(function ($component, $state) {
+                                            if ($state && is_string($state) && str_contains($state, '/storage/')) {
+                                                $relativePath = str_replace([
+                                                    'http://dev-svnova.id/storage/',
+                                                    'https://dev-svnova.id/storage/',
+                                                    config('app.url').'/storage/',
+                                                ], '', $state);
+                                                $component->state($relativePath);
+                                            } elseif ($state && is_string($state) && (str_contains($state, 'picsum.photos') || str_starts_with($state, 'http'))) {
+                                                // Hide external URLs
+                                                $component->state(null);
+                                            }
+                                        })
+                                        ->helperText('Upload the main image for your product. This will be shown in listings and as the primary display.')
                                         ->required(),
-                                    Forms\Components\TextInput::make('alt_text')
-                                        ->maxLength(255),
-                                    Forms\Components\TextInput::make('sort_order')
-                                        ->numeric()
-                                        ->default(0),
-                                    Forms\Components\Toggle::make('is_primary')
-                                        ->default(false),
                                 ])
-                                ->columns(2)
-                                ->collapsed()
-                                ->itemLabel(fn (array $state): ?string => $state['alt_text'] ?? 'Image')
-                                ->addActionLabel('Add Additional Image')
-                                ->columnSpanFull(),
+                                ->collapsible(),
+                            Forms\Components\Section::make('Additional Images')
+                                ->description('Add more images to showcase your product from different angles')
+                                ->schema([
+                                    Forms\Components\Repeater::make('additionalImages')
+                                        ->relationship('additionalImages')
+                                        ->label('Additional Product Images')
+                                        ->schema([
+                                            Forms\Components\FileUpload::make('image_url')
+                                                ->label('Image')
+                                                ->image()
+                                                ->disk('public')
+                                                ->directory('products/gallery')
+                                                ->visibility('public')
+                                                ->maxSize(5120)
+                                                ->imagePreviewHeight(150)
+                                                ->downloadable()
+                                                ->openable()
+                                                ->deletable()
+                                                ->previewable()
+                                                ->acceptedFileTypes(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'])
+                                                ->dehydrateStateUsing(function ($state) {
+                                                    if (! $state) {
+                                                        return $state;
+                                                    }
+                                                    if (is_array($state)) {
+                                                        return $state;
+                                                    } // Handle multiple files case
+
+                                                    return str_starts_with($state, 'http') ? $state : config('app.url').'/storage/'.$state;
+                                                })
+                                                ->afterStateHydrated(function ($component, $state) {
+                                                    if ($state && is_string($state) && str_contains($state, '/storage/')) {
+                                                        $relativePath = str_replace([
+                                                            'http://dev-svnova.id/storage/',
+                                                            'https://dev-svnova.id/storage/',
+                                                            config('app.url').'/storage/',
+                                                        ], '', $state);
+                                                        $component->state($relativePath);
+                                                    } elseif ($state && is_string($state) && (str_contains($state, 'picsum.photos') || str_starts_with($state, 'http'))) {
+                                                        // Hide external URLs
+                                                        $component->state(null);
+                                                    }
+                                                })
+                                                ->required(),
+                                            Forms\Components\TextInput::make('alt_text')
+                                                ->label('Alt Text')
+                                                ->maxLength(255)
+                                                ->placeholder('Describe this image for accessibility'),
+                                        ])
+                                        ->reorderable()
+                                        ->columns(2)
+                                        ->collapsed()
+                                        ->itemLabel(fn (array $state): ?string => $state['alt_text'] ?? 'Additional Image')
+                                        ->addActionLabel('Add Another Image')
+                                        ->maxItems(9)
+                                        ->columnSpanFull(),
+                                ])
+                                ->collapsible(),
                         ]),
 
                     Forms\Components\Wizard\Step::make('Specifications')
@@ -185,28 +251,68 @@ class OfferResource extends Resource
                                             'website' => 'Website',
                                             'other' => 'Other',
                                         ])
-                                        ->required(),
+                                        ->required()
+                                        ->live()
+                                        ->disableOptionWhen(function ($value, $state, Forms\Get $get) {
+                                            // Get all selected platforms in the current repeater
+                                            $selectedPlatforms = collect($get('../../ecommerceLinks'))
+                                                ->pluck('platform')
+                                                ->filter()
+                                                ->toArray();
+
+                                            // If this is the current item, don't disable its own value
+                                            $currentPlatform = $state;
+                                            if ($value === $currentPlatform) {
+                                                return false;
+                                            }
+
+                                            // Disable if platform is already selected elsewhere
+                                            return in_array($value, $selectedPlatforms);
+                                        }),
                                     Forms\Components\TextInput::make('store_name')
                                         ->maxLength(255),
                                     Forms\Components\TextInput::make('product_url')
                                         ->required()
                                         ->url()
-                                        ->columnSpanFull(),
+                                        ->columnSpan(1),
                                     Forms\Components\TextInput::make('price_on_platform')
                                         ->numeric()
-                                        ->prefix('IDR'),
-                                    Forms\Components\TextInput::make('sort_order')
-                                        ->numeric()
-                                        ->default(0),
+                                        ->prefix('IDR')
+                                        ->columnSpan(1),
                                     Forms\Components\Toggle::make('is_verified')
                                         ->default(false),
                                     Forms\Components\Toggle::make('is_active')
                                         ->default(true),
                                 ])
+                                ->reorderable()
                                 ->columns(2)
                                 ->collapsed()
-                                ->itemLabel(fn (array $state): ?string => $state['platform'] ?? null)
+                                ->itemLabel(function (array $state): ?string {
+                                    $platformLabels = [
+                                        'tokopedia' => 'Tokopedia',
+                                        'shopee' => 'Shopee',
+                                        'tiktok_shop' => 'TikTok Shop',
+                                        'bukalapak' => 'Bukalapak',
+                                        'blibli' => 'Blibli',
+                                        'lazada' => 'Lazada',
+                                        'instagram' => 'Instagram',
+                                        'whatsapp' => 'WhatsApp',
+                                        'website' => 'Website',
+                                        'other' => 'Other',
+                                    ];
+
+                                    if (empty($state['platform'])) {
+                                        return 'Select Platform';
+                                    }
+
+                                    $platform = $platformLabels[$state['platform']] ?? $state['platform'];
+                                    $storeName = ! empty($state['store_name']) ? ' - '.$state['store_name'] : '';
+
+                                    return $platform.$storeName;
+                                })
+                                ->live()
                                 ->addActionLabel('Add E-commerce Link')
+                                ->minItems(1)
                                 ->columnSpanFull(),
                         ]),
 
@@ -222,7 +328,7 @@ class OfferResource extends Resource
                                     Forms\Components\TextInput::make('name')
                                         ->required()
                                         ->live(onBlur: true)
-                                        ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
+                                        ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug($state))),
                                     Forms\Components\TextInput::make('slug')
                                         ->required(),
                                 ])
@@ -235,22 +341,17 @@ class OfferResource extends Resource
                                 ->label('Active')
                                 ->helperText('Active products are visible to customers')
                                 ->default(true),
-                            Forms\Components\TextInput::make('view_count')
-                                ->label('View Count')
-                                ->numeric()
-                                ->default(0)
-                                ->disabled()
-                                ->helperText('This is automatically updated'),
                         ])->columns(2),
                 ])
-                ->columnSpanFull()
-                ->persistStepInQueryString()
+                    ->columnSpanFull()
+                    ->persistStepInQueryString(),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\ImageColumn::make('primary_image_url')
                     ->label('Image')
@@ -269,7 +370,7 @@ class OfferResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('availability')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'available' => 'success',
                         'out_of_stock' => 'danger',
                         'seasonal' => 'warning',
@@ -296,6 +397,7 @@ class OfferResource extends Resource
                     ->relationship('sme', 'name')
                     ->options(function () {
                         $user = User::find(Auth::id());
+
                         return $user->getAccessibleSmes()->pluck('name', 'id');
                     }),
                 Tables\Filters\SelectFilter::make('category')
@@ -383,6 +485,7 @@ class OfferResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $user = User::find(Auth::id());
+
         return $user->getAccessibleOffers();
     }
 
@@ -399,6 +502,7 @@ class OfferResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         $user = User::find(Auth::id());
+
         return static::getEloquentQuery()->count();
     }
 }

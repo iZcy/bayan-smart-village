@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Offer;
 use App\Models\OfferEcommerceLink;
-use App\Models\Category;
 use App\Models\OfferTag;
 use App\Models\Village;
 use Illuminate\Http\Request;
@@ -17,7 +17,7 @@ class OfferController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Offer::with(['sme.community.village', 'category', 'tags'])
+        $query = Offer::with(['sme.community.village', 'category', 'tags', 'primaryImage'])
             ->where('is_active', true);
 
         // Filter by category
@@ -92,7 +92,7 @@ class OfferController extends Controller
 
         return response()->json([
             'products' => $products,
-            'filters' => $request->only(['category', 'village', 'tags', 'availability', 'min_price', 'max_price', 'search', 'sort'])
+            'filters' => $request->only(['category', 'village', 'tags', 'availability', 'min_price', 'max_price', 'search', 'sort']),
         ]);
     }
 
@@ -103,7 +103,7 @@ class OfferController extends Controller
     {
         $limit = $request->get('limit', config('smartvillage.products.featured_limit', 8));
 
-        $products = Offer::with(['sme.community.village', 'category'])
+        $products = Offer::with(['sme.community.village', 'category', 'primaryImage'])
             ->where('is_active', true)
             ->where('is_featured', true)
             ->latest()
@@ -111,7 +111,7 @@ class OfferController extends Controller
             ->get();
 
         return response()->json([
-            'featured_products' => $products
+            'featured_products' => $products,
         ]);
     }
 
@@ -126,12 +126,10 @@ class OfferController extends Controller
                 'sme.community.village',
                 'category',
                 'tags',
-                'images' => function ($query) {
-                    $query->orderBy('sort_order');
-                },
+                'additionalImages',
                 'ecommerceLinks' => function ($query) {
                     $query->where('is_active', true)->orderBy('sort_order');
-                }
+                },
             ])
             ->firstOrFail();
 
@@ -142,13 +140,13 @@ class OfferController extends Controller
         $relatedProducts = Offer::where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
-            ->with(['sme.community.village', 'category'])
+            ->with(['sme.community.village', 'category', 'primaryImage'])
             ->take(4)
             ->get();
 
         return response()->json([
             'product' => $product,
-            'related_products' => $relatedProducts
+            'related_products' => $relatedProducts,
         ]);
     }
 
@@ -159,7 +157,7 @@ class OfferController extends Controller
     {
         $village = $request->attributes->get('village');
 
-        if (!$village) {
+        if (! $village) {
             return response()->json(['error' => 'Village not found'], 404);
         }
 
@@ -167,7 +165,7 @@ class OfferController extends Controller
             $q->where('village_id', $village->id);
         })
             ->where('is_active', true)
-            ->with(['sme.community', 'category', 'tags']);
+            ->with(['sme.community', 'category', 'tags', 'primaryImage']);
 
         // Apply same filters as index method
         if ($request->filled('category')) {
@@ -188,7 +186,7 @@ class OfferController extends Controller
 
         return response()->json([
             'village' => $village->name,
-            'products' => $products
+            'products' => $products,
         ]);
     }
 
@@ -204,7 +202,7 @@ class OfferController extends Controller
             ->get();
 
         return response()->json([
-            'categories' => $categories
+            'categories' => $categories,
         ]);
     }
 
@@ -221,7 +219,7 @@ class OfferController extends Controller
             ->get();
 
         return response()->json([
-            'tags' => $tags
+            'tags' => $tags,
         ]);
     }
 
@@ -231,7 +229,7 @@ class OfferController extends Controller
     public function search(Request $request)
     {
         $request->validate([
-            'q' => 'required|string|min:2|max:100'
+            'q' => 'required|string|min:2|max:100',
         ]);
 
         $search = $request->get('q');
@@ -248,13 +246,13 @@ class OfferController extends Controller
                         $catQuery->where('name', 'like', "%{$search}%");
                     });
             })
-            ->with(['sme.community.village', 'category', 'tags'])
+            ->with(['sme.community.village', 'category', 'tags', 'primaryImage'])
             ->latest()
             ->paginate(12);
 
         return response()->json([
             'search_query' => $search,
-            'products' => $products
+            'products' => $products,
         ]);
     }
 
@@ -273,7 +271,7 @@ class OfferController extends Controller
 
         return response()->json([
             'message' => 'Click tracked successfully',
-            'redirect_url' => $link->product_url
+            'redirect_url' => $link->product_url,
         ]);
     }
 
@@ -302,12 +300,12 @@ class OfferController extends Controller
                     ->having('offers_count', '>', 0)
                     ->orderBy('offers_count', 'desc')
                     ->take(5)
-                    ->get()
+                    ->get(),
             ];
         });
 
         return response()->json([
-            'statistics' => $stats
+            'statistics' => $stats,
         ]);
     }
 }

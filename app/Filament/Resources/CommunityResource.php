@@ -53,8 +53,20 @@ class CommunityResource extends Resource
                             ->rows(3),
                         Forms\Components\TextInput::make('domain')
                             ->url(),
-                        Forms\Components\TextInput::make('logo_url')
-                            ->url(),
+                        Forms\Components\FileUpload::make('logo_url')
+                            ->label('Community Logo')
+                            ->image()
+                            ->disk('public')
+                            ->directory('communities/logos')
+                            ->visibility('public')
+                            ->maxSize(2048) // 2MB
+                            ->imagePreviewHeight(100)
+                            ->downloadable()
+                            ->openable()
+                            ->deletable()
+                            ->previewable()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                            ->columnSpanFull(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Contact Information')
@@ -72,6 +84,7 @@ class CommunityResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\ImageColumn::make('logo_url')
                     ->label('Logo')

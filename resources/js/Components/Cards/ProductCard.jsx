@@ -93,14 +93,9 @@ const ProductCard = ({ product, index, village }) => {
                     {product.name}
                 </h3>
 
-                <p className="text-gray-300 mb-4 line-clamp-3 leading-relaxed text-sm h-[68px] overflow-hidden">
+                <p className="text-gray-300 mb-4 leading-relaxed text-sm line-clamp-3">
                     {product.short_description ||
-                        product.description
-                            ?.replace(/<[^>]*>/g, "")
-                            .substring(0, 120)}
-                    {(product.short_description?.length > 120 ||
-                        product.description?.length > 120) &&
-                        "..."}
+                        product.description?.replace(/<[^>]*>/g, "")}
                 </p>
 
                 <div className="flex items-center justify-between">

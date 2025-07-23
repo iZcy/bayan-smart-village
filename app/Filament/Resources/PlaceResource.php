@@ -53,6 +53,20 @@ class PlaceResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload(),
+                        Forms\Components\Select::make('category_id')
+                            ->relationship('category', 'name')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->options(function () {
+                                $user = \App\Models\User::find(\Illuminate\Support\Facades\Auth::id());
+                                if ($user->isSuperAdmin()) {
+                                    return \App\Models\Category::pluck('name', 'id');
+                                }
+
+                                $villageIds = $user->getAccessibleVillages()->pluck('id');
+                                return \App\Models\Category::whereIn('village_id', $villageIds)->pluck('name', 'id');
+                            }),
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255)
@@ -64,8 +78,20 @@ class PlaceResource extends Resource
                         Forms\Components\Textarea::make('description')
                             ->required()
                             ->rows(4),
-                        Forms\Components\TextInput::make('image_url')
-                            ->url(),
+                        Forms\Components\FileUpload::make('image_url')
+                            ->label('Place Image')
+                            ->image()
+                            ->disk('public')
+                            ->directory('places')
+                            ->visibility('public')
+                            ->maxSize(5120) // 5MB
+                            ->imagePreviewHeight(150)
+                            ->downloadable()
+                            ->openable()
+                            ->deletable()
+                            ->previewable()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                            ->columnSpanFull(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Contact & Location')
@@ -93,6 +119,7 @@ class PlaceResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')
                     ->label('Image')
@@ -101,6 +128,9 @@ class PlaceResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('village.name')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('category.name')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('smes_count')
@@ -121,6 +151,8 @@ class PlaceResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('village')
                     ->relationship('village', 'name'),
+                Tables\Filters\SelectFilter::make('category')
+                    ->relationship('category', 'name'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -143,6 +175,7 @@ class PlaceResource extends Resource
                         Infolists\Components\ImageEntry::make('image_url'),
                         Infolists\Components\TextEntry::make('name'),
                         Infolists\Components\TextEntry::make('village.name'),
+                        Infolists\Components\TextEntry::make('category.name'),
                         Infolists\Components\TextEntry::make('description'),
                     ])->columns(2),
 
@@ -156,8 +189,10 @@ class PlaceResource extends Resource
 
                 Infolists\Components\Section::make('Custom Fields')
                     ->schema([
-                        Infolists\Components\KeyValueEntry::make('custom_fields'),
-                    ]),
+                        Infolists\Components\KeyValueEntry::make('custom_fields')
+                            ->hidden(fn ($record) => empty($record->custom_fields)),
+                    ])
+                    ->hidden(fn ($record) => empty($record->custom_fields)),
             ]);
     }
 

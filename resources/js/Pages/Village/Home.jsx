@@ -409,7 +409,7 @@ const Home = ({
                 <section
                     id="tourism"
                     ref={tourismRef}
-                    className="min-h-screen relative overflow-hidden py-20 z-10"
+                    className="min-h-fit lg:min-h-screen relative overflow-x-hidden py-20 z-10"
                     onMouseEnter={() => {
                         setIsTourismInteracting(true);
                         handleUserInteraction();
@@ -421,14 +421,14 @@ const Home = ({
                     {/* Enhanced backdrop blur from previous version */}
                     <div className="absolute inset-0 backdrop-blur-sm" />
 
-                    <div className="container mx-auto px-6 h-full relative z-10">
+                    <div className="container mx-auto px-4 sm:px-6 relative z-10">
                         <motion.div
                             initial={{ opacity: 0, y: 50 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
-                            className="text-center mb-16"
+                            className="text-center mb-12 lg:mb-16"
                         >
-                            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+                            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-4">
                                 🏞️ Tourism & Services
                             </h2>
                             <motion.div
@@ -439,13 +439,13 @@ const Home = ({
                             />
                         </motion.div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 max-h-[70vh]">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                             {/* Real Google Maps - Left (Restored from previous version) */}
                             <motion.div
                                 initial={{ opacity: 0, x: -50 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 transition={{ duration: 0.8 }}
-                                className="bg-white/10 backdrop-blur-md rounded-2xl p-4 md:p-6 flex items-center justify-center"
+                                className="bg-white/10 backdrop-blur-md rounded-2xl p-3 sm:p-4 md:p-6 order-2 lg:order-1 flex items-center justify-center min-h-80"
                                 onMouseDown={handleUserInteraction}
                                 onTouchStart={handleUserInteraction}
                                 onWheel={handleUserInteraction}
@@ -472,7 +472,7 @@ const Home = ({
                                                     ? { duration: 0 }
                                                     : { duration: 0.5 },
                                         }}
-                                        className="w-full h-80 bg-gradient-to-br from-green-400/30 to-blue-400/30 rounded-xl relative overflow-hidden"
+                                        className="w-full h-60 sm:h-72 lg:h-80 bg-gradient-to-br from-green-400/30 to-blue-400/30 rounded-xl relative overflow-hidden"
                                         onMouseDown={handleUserInteraction}
                                         onTouchStart={handleUserInteraction}
                                         onWheel={handleUserInteraction}
@@ -580,7 +580,7 @@ const Home = ({
                                 initial={{ opacity: 0, y: 50 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.8, delay: 0.2 }}
-                                className="flex flex-col justify-center max-h-96"
+                                className="order-1 lg:order-2 flex flex-col justify-center min-h-80"
                                 onScroll={handleUserInteraction}
                                 onWheel={handleUserInteraction}
                                 onTouchStart={handleUserInteraction}
@@ -608,24 +608,20 @@ const Home = ({
                                                     ? { duration: 0 }
                                                     : { duration: 0.5 },
                                         }}
-                                        className="text-white bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10 h-full overflow-y-auto"
-                                        onScroll={handleUserInteraction}
-                                        onWheel={handleUserInteraction}
+                                        className="text-white bg-white/5 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 border border-white/10"
                                         onMouseDown={handleUserInteraction}
                                         onTouchStart={handleUserInteraction}
                                     >
-                                        <h3 className="text-xl md:text-3xl font-bold mb-4">
+                                        <h3 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-4">
                                             {tourismPlaces[selectedTourismPlace]
                                                 ?.name ||
                                                 "Beautiful Destination"}
                                         </h3>
                                         <motion.div
-                                            className="text-lg opacity-90 mb-6 leading-relaxed max-h-32 overflow-y-auto"
+                                            className="text-sm sm:text-base lg:text-lg opacity-90 mb-4 sm:mb-6 leading-relaxed"
                                             initial={{ y: 20 }}
                                             animate={{ y: 0 }}
                                             transition={{ delay: 0.3 }}
-                                            onScroll={handleUserInteraction}
-                                            onWheel={handleUserInteraction}
                                         >
                                             <p className="line-clamp-3">
                                                 {tourismPlaces[
@@ -633,16 +629,7 @@ const Home = ({
                                                 ]?.description
                                                     ? tourismPlaces[
                                                           selectedTourismPlace
-                                                      ].description.length > 200
-                                                        ? tourismPlaces[
-                                                              selectedTourismPlace
-                                                          ].description.substring(
-                                                              0,
-                                                              200
-                                                          ) + "..."
-                                                        : tourismPlaces[
-                                                              selectedTourismPlace
-                                                          ].description
+                                                      ].description
                                                     : "Explore the natural beauty and cultural richness of this amazing destination."}
                                             </p>
                                         </motion.div>
@@ -719,7 +706,7 @@ const Home = ({
                                 initial={{ opacity: 0, x: 50 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 transition={{ duration: 0.8, delay: 0.4 }}
-                                className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 pr-2"
+                                className="space-y-3 sm:space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 pr-1 sm:pr-2 order-3 lg:order-3"
                                 onScroll={handleUserInteraction}
                                 onWheel={handleUserInteraction}
                                 onTouchStart={handleUserInteraction}
@@ -741,7 +728,7 @@ const Home = ({
                                                     "0 10px 30px rgba(255,255,255,0.1)",
                                             }}
                                             whileTap={{ scale: 0.98 }}
-                                            className={`p-4 rounded-xl cursor-pointer transition-all duration-300 ${
+                                            className={`p-3 sm:p-4 rounded-xl cursor-pointer transition-all duration-300 ${
                                                 selectedTourismPlace === index
                                                     ? "bg-white/20 backdrop-blur-md border border-white/30 shadow-lg"
                                                     : "bg-white/10 backdrop-blur-sm hover:bg-white/15"
@@ -750,9 +737,9 @@ const Home = ({
                                             onMouseDown={handleUserInteraction}
                                             onTouchStart={handleUserInteraction}
                                         >
-                                            <div className="flex items-center space-x-4">
+                                            <div className="flex items-center space-x-3 sm:space-x-4">
                                                 <motion.div
-                                                    className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center relative overflow-hidden flex-shrink-0"
+                                                    className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-lg flex items-center justify-center relative overflow-hidden flex-shrink-0"
                                                     whileHover={{ rotate: 5 }}
                                                 >
                                                     {place.image_url ? (
@@ -764,7 +751,7 @@ const Home = ({
                                                             className="w-full h-full object-cover rounded-lg"
                                                         />
                                                     ) : (
-                                                        <span className="text-2xl">
+                                                        <span className="text-xl sm:text-2xl">
                                                             🏞️
                                                         </span>
                                                     )}
@@ -778,10 +765,10 @@ const Home = ({
                                                 </motion.div>
 
                                                 <div className="flex-1 text-white min-w-0">
-                                                    <h4 className="font-semibold text-lg truncate">
+                                                    <h4 className="font-semibold text-sm sm:text-base lg:text-lg truncate">
                                                         {place.name}
                                                     </h4>
-                                                    <p className="text-sm opacity-75 truncate">
+                                                    <p className="text-xs sm:text-sm opacity-75 truncate">
                                                         {place.category?.name}
                                                     </p>
                                                 </div>
@@ -815,7 +802,7 @@ const Home = ({
                 <section
                     id="sme"
                     ref={smeRef}
-                    className="min-h-screen relative overflow-hidden py-20 z-10"
+                    className="min-h-fit lg:min-h-screen relative overflow-x-hidden py-20 z-10"
                     onMouseEnter={() => {
                         setIsSMEInteracting(true);
                         handleUserInteraction();
@@ -827,14 +814,14 @@ const Home = ({
                     {/* Enhanced backdrop blur from previous version */}
                     <div className="absolute inset-0 backdrop-blur-sm" />
 
-                    <div className="container mx-auto px-6 h-full relative z-10">
+                    <div className="container mx-auto px-4 sm:px-6 relative z-10">
                         <motion.div
                             initial={{ opacity: 0, y: 50 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
-                            className="text-center mb-16"
+                            className="text-center mb-12 lg:mb-16"
                         >
-                            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+                            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-4">
                                 🏪 Local Product Businesses
                             </h2>
                             <motion.div
@@ -845,13 +832,13 @@ const Home = ({
                             />
                         </motion.div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 max-h-[70vh]">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                             {/* Enhanced SME Places List - LEFT (From previous version) */}
                             <motion.div
                                 initial={{ opacity: 0, x: -50 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 transition={{ duration: 0.8 }}
-                                className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 pr-2"
+                                className="space-y-3 sm:space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 pr-1 sm:pr-2 order-3 lg:order-1"
                                 onScroll={handleUserInteraction}
                                 onWheel={handleUserInteraction}
                                 onTouchStart={handleUserInteraction}
@@ -871,7 +858,7 @@ const Home = ({
                                                 "0 10px 30px rgba(255,255,255,0.1)",
                                         }}
                                         whileTap={{ scale: 0.98 }}
-                                        className={`p-4 rounded-xl cursor-pointer transition-all duration-300 ${
+                                        className={`p-3 sm:p-4 rounded-xl cursor-pointer transition-all duration-300 ${
                                             selectedSMEPlace === index
                                                 ? "bg-white/20 backdrop-blur-md border border-white/30 shadow-lg"
                                                 : "bg-white/10 backdrop-blur-sm hover:bg-white/15"
@@ -880,7 +867,7 @@ const Home = ({
                                         onMouseDown={handleUserInteraction}
                                         onTouchStart={handleUserInteraction}
                                     >
-                                        <div className="flex items-center space-x-4">
+                                        <div className="flex items-center space-x-3 sm:space-x-4">
                                             <motion.div
                                                 animate={{
                                                     scale:
@@ -894,20 +881,20 @@ const Home = ({
                                                             ? 1
                                                             : 0.3,
                                                 }}
-                                                className="w-3 h-3 rounded-full bg-white flex-shrink-0"
+                                                className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-white flex-shrink-0"
                                             />
 
                                             <div className="flex-1 text-white min-w-0">
-                                                <h4 className="font-semibold text-lg truncate">
+                                                <h4 className="font-semibold text-sm sm:text-base lg:text-lg truncate">
                                                     {place.name}
                                                 </h4>
-                                                <p className="text-sm opacity-75 truncate">
+                                                <p className="text-xs sm:text-sm opacity-75 truncate">
                                                     {place.category?.name}
                                                 </p>
                                             </div>
 
                                             <motion.div
-                                                className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center relative overflow-hidden flex-shrink-0"
+                                                className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-lg flex items-center justify-center relative overflow-hidden flex-shrink-0"
                                                 whileHover={{ rotate: -5 }}
                                             >
                                                 {place.image_url ? (
@@ -917,7 +904,7 @@ const Home = ({
                                                         className="w-full h-full object-cover rounded-lg"
                                                     />
                                                 ) : (
-                                                    <span className="text-2xl">
+                                                    <span className="text-xl sm:text-2xl">
                                                         🏪
                                                     </span>
                                                 )}
@@ -938,7 +925,7 @@ const Home = ({
                                 initial={{ opacity: 0, y: 50 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.8, delay: 0.2 }}
-                                className="flex flex-col justify-center max-h-96"
+                                className="order-1 lg:order-2 flex flex-col justify-center min-h-80"
                                 onScroll={handleUserInteraction}
                                 onWheel={handleUserInteraction}
                                 onTouchStart={handleUserInteraction}
@@ -978,14 +965,12 @@ const Home = ({
                                                           type: "spring",
                                                       },
                                         }}
-                                        className="text-white bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10 h-full overflow-y-auto"
-                                        onScroll={handleUserInteraction}
-                                        onWheel={handleUserInteraction}
+                                        className="text-white bg-white/5 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 border border-white/10"
                                         onMouseDown={handleUserInteraction}
                                         onTouchStart={handleUserInteraction}
                                     >
                                         <motion.h3
-                                            className="text-3xl font-bold mb-4 line-clamp-1"
+                                            className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-4"
                                             initial={{ y: 20 }}
                                             animate={{ y: 0 }}
                                             transition={{ delay: 0.2 }}
@@ -995,56 +980,38 @@ const Home = ({
                                         </motion.h3>
 
                                         <motion.div
-                                            className="text-lg opacity-90 mb-6 leading-relaxed max-h-32 overflow-y-auto"
+                                            className="text-sm sm:text-base lg:text-lg opacity-90 mb-4 sm:mb-6 leading-relaxed"
                                             initial={{ y: 20 }}
                                             animate={{ y: 0 }}
                                             transition={{ delay: 0.3 }}
-                                            onScroll={handleUserInteraction}
-                                            onWheel={handleUserInteraction}
                                         >
                                             <p className="line-clamp-3">
                                                 {smePlaces[selectedSMEPlace]
                                                     ?.description
                                                     ? smePlaces[
                                                           selectedSMEPlace
-                                                      ].description.length > 200
-                                                        ? smePlaces[
-                                                              selectedSMEPlace
-                                                          ].description.substring(
-                                                              0,
-                                                              200
-                                                          ) + "..."
-                                                        : smePlaces[
-                                                              selectedSMEPlace
-                                                          ].description
+                                                      ].description
                                                     : "Supporting local economy through quality products and services."}
                                             </p>
                                         </motion.div>
-
-                                        <motion.div
-                                            className="space-y-3"
-                                            initial={{ y: 20 }}
-                                            animate={{ y: 0 }}
-                                            transition={{ delay: 0.4 }}
-                                        >
-                                            <div className="flex items-center p-3 bg-orange-500/20 rounded-lg">
-                                                <span className="text-orange-200 text-xl mr-3">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center">
+                                                <span className="text-orange-200">
                                                     📍
                                                 </span>
-                                                <span className="text-sm">
+                                                <span className="ml-2 text-sm">
                                                     {smePlaces[selectedSMEPlace]
                                                         ?.address ||
                                                         "Village Location"}
                                                 </span>
                                             </div>
-
                                             {smePlaces[selectedSMEPlace]
                                                 ?.phone_number && (
-                                                <div className="flex items-center p-3 bg-orange-500/20 rounded-lg">
-                                                    <span className="text-orange-200 text-xl mr-3">
+                                                <div className="flex items-center">
+                                                    <span className="text-orange-200">
                                                         📞
                                                     </span>
-                                                    <span className="text-sm">
+                                                    <span className="ml-2 text-sm">
                                                         {
                                                             smePlaces[
                                                                 selectedSMEPlace
@@ -1053,16 +1020,15 @@ const Home = ({
                                                     </span>
                                                 </div>
                                             )}
-
                                             {smePlaces[selectedSMEPlace]
                                                 ?.latitude &&
                                                 smePlaces[selectedSMEPlace]
                                                     ?.longitude && (
-                                                    <div className="flex items-center p-3 bg-orange-500/20 rounded-lg">
-                                                        <span className="text-orange-200 text-xl mr-3">
+                                                    <div className="flex items-center">
+                                                        <span className="text-orange-200">
                                                             🗺️
                                                         </span>
-                                                        <span className="text-sm">
+                                                        <span className="ml-2 text-sm">
                                                             {
                                                                 smePlaces[
                                                                     selectedSMEPlace
@@ -1089,7 +1055,7 @@ const Home = ({
                                             >
                                                 Visit Business →
                                             </motion.button>
-                                        </motion.div>
+                                        </div>
                                     </motion.div>
                                 </AnimatePresence>
                             </motion.div>
@@ -1099,7 +1065,7 @@ const Home = ({
                                 initial={{ opacity: 0, x: 50 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 transition={{ duration: 0.8, delay: 0.4 }}
-                                className="bg-white/10 backdrop-blur-md rounded-2xl p-6 flex items-center justify-center"
+                                className="bg-white/10 backdrop-blur-md rounded-2xl p-3 sm:p-4 lg:p-6 order-2 lg:order-3 flex items-center justify-center min-h-80"
                                 onMouseDown={handleUserInteraction}
                                 onTouchStart={handleUserInteraction}
                                 onWheel={handleUserInteraction}
@@ -1138,7 +1104,7 @@ const Home = ({
                                                           type: "spring",
                                                       },
                                         }}
-                                        className="w-full h-80 bg-gradient-to-br from-orange-400/30 to-red-400/30 rounded-xl relative overflow-hidden"
+                                        className="w-full h-60 sm:h-72 lg:h-80 bg-gradient-to-br from-orange-400/30 to-red-400/30 rounded-xl relative overflow-hidden"
                                         onMouseDown={handleUserInteraction}
                                         onTouchStart={handleUserInteraction}
                                         onWheel={handleUserInteraction}

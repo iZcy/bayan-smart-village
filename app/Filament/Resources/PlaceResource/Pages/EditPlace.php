@@ -18,4 +18,16 @@ class EditPlace extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $record = $this->getRecord();
+        
+        // Handle image_url - get raw database value instead of accessor URL
+        if ($record && $record->image_url) {
+            $data['image_url'] = $record->getRawOriginal('image_url');
+        }
+
+        return $data;
+    }
 }

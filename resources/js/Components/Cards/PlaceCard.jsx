@@ -77,9 +77,8 @@ const PlaceCard = ({ place, index, village }) => {
                     {place.name}
                 </h3>
 
-                <p className="text-gray-300 mb-4 line-clamp-3 leading-relaxed text-sm h-[68px] overflow-hidden">
-                    {place.description?.substring(0, 150)}
-                    {place.description?.length > 150 && "..."}
+                <p className="text-gray-300 mb-4 leading-relaxed text-sm line-clamp-3">
+                    {place.description}
                 </p>
 
                 <div className="flex items-center justify-between">

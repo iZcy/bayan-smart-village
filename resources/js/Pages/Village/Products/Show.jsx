@@ -48,9 +48,9 @@ const ProductShowPage = ({
                   },
               ]
             : []),
-        ...(product.images || []).map((img) => ({
+        ...(product.additional_images || []).map((img) => ({
             image_url: img.image_url,
-            caption: img.caption || `${product.name} - Image`,
+            caption: img.alt_text || `${product.name} - Image`,
             is_primary: false,
         })),
     ];
