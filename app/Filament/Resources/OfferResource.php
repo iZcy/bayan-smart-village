@@ -25,7 +25,18 @@ class OfferResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-gift';
 
-    protected static ?string $navigationGroup = 'Business';
+    protected static ?string $navigationGroup = 'Bisnis';
+    protected static ?string $navigationLabel = 'Penawaran';
+
+    public static function getModelLabel(): string
+    {
+        return __('Penawaran');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Penawaran');
+    }
 
     protected static ?int $navigationSort = 2;
 
@@ -34,10 +45,11 @@ class OfferResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Wizard::make([
-                    Forms\Components\Wizard\Step::make('Basic Information')
-                        ->description('Essential product details')
+                    Forms\Components\Wizard\Step::make('Informasi Dasar')
+                        ->description('Detail produk utama')
                         ->schema([
                             Forms\Components\Select::make('sme_id')
+                                ->label('UKM')
                                 ->relationship('sme', 'name')
                                 ->required()
                                 ->searchable()
@@ -48,6 +60,7 @@ class OfferResource extends Resource
                                     return $user->getAccessibleSmes()->pluck('name', 'id');
                                 }),
                             Forms\Components\Select::make('category_id')
+                                ->label('Kategori')
                                 ->relationship('category', 'name')
                                 ->required()
                                 ->searchable()
@@ -66,7 +79,7 @@ class OfferResource extends Resource
                                 ->required()
                                 ->maxLength(255)
                                 ->live(onBlur: true)
-                                ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug($state))),
+                                ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
                             Forms\Components\TextInput::make('slug')
                                 ->required()
                                 ->maxLength(255),
@@ -116,6 +129,16 @@ class OfferResource extends Resource
                             Forms\Components\Section::make('Primary Image')
                                 ->description('This will be the main image displayed for your product')
                                 ->schema([
+                                    Forms\Components\ViewField::make('current_primary_image')
+                                        ->label('Current Primary Image')
+                                        ->view('filament.forms.components.image-preview')
+                                        ->viewData(fn ($record) => [
+                                            'imageUrl' => $record?->primary_image_url,
+                                            'altText' => $record?->name ?? 'Product image'
+                                        ])
+                                        ->visible(fn ($record) => $record && $record->primary_image_url)
+                                        ->columnSpanFull(),
+                                    
                                     Forms\Components\FileUpload::make('primary_image_url')
                                         ->label('Primary Product Image')
                                         ->image()
@@ -129,31 +152,16 @@ class OfferResource extends Resource
                                         ->deletable()
                                         ->previewable()
                                         ->acceptedFileTypes(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'])
-                                        ->dehydrateStateUsing(function ($state) {
-                                            if (! $state) {
-                                                return $state;
-                                            }
-                                            if (is_array($state)) {
-                                                return $state;
-                                            } // Handle multiple files case
-
-                                            return str_starts_with($state, 'http') ? $state : config('app.url').'/storage/'.$state;
-                                        })
-                                        ->afterStateHydrated(function ($component, $state) {
-                                            if ($state && is_string($state) && str_contains($state, '/storage/')) {
-                                                $relativePath = str_replace([
-                                                    'http://dev-svnova.id/storage/',
-                                                    'https://dev-svnova.id/storage/',
-                                                    config('app.url').'/storage/',
-                                                ], '', $state);
-                                                $component->state($relativePath);
-                                            } elseif ($state && is_string($state) && (str_contains($state, 'picsum.photos') || str_starts_with($state, 'http'))) {
-                                                // Hide external URLs
-                                                $component->state(null);
-                                            }
-                                        })
-                                        ->helperText('Upload the main image for your product. This will be shown in listings and as the primary display.')
-                                        ->required(),
+                                        ->helperText(fn ($operation, $record) => 
+                                            $operation === 'edit' && $record && $record->primary_image_url 
+                                                ? 'Upload a new image to replace the current one, or leave empty to keep the existing image.'
+                                                : 'Upload the main image for your product. This will be shown in listings and as the primary display.'
+                                        )
+                                        ->required(fn ($operation) => $operation === 'create')
+                                        ->getUploadedFileNameForStorageUsing(
+                                            fn ($file): string => (string) str($file->getClientOriginalName())
+                                                ->prepend('primary-' . now()->timestamp . '-')
+                                        ),
                                 ])
                                 ->collapsible(),
                             Forms\Components\Section::make('Additional Images')
@@ -163,6 +171,16 @@ class OfferResource extends Resource
                                         ->relationship('additionalImages')
                                         ->label('Additional Product Images')
                                         ->schema([
+                                            Forms\Components\ViewField::make('current_image')
+                                                ->label('Current Image')
+                                                ->view('filament.forms.components.image-preview')
+                                                ->viewData(fn ($record) => [
+                                                    'imageUrl' => $record?->image_url,
+                                                    'altText' => $record?->alt_text ?? 'Additional product image'
+                                                ])
+                                                ->visible(fn ($record) => $record && $record->image_url)
+                                                ->columnSpanFull(),
+                                                
                                             Forms\Components\FileUpload::make('image_url')
                                                 ->label('Image')
                                                 ->image()
@@ -176,30 +194,12 @@ class OfferResource extends Resource
                                                 ->deletable()
                                                 ->previewable()
                                                 ->acceptedFileTypes(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'])
-                                                ->dehydrateStateUsing(function ($state) {
-                                                    if (! $state) {
-                                                        return $state;
-                                                    }
-                                                    if (is_array($state)) {
-                                                        return $state;
-                                                    } // Handle multiple files case
-
-                                                    return str_starts_with($state, 'http') ? $state : config('app.url').'/storage/'.$state;
-                                                })
-                                                ->afterStateHydrated(function ($component, $state) {
-                                                    if ($state && is_string($state) && str_contains($state, '/storage/')) {
-                                                        $relativePath = str_replace([
-                                                            'http://dev-svnova.id/storage/',
-                                                            'https://dev-svnova.id/storage/',
-                                                            config('app.url').'/storage/',
-                                                        ], '', $state);
-                                                        $component->state($relativePath);
-                                                    } elseif ($state && is_string($state) && (str_contains($state, 'picsum.photos') || str_starts_with($state, 'http'))) {
-                                                        // Hide external URLs
-                                                        $component->state(null);
-                                                    }
-                                                })
-                                                ->required(),
+                                                ->helperText(fn ($record) => 
+                                                    $record && $record->image_url 
+                                                        ? 'Upload a new image to replace the current one, or leave empty to keep the existing image.'
+                                                        : 'Upload an additional image to showcase your product.'
+                                                )
+                                                ->nullable(),
                                             Forms\Components\TextInput::make('alt_text')
                                                 ->label('Alt Text')
                                                 ->maxLength(255)
@@ -208,10 +208,25 @@ class OfferResource extends Resource
                                         ->reorderable()
                                         ->columns(2)
                                         ->collapsed()
-                                        ->itemLabel(fn (array $state): ?string => $state['alt_text'] ?? 'Additional Image')
+                                        ->itemLabel(fn(array $state): ?string => $state['alt_text'] ?? 'Additional Image')
                                         ->addActionLabel('Add Another Image')
                                         ->maxItems(9)
-                                        ->columnSpanFull(),
+                                        ->minItems(0)
+                                        ->columnSpanFull()
+                                        ->mutateRelationshipDataBeforeCreateUsing(function (array $data): ?array {
+                                            // Filter out empty image records
+                                            if (empty($data['image_url']) || is_null($data['image_url'])) {
+                                                return null;
+                                            }
+                                            return $data;
+                                        })
+                                        ->mutateRelationshipDataBeforeSaveUsing(function (array $data): ?array {
+                                            // Filter out empty image records  
+                                            if (empty($data['image_url']) || is_null($data['image_url'])) {
+                                                return null;
+                                            }
+                                            return $data;
+                                        }),
                                 ])
                                 ->collapsible(),
                         ]),
@@ -306,9 +321,9 @@ class OfferResource extends Resource
                                     }
 
                                     $platform = $platformLabels[$state['platform']] ?? $state['platform'];
-                                    $storeName = ! empty($state['store_name']) ? ' - '.$state['store_name'] : '';
+                                    $storeName = ! empty($state['store_name']) ? ' - ' . $state['store_name'] : '';
 
-                                    return $platform.$storeName;
+                                    return $platform . $storeName;
                                 })
                                 ->live()
                                 ->addActionLabel('Add E-commerce Link')
@@ -328,7 +343,7 @@ class OfferResource extends Resource
                                     Forms\Components\TextInput::make('name')
                                         ->required()
                                         ->live(onBlur: true)
-                                        ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug($state))),
+                                        ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
                                     Forms\Components\TextInput::make('slug')
                                         ->required(),
                                 ])
@@ -352,6 +367,8 @@ class OfferResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(20)
+            ->paginationPageOptions([10, 20, 50])
             ->columns([
                 Tables\Columns\ImageColumn::make('primary_image_url')
                     ->label('Image')
@@ -370,7 +387,7 @@ class OfferResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('availability')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'available' => 'success',
                         'out_of_stock' => 'danger',
                         'seasonal' => 'warning',
@@ -472,13 +489,76 @@ class OfferResource extends Resource
                             ->separator(','),
                     ]),
 
-                Infolists\Components\Section::make('Related Content')
+                Infolists\Components\Section::make('E-commerce Links')
                     ->schema([
-                        Infolists\Components\TextEntry::make('ecommerceLinks_count')
-                            ->label('E-commerce Links'),
-                        Infolists\Components\TextEntry::make('images_count')
-                            ->label('Additional Images'),
-                    ])->columns(2),
+                        Infolists\Components\RepeatableEntry::make('ecommerceLinks')
+                            ->label('Available on')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('platform')
+                                    ->badge()
+                                    ->color(fn (string $state): string => match ($state) {
+                                        'tokopedia' => 'success',
+                                        'shopee' => 'warning',
+                                        'tiktok_shop' => 'danger',
+                                        'bukalapak' => 'info',
+                                        'blibli' => 'primary',
+                                        'lazada' => 'secondary',
+                                        'instagram' => 'gray',
+                                        'whatsapp' => 'success',
+                                        'website' => 'primary',
+                                        'other' => 'gray',
+                                        default => 'gray',
+                                    })
+                                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                                        'tiktok_shop' => 'TikTok Shop',
+                                        default => ucfirst($state),
+                                    }),
+                                Infolists\Components\TextEntry::make('store_name')
+                                    ->label('Store'),
+                                Infolists\Components\TextEntry::make('product_url')
+                                    ->label('Link')
+                                    ->url(fn ($record) => $record->product_url)
+                                    ->openUrlInNewTab()
+                                    ->icon('heroicon-m-arrow-top-right-on-square')
+                                    ->limit(50),
+                                Infolists\Components\TextEntry::make('price_on_platform')
+                                    ->label('Price')
+                                    ->money('IDR')
+                                    ->placeholder('Not specified'),
+                                Infolists\Components\IconEntry::make('is_verified')
+                                    ->label('Verified')
+                                    ->boolean(),
+                                Infolists\Components\IconEntry::make('is_active')
+                                    ->label('Active')
+                                    ->boolean(),
+                            ])
+                            ->columns(3)
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible()
+                    ->visible(fn ($record) => $record->ecommerceLinks->isNotEmpty()),
+
+                Infolists\Components\Section::make('Additional Images')
+                    ->schema([
+                        Infolists\Components\RepeatableEntry::make('additionalImages')
+                            ->label('Gallery')
+                            ->schema([
+                                Infolists\Components\ImageEntry::make('image_url')
+                                    ->label('Image')
+                                    ->size(150)
+                                    ->square(),
+                                Infolists\Components\TextEntry::make('alt_text')
+                                    ->label('Description')
+                                    ->placeholder('No description'),
+                                Infolists\Components\TextEntry::make('sort_order')
+                                    ->label('Order')
+                                    ->badge(),
+                            ])
+                            ->columns(3)
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible()
+                    ->visible(fn ($record) => $record->additionalImages->isNotEmpty()),
             ]);
     }
 

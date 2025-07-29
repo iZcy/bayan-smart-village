@@ -22,16 +22,28 @@ class CommunityResource extends Resource
 {
     protected static ?string $model = Community::class;
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
-    protected static ?string $navigationGroup = 'Management';
+    protected static ?string $navigationGroup = 'Manajemen';
+    protected static ?string $navigationLabel = 'Komunitas';
+
+    public static function getModelLabel(): string
+    {
+        return __('Komunitas');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Komunitas');
+    }
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Basic Information')
+                Forms\Components\Section::make('Informasi Dasar')
                     ->schema([
                         Forms\Components\Select::make('village_id')
+                            ->label('Desa')
                             ->relationship('village', 'name')
                             ->required()
                             ->searchable()
@@ -42,11 +54,13 @@ class CommunityResource extends Resource
                             })
                             ->disabled(fn() => !User::find(Auth::id())->isSuperAdmin()), // Only super admin can change village
                         Forms\Components\TextInput::make('name')
+                            ->label('Nama Komunitas')
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
                         Forms\Components\TextInput::make('slug')
+                            ->label('Slug')
                             ->required()
                             ->maxLength(255),
                         Forms\Components\Textarea::make('description')
@@ -85,6 +99,8 @@ class CommunityResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(20)
+            ->paginationPageOptions([10, 20, 50])
             ->columns([
                 Tables\Columns\ImageColumn::make('logo_url')
                     ->label('Logo')
@@ -95,7 +111,7 @@ class CommunityResource extends Resource
                 Tables\Columns\TextColumn::make('village.name')
                     ->searchable()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: User::find(Auth::id())?->isVillageAdmin()),
+                    ->toggleable(isToggledHiddenByDefault: User::find(Auth::id())->isVillageAdmin()),
                 Tables\Columns\TextColumn::make('smes_count')
                     ->counts('smes')
                     ->label('SMEs'),

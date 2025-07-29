@@ -21,8 +21,7 @@ class OfferEcommerceLinkResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
     protected static ?string $navigationGroup = 'Develop';
     protected static ?int $navigationSort = 100;
-    protected static ?string $label = 'E-commerce Links';
-    protected static ?string $pluralLabel = 'E-commerce Links';
+    protected static ?string $navigationLabel = 'Tautan E-commerce';
 
     public static function form(Form $form): Form
     {
@@ -82,6 +81,8 @@ class OfferEcommerceLinkResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(20)
+            ->paginationPageOptions([10, 20, 50])
             ->columns([
                 Tables\Columns\TextColumn::make('offer.name')
                     ->searchable()

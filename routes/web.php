@@ -367,6 +367,51 @@ Route::prefix('media')->name('media.')->group(function () {
         ->name('optimized');
 });
 
+// Audio serving route (for proper range request handling)
+Route::get('/audio/{filename}', function($filename) {
+    $path = public_path('audio/' . $filename);
+    
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    
+    $size = filesize($path);
+    $length = $size;
+    $start = 0;
+    $end = $size - 1;
+    
+    $headers = [
+        'Content-Type' => 'audio/mpeg',
+        'Accept-Ranges' => 'bytes',
+        'Content-Length' => $size,
+        'Cache-Control' => 'public, max-age=3600',
+    ];
+    
+    // Handle range requests for audio streaming
+    if (request()->hasHeader('Range')) {
+        $range = request()->header('Range');
+        if (preg_match('/bytes=(\d+)-(\d*)/', $range, $matches)) {
+            $start = intval($matches[1]);
+            $end = $matches[2] ? intval($matches[2]) : $size - 1;
+            $length = $end - $start + 1;
+            
+            $headers['Content-Range'] = "bytes $start-$end/$size";
+            $headers['Content-Length'] = $length;
+            
+            $status = 206; // Partial Content
+        }
+    } else {
+        $status = 200;
+    }
+    
+    $stream = fopen($path, 'rb');
+    fseek($stream, $start);
+    $content = fread($stream, $length);
+    fclose($stream);
+    
+    return response($content, $status, $headers);
+})->where('filename', '.*')->name('audio.serve');
+
 // Handle custom domains dynamically
 try {
     $villagesWithCustomDomains = \App\Models\Village::whereNotNull('domain')

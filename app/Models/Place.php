@@ -29,7 +29,7 @@ class Place extends Model
     ];
 
     protected $casts = [
-        'custom_fields' => 'array',
+        'custom_fields' => 'json',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
     ];

@@ -21,7 +21,7 @@ class OfferImageResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-camera';
     protected static ?string $navigationGroup = 'Develop';
     protected static ?int $navigationSort = 101;
-    protected static ?string $label = 'Offer Images';
+    protected static ?string $label = 'Gambar Penawaran';
 
     public static function form(Form $form): Form
     {
@@ -61,6 +61,8 @@ class OfferImageResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(20)
+            ->paginationPageOptions([10, 20, 50])
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')
                     ->label('Image')

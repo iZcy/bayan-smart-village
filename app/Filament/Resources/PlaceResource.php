@@ -21,12 +21,17 @@ class PlaceResource extends Resource
 {
     protected static ?string $model = Place::class;
     protected static ?string $navigationIcon = 'heroicon-o-map-pin';
-    protected static ?string $navigationGroup = 'Management';
+    protected static ?string $navigationGroup = 'Manajemen';
     protected static ?int $navigationSort = 3;
+    protected static ?string $navigationLabel = 'Tempat';
 
     public static function getEloquentQuery(): Builder
     {
         $user = User::find(Auth::id());
+
+        if (false) {
+            return parent::getEloquentQuery()->whereRaw('1 = 0');
+        }
 
         if ($user->isSuperAdmin()) {
             return parent::getEloquentQuery();
@@ -59,7 +64,7 @@ class PlaceResource extends Resource
                             ->searchable()
                             ->preload()
                             ->options(function () {
-                                $user = \App\Models\User::find(\Illuminate\Support\Facades\Auth::id());
+                                $user = User::find(Auth::id());
                                 if ($user->isSuperAdmin()) {
                                     return \App\Models\Category::pluck('name', 'id');
                                 }
@@ -120,6 +125,8 @@ class PlaceResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(20)
+            ->paginationPageOptions([10, 20, 50])
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')
                     ->label('Image')
@@ -190,9 +197,9 @@ class PlaceResource extends Resource
                 Infolists\Components\Section::make('Custom Fields')
                     ->schema([
                         Infolists\Components\KeyValueEntry::make('custom_fields')
-                            ->hidden(fn ($record) => empty($record->custom_fields)),
+                            ->hidden(fn($record) => empty($record->custom_fields)),
                     ])
-                    ->hidden(fn ($record) => empty($record->custom_fields)),
+                    ->hidden(fn($record) => empty($record->custom_fields)),
             ]);
     }
 

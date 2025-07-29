@@ -21,8 +21,9 @@ class ExternalLinkResource extends Resource
 {
     protected static ?string $model = ExternalLink::class;
     protected static ?string $navigationIcon = 'heroicon-o-link';
-    protected static ?string $navigationGroup = 'Content';
+    protected static ?string $navigationGroup = 'Konten';
     protected static ?int $navigationSort = 2;
+    protected static ?string $navigationLabel = 'Tautan Eksternal';
 
     public static function getEloquentQuery(): Builder
     {
@@ -107,7 +108,7 @@ class ExternalLinkResource extends Resource
                             $user = User::find(Auth::id());
                             return $user->getAccessibleVillages()->pluck('name', 'id');
                         }),
-                    
+
                     Forms\Components\Select::make('community_id')
                         ->relationship('community', 'name')
                         ->searchable()
@@ -124,8 +125,8 @@ class ExternalLinkResource extends Resource
                             }
                             return \App\Models\Community::where('village_id', $villageId)->pluck('name', 'id');
                         })
-                        ->disabled(fn (callable $get): bool => !$get('village_id')),
-                    
+                        ->disabled(fn(callable $get): bool => !$get('village_id')),
+
                     Forms\Components\Select::make('sme_id')
                         ->relationship('sme', 'name')
                         ->searchable()
@@ -137,7 +138,7 @@ class ExternalLinkResource extends Resource
                             }
                             return \App\Models\Sme::where('community_id', $communityId)->pluck('name', 'id');
                         })
-                        ->disabled(fn (callable $get): bool => !$get('community_id')),
+                        ->disabled(fn(callable $get): bool => !$get('community_id')),
                 ])->columns(3),
 
             Forms\Components\Section::make('Settings')
@@ -154,7 +155,7 @@ class ExternalLinkResource extends Resource
                         ->viewData(function (callable $get) {
                             $slug = $get('slug');
                             $villageId = $get('village_id');
-                            
+
                             if (!$slug) {
                                 return [
                                     'url' => null,
@@ -163,10 +164,10 @@ class ExternalLinkResource extends Resource
                                     'size' => 200
                                 ];
                             }
-                            
+
                             $baseDomain = config('app.domain', 'kecamatanbayan.id');
                             $protocol = config('smartvillage.url.protocol', 'https');
-                            
+
                             $url = '';
                             if ($villageId) {
                                 $village = \App\Models\Village::find($villageId);
@@ -176,7 +177,7 @@ class ExternalLinkResource extends Resource
                             } else {
                                 $url = "{$protocol}://{$baseDomain}/l/{$slug}";
                             }
-                            
+
                             return [
                                 'url' => $url,
                                 'label' => 'Short Link QR Code',
@@ -195,6 +196,8 @@ class ExternalLinkResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(20)
+            ->paginationPageOptions([10, 20, 50])
             ->columns([
                 Tables\Columns\TextColumn::make('label')
                     ->searchable()
@@ -293,17 +296,17 @@ class ExternalLinkResource extends Resource
                             ->viewData(function ($record) {
                                 $baseDomain = config('app.domain', 'kecamatanbayan.id');
                                 $protocol = config('smartvillage.url.protocol', 'https');
-                                
+
                                 $url = '';
                                 if ($record->village_id && $record->village) {
                                     $url = "{$protocol}://{$record->village->slug}.{$baseDomain}/l/{$record->slug}";
                                 } else {
                                     $url = "{$protocol}://{$baseDomain}/l/{$record->slug}";
                                 }
-                                
+
                                 $label = "Short Link: {$record->label}";
                                 $description = "Scan this QR code to access: {$record->url}";
-                                
+
                                 return [
                                     'url' => $url,
                                     'label' => $label,

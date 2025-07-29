@@ -23,8 +23,9 @@ class SmeResource extends Resource
 {
     protected static ?string $model = Sme::class;
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
-    protected static ?string $navigationGroup = 'Business';
+    protected static ?string $navigationGroup = 'Bisnis';
     protected static ?int $navigationSort = 1;
+    protected static ?string $navigationLabel = 'UMKM';
 
     public static function form(Form $form): Form
     {
@@ -104,7 +105,7 @@ class SmeResource extends Resource
                                             ->type('time')
                                             ->required()
                                             ->default('09:00'),
-                                        Forms\Components\TextInput::make('business_hours.Sunday.close') 
+                                        Forms\Components\TextInput::make('business_hours.Sunday.close')
                                             ->label('Sunday Close')
                                             ->type('time')
                                             ->required()
@@ -115,7 +116,7 @@ class SmeResource extends Resource
                                         Forms\Components\Placeholder::make('sunday_label')
                                             ->label('')
                                             ->content(''),
-                                            
+
                                         Forms\Components\TextInput::make('business_hours.Monday.open')
                                             ->label('Monday Open')
                                             ->type('time')
@@ -132,14 +133,14 @@ class SmeResource extends Resource
                                         Forms\Components\Placeholder::make('monday_label')
                                             ->label('')
                                             ->content(''),
-                                            
+
                                         Forms\Components\TextInput::make('business_hours.Tuesday.open')
                                             ->label('Tuesday Open')
                                             ->type('time')
                                             ->required()
                                             ->default('09:00'),
                                         Forms\Components\TextInput::make('business_hours.Tuesday.close')
-                                            ->label('Tuesday Close') 
+                                            ->label('Tuesday Close')
                                             ->type('time')
                                             ->required()
                                             ->default('17:00'),
@@ -149,7 +150,7 @@ class SmeResource extends Resource
                                         Forms\Components\Placeholder::make('tuesday_label')
                                             ->label('')
                                             ->content(''),
-                                            
+
                                         Forms\Components\TextInput::make('business_hours.Wednesday.open')
                                             ->label('Wednesday Open')
                                             ->type('time')
@@ -166,7 +167,7 @@ class SmeResource extends Resource
                                         Forms\Components\Placeholder::make('wednesday_label')
                                             ->label('')
                                             ->content(''),
-                                            
+
                                         Forms\Components\TextInput::make('business_hours.Thursday.open')
                                             ->label('Thursday Open')
                                             ->type('time')
@@ -175,7 +176,7 @@ class SmeResource extends Resource
                                         Forms\Components\TextInput::make('business_hours.Thursday.close')
                                             ->label('Thursday Close')
                                             ->type('time')
-                                            ->required() 
+                                            ->required()
                                             ->default('17:00'),
                                         Forms\Components\Toggle::make('business_hours.Thursday.closed')
                                             ->label('Thursday Closed')
@@ -183,7 +184,7 @@ class SmeResource extends Resource
                                         Forms\Components\Placeholder::make('thursday_label')
                                             ->label('')
                                             ->content(''),
-                                            
+
                                         Forms\Components\TextInput::make('business_hours.Friday.open')
                                             ->label('Friday Open')
                                             ->type('time')
@@ -200,7 +201,7 @@ class SmeResource extends Resource
                                         Forms\Components\Placeholder::make('friday_label')
                                             ->label('')
                                             ->content(''),
-                                            
+
                                         Forms\Components\TextInput::make('business_hours.Saturday.open')
                                             ->label('Saturday Open')
                                             ->type('time')
@@ -233,6 +234,8 @@ class SmeResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(20)
+            ->paginationPageOptions([10, 20, 50])
             ->columns([
                 Tables\Columns\ImageColumn::make('logo_url')
                     ->label('Logo')
@@ -315,10 +318,10 @@ class SmeResource extends Resource
                             ->label('Business Hours')
                             ->formatStateUsing(function ($state) {
                                 if (!$state) return 'Not set';
-                                
+
                                 $orderedDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                                 $formatted = [];
-                                
+
                                 foreach ($orderedDays as $day) {
                                     if (isset($state[$day])) {
                                         $dayData = $state[$day];
@@ -331,7 +334,7 @@ class SmeResource extends Resource
                                         }
                                     }
                                 }
-                                
+
                                 return implode("\n", $formatted);
                             })
                             ->columnSpanFull(),

@@ -32,7 +32,7 @@ class VillagePageController extends Controller
         })
             ->where('is_active', true)
             ->where('is_featured', true)
-            ->with(['sme.community', 'category', 'tags', 'images', 'primaryImage'])
+            ->with(['sme.community', 'category', 'tags', 'images'])
             ->latest()
             ->take(6)
             ->get();
@@ -242,7 +242,7 @@ class VillagePageController extends Controller
                 $query->orderBy('is_featured', 'desc')->latest();
         }
 
-        $products = $query->with(['sme.community', 'category', 'tags', 'images', 'primaryImage'])
+        $products = $query->with(['sme.community', 'category', 'tags', 'images'])
             ->paginate(12);
 
         // Get available categories for filter
@@ -596,7 +596,7 @@ class VillagePageController extends Controller
                 'place.category',
                 'offers' => function ($query) {
                     $query->where('is_active', true)
-                        ->with(['category', 'tags', 'images', 'primaryImage', 'ecommerceLinks'])
+                        ->with(['category', 'tags', 'images', 'ecommerceLinks'])
                         ->orderBy('is_featured', 'desc')
                         ->orderBy('name');
                 },

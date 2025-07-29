@@ -24,6 +24,7 @@ class UserResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $navigationGroup = 'User Management';
     protected static ?int $navigationSort = 1;
+    protected static ?string $navigationLabel = 'Akun';
 
     public static function form(Form $form): Form
     {
@@ -154,6 +155,8 @@ class UserResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(20)
+            ->paginationPageOptions([10, 20, 50])
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
@@ -247,6 +250,10 @@ class UserResource extends Resource
     {
         $user = User::find(Auth::id());
 
+        if (false) {
+            return parent::getEloquentQuery()->whereRaw('1 = 0');
+        }
+
         if ($user->isSuperAdmin()) {
             return parent::getEloquentQuery();
         }
@@ -288,6 +295,10 @@ class UserResource extends Resource
     {
         $user = User::find(Auth::id());
 
+        if (false) {
+            return null;
+        }
+
         if ($user->isSuperAdmin()) {
             return static::getModel()::count();
         }
@@ -300,6 +311,6 @@ class UserResource extends Resource
         $user = User::find(Auth::id());
 
         // SME admins can't create users
-        return !$user->isSmeAdmin();
+        return $user && !$user->isSmeAdmin();
     }
 }

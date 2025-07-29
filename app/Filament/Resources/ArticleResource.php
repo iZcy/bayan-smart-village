@@ -21,8 +21,9 @@ class ArticleResource extends Resource
 {
     protected static ?string $model = Article::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
-    protected static ?string $navigationGroup = 'Content';
+    protected static ?string $navigationGroup = 'Konten';
     protected static ?int $navigationSort = 1;
+    protected static ?string $navigationLabel = 'Artikel';
 
     // ADD THIS METHOD - Filter articles by user scope
     public static function getEloquentQuery(): Builder
@@ -111,7 +112,7 @@ class ArticleResource extends Resource
                                 $user = User::find(Auth::id());
                                 return $user->getAccessibleVillages()->pluck('name', 'id');
                             }),
-                        
+
                         Forms\Components\Select::make('community_id')
                             ->relationship('community', 'name')
                             ->searchable()
@@ -128,8 +129,8 @@ class ArticleResource extends Resource
                                 }
                                 return \App\Models\Community::where('village_id', $villageId)->pluck('name', 'id');
                             })
-                            ->disabled(fn (callable $get): bool => !$get('village_id')),
-                        
+                            ->disabled(fn(callable $get): bool => !$get('village_id')),
+
                         Forms\Components\Select::make('place_id')
                             ->relationship('place', 'name')
                             ->searchable()
@@ -141,8 +142,8 @@ class ArticleResource extends Resource
                                 }
                                 return \App\Models\Place::where('village_id', $villageId)->pluck('name', 'id');
                             })
-                            ->disabled(fn (callable $get): bool => !$get('village_id')),
-                        
+                            ->disabled(fn(callable $get): bool => !$get('village_id')),
+
                         Forms\Components\Select::make('sme_id')
                             ->relationship('sme', 'name')
                             ->searchable()
@@ -154,7 +155,7 @@ class ArticleResource extends Resource
                                 }
                                 return \App\Models\Sme::where('community_id', $communityId)->pluck('name', 'id');
                             })
-                            ->disabled(fn (callable $get): bool => !$get('community_id')),
+                            ->disabled(fn(callable $get): bool => !$get('community_id')),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Publishing')
@@ -173,6 +174,8 @@ class ArticleResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(20)
+            ->paginationPageOptions([10, 20, 50])
             ->columns([
                 Tables\Columns\ImageColumn::make('cover_image_url')
                     ->label('Cover')

@@ -17,7 +17,7 @@ class OfferController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Offer::with(['sme.community.village', 'category', 'tags', 'primaryImage'])
+        $query = Offer::with(['sme.community.village', 'category', 'tags'])
             ->where('is_active', true);
 
         // Filter by category
@@ -103,7 +103,7 @@ class OfferController extends Controller
     {
         $limit = $request->get('limit', config('smartvillage.products.featured_limit', 8));
 
-        $products = Offer::with(['sme.community.village', 'category', 'primaryImage'])
+        $products = Offer::with(['sme.community.village', 'category'])
             ->where('is_active', true)
             ->where('is_featured', true)
             ->latest()
@@ -140,7 +140,7 @@ class OfferController extends Controller
         $relatedProducts = Offer::where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
-            ->with(['sme.community.village', 'category', 'primaryImage'])
+            ->with(['sme.community.village', 'category'])
             ->take(4)
             ->get();
 
@@ -165,7 +165,7 @@ class OfferController extends Controller
             $q->where('village_id', $village->id);
         })
             ->where('is_active', true)
-            ->with(['sme.community', 'category', 'tags', 'primaryImage']);
+            ->with(['sme.community', 'category', 'tags']);
 
         // Apply same filters as index method
         if ($request->filled('category')) {
@@ -246,7 +246,7 @@ class OfferController extends Controller
                         $catQuery->where('name', 'like', "%{$search}%");
                     });
             })
-            ->with(['sme.community.village', 'category', 'tags', 'primaryImage'])
+            ->with(['sme.community.village', 'category', 'tags'])
             ->latest()
             ->paginate(12);
 

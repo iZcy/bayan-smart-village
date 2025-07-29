@@ -31,7 +31,7 @@ class Sme extends Model
     ];
 
     protected $casts = [
-        'business_hours' => 'array',
+        'business_hours' => 'json',
         'is_verified' => 'boolean',
         'is_active' => 'boolean',
     ];

@@ -62,38 +62,18 @@ const MediaBackground = ({
                     }
                 }
 
-                // Fetch background audio (only if audio is not disabled)
+                // Skip API and use fallback audio directly (only if audio is not disabled)
                 if (!disableAudio) {
-                    const audioResponse = await fetch(
-                        `/api/media/${context}/featured?type=audio`
-                    );
-                    if (audioResponse.ok) {
-                        const audioData = await audioResponse.json();
-                        if (audioData.media) {
-                            setBackgroundAudio(audioData.media);
-                            console.log(
-                                `Loaded ${context} audio:`,
-                                audioData.media.title,
-                                {
-                                    autoplay: audioData.media.autoplay,
-                                    loop: audioData.media.loop,
-                                    volume: audioData.media.volume,
-                                    village: audioData.village,
-                                }
-                            );
-                        } else {
-                            console.log(
-                                `No featured audio found for ${context} context in ${
-                                    audioData.village || "global"
-                                }`
-                            );
-                        }
-                    } else {
-                        console.log(
-                            `Failed to fetch ${context} audio:`,
-                            audioResponse.status
-                        );
-                    }
+                    console.log(`Using fallback audio: ${fallbackAudio}`);
+                    // Use fallback audio with default settings
+                    setBackgroundAudio({
+                        file_url: fallbackAudio,
+                        title: "Background Music",
+                        autoplay: true,
+                        loop: true,
+                        volume: 30,
+                        muted: false
+                    });
                 }
             } catch (error) {
                 console.log(
@@ -483,18 +463,6 @@ const MediaBackground = ({
                             </motion.button>
                         )}
 
-                        {/* Media Info */}
-                        {(backgroundVideo || backgroundAudio) && (
-                            <motion.div
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className="bg-black/30 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm"
-                            >
-                                {backgroundVideo?.title ||
-                                    backgroundAudio?.title ||
-                                    "Default Media"}
-                            </motion.div>
-                        )}
                     </div>
                 )}
 

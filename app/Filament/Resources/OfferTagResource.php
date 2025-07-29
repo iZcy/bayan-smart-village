@@ -20,8 +20,9 @@ class OfferTagResource extends Resource
 {
     protected static ?string $model = OfferTag::class;
     protected static ?string $navigationIcon = 'heroicon-o-hashtag';
-    protected static ?string $navigationGroup = 'Business';
+    protected static ?string $navigationGroup = 'Bisnis';
     protected static ?int $navigationSort = 4;
+    protected static ?string $navigationLabel = 'Tag Penawaran';
 
     public static function form(Form $form): Form
     {
@@ -50,6 +51,8 @@ class OfferTagResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(20)
+            ->paginationPageOptions([10, 20, 50])
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()

@@ -47,12 +47,12 @@ class Offer extends Model
         'price' => 'decimal:2',
         'price_range_min' => 'decimal:2',
         'price_range_max' => 'decimal:2',
-        'seasonal_availability' => 'array',
-        'materials' => 'array',
-        'colors' => 'array',
-        'sizes' => 'array',
-        'features' => 'array',
-        'certification' => 'array',
+        'seasonal_availability' => 'json',
+        'materials' => 'json',
+        'colors' => 'json',
+        'sizes' => 'json',
+        'features' => 'json',
+        'certification' => 'json',
         'is_featured' => 'boolean',
         'is_active' => 'boolean',
         'view_count' => 'integer',
@@ -73,19 +73,22 @@ class Offer extends Model
         return $this->hasMany(OfferEcommerceLink::class);
     }
 
-    public function images(): HasMany
+    public function additionalImages(): HasMany
     {
         return $this->hasMany(OfferImage::class)->ordered();
     }
 
-    public function primaryImage(): HasOne
+    public function images(): HasMany
     {
-        return $this->hasOne(OfferImage::class)->where('is_primary', true);
+        // Alias for additionalImages to maintain compatibility
+        return $this->additionalImages();
     }
 
-    public function additionalImages(): HasMany
+    public function primaryImage(): HasOne
     {
-        return $this->hasMany(OfferImage::class)->where('is_primary', false)->ordered();
+        // Legacy compatibility - returns the first additional image as "primary"
+        // Note: Primary image is now stored in primary_image_url field directly
+        return $this->hasOne(OfferImage::class)->orderBy('sort_order');
     }
 
     public function tags(): BelongsToMany
@@ -94,42 +97,49 @@ class Offer extends Model
     }
 
     /**
-     * Get the primary image URL - prioritizes primary_image_url field over relationship
+     * Get the primary image URL - uses only the primary_image_url field
      */
     public function getPrimaryImageUrlAttribute(): ?string
     {
-        // First, try to get from the direct primary_image_url field
+        // Only use the direct primary_image_url field - no fallbacks
         if (! empty($this->attributes['primary_image_url'])) {
             // Use the trait's URL conversion method to ensure full URL
             return $this->convertImagePathToUrl($this->attributes['primary_image_url']);
         }
 
-        // Fallback to primary image relationship (for backward compatibility)
-        if ($this->relationLoaded('primaryImage') && $this->primaryImage) {
-            return $this->primaryImage->image_url;
-        }
-
-        // If not loaded, try to load the relationship
-        if (! $this->relationLoaded('primaryImage')) {
-            $primaryImage = $this->primaryImage()->first();
-            if ($primaryImage) {
-                return $primaryImage->image_url;
-            }
-        }
-
-        // Final fallback: use the first available image from the images relationship
-        if ($this->relationLoaded('images') && $this->images->isNotEmpty()) {
-            return $this->images->first()->image_url;
-        }
-
-        // If images not loaded, try to load and get first image
-        if (! $this->relationLoaded('images')) {
-            $firstImage = $this->images()->first();
-            if ($firstImage) {
-                return $firstImage->image_url;
-            }
-        }
-
         return null;
+    }
+
+    /**
+     * Mutators to ensure array fields are properly handled
+     */
+    public function setSeasonalAvailabilityAttribute($value)
+    {
+        $this->attributes['seasonal_availability'] = is_array($value) ? json_encode($value) : ($value ?? '[]');
+    }
+
+    public function setMaterialsAttribute($value)
+    {
+        $this->attributes['materials'] = is_array($value) ? json_encode($value) : ($value ?? '[]');
+    }
+
+    public function setColorsAttribute($value)
+    {
+        $this->attributes['colors'] = is_array($value) ? json_encode($value) : ($value ?? '[]');
+    }
+
+    public function setSizesAttribute($value)
+    {
+        $this->attributes['sizes'] = is_array($value) ? json_encode($value) : ($value ?? '[]');
+    }
+
+    public function setFeaturesAttribute($value)
+    {
+        $this->attributes['features'] = is_array($value) ? json_encode($value) : ($value ?? '[]');
+    }
+
+    public function setCertificationAttribute($value)
+    {
+        $this->attributes['certification'] = is_array($value) ? json_encode($value) : ($value ?? '[]');
     }
 }

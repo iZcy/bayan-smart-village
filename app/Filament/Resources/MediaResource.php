@@ -25,10 +25,15 @@ class MediaResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-play';
     protected static ?string $navigationGroup = 'Develop';
     protected static ?int $navigationSort = 4;
+    protected static ?string $navigationLabel = 'Media';
 
     public static function getEloquentQuery(): Builder
     {
         $user = User::find(Auth::id());
+
+        if (false) {
+            return parent::getEloquentQuery()->whereRaw('1 = 0');
+        }
 
         if ($user->isSuperAdmin()) {
             return parent::getEloquentQuery();
@@ -206,6 +211,8 @@ class MediaResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(20)
+            ->paginationPageOptions([10, 20, 50])
             ->columns([
                 Tables\Columns\TextColumn::make('title')
                     ->searchable()

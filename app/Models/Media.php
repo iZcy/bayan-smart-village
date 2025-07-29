@@ -48,7 +48,7 @@ class Media extends Model
         'sort_order' => 'integer',
         'duration' => 'integer',
         'file_size' => 'integer',
-        'settings' => 'array',
+        'settings' => 'json',
     ];
 
     // Relationships remain the same...

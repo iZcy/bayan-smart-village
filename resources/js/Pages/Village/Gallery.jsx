@@ -27,6 +27,7 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
     const [searchTerm, setSearchTerm] = useState(filterData.search || "");
     const [selectedImage, setSelectedImage] = useState(null);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+    const [mediaLoaded, setMediaLoaded] = useState(false);
     const { scrollY } = useScroll();
 
     // Use imageData directly since filtering is done server-side
@@ -47,6 +48,13 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
             "linear-gradient(to bottom, rgba(55,48,163,0.3), rgba(0,0,0,0.4))", // End fade
         ]
     );
+
+    // Handle media loading
+    const handleMediaLoad = ({ type, loaded, error }) => {
+        if (loaded && !error) {
+            setMediaLoaded(true);
+        }
+    };
 
     // Server-side filtering with debounce
     useEffect(() => {
@@ -105,8 +113,9 @@ const GalleryPage = ({ village, images, places = [], filters = {} }) => {
                 blur={true}
                 audioOnly={true}
                 controlsId="gallery-media-controls"
+                onMediaLoad={handleMediaLoad}
                 fallbackVideo="/video/videobackground.mp4"
-                fallbackAudio="/audio/village-nature.mp3"
+                fallbackAudio="/audio/sasakbacksong.mp3"
             />
             {/* Enhanced Color Overlay */}
             <motion.div

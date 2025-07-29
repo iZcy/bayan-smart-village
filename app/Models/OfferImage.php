@@ -19,12 +19,10 @@ class OfferImage extends Model
         'image_url',
         'alt_text',
         'sort_order',
-        'is_primary',
     ];
 
     protected $casts = [
         'sort_order' => 'integer',
-        'is_primary' => 'boolean',
     ];
 
     public function offer(): BelongsTo
@@ -33,36 +31,11 @@ class OfferImage extends Model
     }
 
     /**
-     * Scope for primary images
-     */
-    public function scopePrimary($query)
-    {
-        return $query->where('is_primary', true);
-    }
-
-    /**
      * Scope for ordered images
      */
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order');
-    }
-
-    /**
-     * Boot method to handle primary image logic and auto-sorting
-     */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::saving(function ($offerImage) {
-            // If this is being set as primary, ensure no other images for this offer are primary
-            if ($offerImage->is_primary) {
-                static::where('offer_id', $offerImage->offer_id)
-                    ->where('id', '!=', $offerImage->id)
-                    ->update(['is_primary' => false]);
-            }
-        });
     }
 
     /**

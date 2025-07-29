@@ -30,7 +30,7 @@ class Village extends Model
     ];
 
     protected $casts = [
-        'settings' => 'array',
+        'settings' => 'json',
         'is_active' => 'boolean',
         'established_at' => 'datetime',
         'latitude' => 'decimal:8',
