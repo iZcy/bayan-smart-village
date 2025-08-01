@@ -97,17 +97,13 @@ class Offer extends Model
     }
 
     /**
-     * Get the primary image URL - uses only the primary_image_url field
+     * Get the primary image URL with proper path conversion
      */
-    public function getPrimaryImageUrlAttribute(): ?string
+    public function getPrimaryImageUrlAttribute($value): ?string
     {
-        // Only use the direct primary_image_url field - no fallbacks
-        if (! empty($this->attributes['primary_image_url'])) {
-            // Use the trait's URL conversion method to ensure full URL
-            return $this->convertImagePathToUrl($this->attributes['primary_image_url']);
-        }
-
-        return null;
+        // Get the raw attribute value from the database
+        $rawValue = $this->attributes['primary_image_url'] ?? null;
+        return $this->convertImagePathToUrl($rawValue);
     }
 
     /**

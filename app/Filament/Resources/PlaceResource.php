@@ -24,10 +24,11 @@ class PlaceResource extends Resource
     protected static ?string $navigationGroup = 'Manajemen';
     protected static ?int $navigationSort = 3;
     protected static ?string $navigationLabel = 'Tempat';
+    protected static ?string $pluralModelLabel = 'Tempat';
 
     public static function getEloquentQuery(): Builder
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
 
         if (false) {
             return parent::getEloquentQuery()->whereRaw('1 = 0');
@@ -43,7 +44,7 @@ class PlaceResource extends Resource
 
     public static function canViewAny(): bool
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return !$user->isSmeAdmin();
     }
 
@@ -57,20 +58,58 @@ class PlaceResource extends Resource
                             ->relationship('village', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = Auth::user();
+                                return $user->getAccessibleVillages()->pluck('name', 'id');
+                            })
+                            ->default(function () {
+                                $user = Auth::user();
+                                return !$user->isSuperAdmin() && $user->village_id ? $user->village_id : null;
+                            })
+                            ->disabled(fn() => !Auth::user()->isSuperAdmin()), // Only super admin can change village
                         Forms\Components\Select::make('category_id')
                             ->relationship('category', 'name')
                             ->required()
                             ->searchable()
                             ->preload()
                             ->options(function () {
-                                $user = User::find(Auth::id());
+                                $user = Auth::user();
                                 if ($user->isSuperAdmin()) {
                                     return \App\Models\Category::pluck('name', 'id');
                                 }
 
                                 $villageIds = $user->getAccessibleVillages()->pluck('id');
                                 return \App\Models\Category::whereIn('village_id', $villageIds)->pluck('name', 'id');
+                            })
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
+                                Forms\Components\TextInput::make('slug')
+                                    ->required(),
+                                Forms\Components\Textarea::make('description')
+                                    ->rows(3),
+                            ])
+                            ->createOptionUsing(function (array $data, Forms\Get $get): string {
+                                $villageId = $get('village_id');
+                                
+                                // Check if category already exists for this village
+                                $existingCategory = \App\Models\Category::where('village_id', $villageId)
+                                    ->where('name', $data['name'])
+                                    ->first();
+                                
+                                if ($existingCategory) {
+                                    return $existingCategory->id;
+                                }
+                                
+                                return \App\Models\Category::create([
+                                    'village_id' => $villageId,
+                                    'name' => $data['name'],
+                                    'slug' => $data['slug'],
+                                    'description' => $data['description'],
+                                ])->id;
                             }),
                         Forms\Components\TextInput::make('name')
                             ->required()
@@ -89,7 +128,7 @@ class PlaceResource extends Resource
                             ->disk('public')
                             ->directory('places')
                             ->visibility('public')
-                            ->maxSize(5120) // 5MB
+                            ->maxSize(20480) // 20MB
                             ->imagePreviewHeight(150)
                             ->downloadable()
                             ->openable()
@@ -215,7 +254,7 @@ class PlaceResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return static::getEloquentQuery()->count();
     }
 }

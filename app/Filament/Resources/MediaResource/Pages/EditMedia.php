@@ -29,7 +29,7 @@ class EditMedia extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
 
         // Ensure user can only edit media within their scope
         if (!$user->isSuperAdmin()) {

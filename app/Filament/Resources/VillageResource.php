@@ -40,13 +40,13 @@ class VillageResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return $user->getAccessibleVillages();
     }
 
     public static function canViewAny(): bool
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return ($user->isSuperAdmin() || $user->isVillageAdmin());
     }
 
@@ -80,7 +80,7 @@ class VillageResource extends Resource
                             ->disk('public')
                             ->directory('villages')
                             ->visibility('public')
-                            ->maxSize(10240) // 10MB
+                            ->maxSize(20480) // 20MB
                             ->imageResizeMode('cover')
                             ->imageCropAspectRatio('16:9')
                             ->imageResizeTargetWidth(1200)
@@ -267,7 +267,7 @@ class VillageResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return static::getEloquentQuery()->count();
     }
 }

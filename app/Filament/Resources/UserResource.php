@@ -25,6 +25,7 @@ class UserResource extends Resource
     protected static ?string $navigationGroup = 'User Management';
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationLabel = 'Akun';
+    protected static ?string $pluralModelLabel = 'Akun';
 
     public static function form(Form $form): Form
     {
@@ -54,7 +55,7 @@ class UserResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('role')
                             ->options(function () {
-                                $user = User::find(Auth::id());
+                                $user = Auth::user();
                                 $roles = User::getRoles();
 
                                 // Filter roles based on current user's permissions
@@ -98,7 +99,7 @@ class UserResource extends Resource
                                 User::ROLE_SME_ADMIN
                             ]))
                             ->options(function () {
-                                $user = User::find(Auth::id());
+                                $user = Auth::user();
                                 if ($user->isSuperAdmin()) {
                                     return Village::pluck('name', 'id');
                                 }
@@ -248,7 +249,7 @@ class UserResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
 
         if (false) {
             return parent::getEloquentQuery()->whereRaw('1 = 0');
@@ -293,7 +294,7 @@ class UserResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
 
         if (false) {
             return null;
@@ -308,7 +309,7 @@ class UserResource extends Resource
 
     public static function canCreate(): bool
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
 
         // SME admins can't create users
         return $user && !$user->isSmeAdmin();

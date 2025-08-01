@@ -7,8 +7,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Filament\Models\Contracts\FilamentUser;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable, HasUuids;
 
@@ -282,5 +283,17 @@ class User extends Authenticatable
         }
 
         return 'No Scope';
+    }
+
+    // Filament panel access control
+    public function canAccessPanel(\Filament\Panel $panel): bool
+    {
+        // Only allow active users to access admin panel
+        if (!$this->is_active) {
+            return false;
+        }
+
+        // Allow all roles to access admin panel (they'll be filtered by resource-level permissions)
+        return $this->isSuperAdmin() || $this->isVillageAdmin() || $this->isCommunityAdmin() || $this->isSmeAdmin();
     }
 }

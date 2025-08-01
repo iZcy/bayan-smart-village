@@ -22,6 +22,7 @@ class OfferImageResource extends Resource
     protected static ?string $navigationGroup = 'Develop';
     protected static ?int $navigationSort = 101;
     protected static ?string $label = 'Gambar Penawaran';
+    protected static ?string $pluralModelLabel = 'Gambar Penawaran';
 
     public static function form(Form $form): Form
     {
@@ -130,7 +131,7 @@ class OfferImageResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return static::getEloquentQuery()->count();
     }
 }

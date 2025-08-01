@@ -23,6 +23,7 @@ class OfferTagResource extends Resource
     protected static ?string $navigationGroup = 'Bisnis';
     protected static ?int $navigationSort = 4;
     protected static ?string $navigationLabel = 'Tag Penawaran';
+    protected static ?string $pluralModelLabel = 'Tag Penawaran';
 
     public static function form(Form $form): Form
     {
@@ -116,7 +117,7 @@ class OfferTagResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return static::getEloquentQuery()->count();
     }
 }

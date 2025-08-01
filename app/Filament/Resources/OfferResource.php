@@ -54,26 +54,82 @@ class OfferResource extends Resource
                                 ->required()
                                 ->searchable()
                                 ->preload()
+                                ->live()
                                 ->options(function () {
-                                    $user = User::find(Auth::id());
+                                    $user = Auth::user();
 
                                     return $user->getAccessibleSmes()->pluck('name', 'id');
-                                }),
+                                })
+                                ->afterStateUpdated(fn (callable $set) => $set('category_id', null)),
                             Forms\Components\Select::make('category_id')
                                 ->label('Kategori')
                                 ->relationship('category', 'name')
                                 ->required()
                                 ->searchable()
                                 ->preload()
-                                ->options(function () {
-                                    $user = User::find(Auth::id());
+                                ->live()
+                                ->options(function (Forms\Get $get) {
+                                    $user = Auth::user();
+                                    
+                                    // If SME is selected, filter categories by the SME's village
+                                    $smeId = $get('sme_id');
+                                    if ($smeId) {
+                                        $sme = \App\Models\Sme::find($smeId);
+                                        if ($sme && $sme->community && $sme->community->village_id) {
+                                            return Category::where('village_id', $sme->community->village_id)
+                                                ->pluck('name', 'id');
+                                        }
+                                    }
+                                    
+                                    // Fallback to user accessible categories
                                     if ($user->isSuperAdmin()) {
                                         return Category::pluck('name', 'id');
                                     }
 
                                     $villageIds = $user->getAccessibleVillages()->pluck('id');
-
                                     return Category::whereIn('village_id', $villageIds)->pluck('name', 'id');
+                                })
+                                ->createOptionForm([
+                                    Forms\Components\TextInput::make('name')
+                                        ->required()
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(fn($state, callable $set) => $set('slug', Str::slug($state))),
+                                    Forms\Components\TextInput::make('slug')
+                                        ->required(),
+                                    Forms\Components\Textarea::make('description')
+                                        ->rows(3),
+                                ])
+                                ->createOptionUsing(function (array $data, Forms\Get $get): string {
+                                    $user = Auth::user();
+                                    
+                                    // Get the village ID - for offers, we need to get it from the SME
+                                    $smeId = $get('sme_id');
+                                    if (!$smeId) {
+                                        throw new \Exception('Please select an SME first before creating a new category.');
+                                    }
+                                    
+                                    $sme = \App\Models\Sme::find($smeId);
+                                    if (!$sme || !$sme->community || !$sme->community->village_id) {
+                                        throw new \Exception('Unable to determine village for category creation.');
+                                    }
+                                    
+                                    $villageId = $sme->community->village_id;
+                                    
+                                    // Check if category already exists for this village
+                                    $existingCategory = Category::where('village_id', $villageId)
+                                        ->where('name', $data['name'])
+                                        ->first();
+                                    
+                                    if ($existingCategory) {
+                                        return $existingCategory->id;
+                                    }
+                                    
+                                    return Category::create([
+                                        'village_id' => $villageId,
+                                        'name' => $data['name'],
+                                        'slug' => $data['slug'],
+                                        'description' => $data['description'],
+                                    ])->id;
                                 }),
                             Forms\Components\TextInput::make('name')
                                 ->required()
@@ -145,7 +201,7 @@ class OfferResource extends Resource
                                         ->disk('public')
                                         ->directory('products/primary')
                                         ->visibility('public')
-                                        ->maxSize(5120)
+                                        ->maxSize(20480)
                                         ->imagePreviewHeight(200)
                                         ->downloadable()
                                         ->openable()
@@ -187,7 +243,7 @@ class OfferResource extends Resource
                                                 ->disk('public')
                                                 ->directory('products/gallery')
                                                 ->visibility('public')
-                                                ->maxSize(5120)
+                                                ->maxSize(20480)
                                                 ->imagePreviewHeight(150)
                                                 ->downloadable()
                                                 ->openable()
@@ -372,6 +428,7 @@ class OfferResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('primary_image_url')
                     ->label('Image')
+                    ->size(60)
                     ->circular(),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
@@ -413,7 +470,7 @@ class OfferResource extends Resource
                 Tables\Filters\SelectFilter::make('sme')
                     ->relationship('sme', 'name')
                     ->options(function () {
-                        $user = User::find(Auth::id());
+                        $user = Auth::user();
 
                         return $user->getAccessibleSmes()->pluck('name', 'id');
                     }),
@@ -450,7 +507,8 @@ class OfferResource extends Resource
             ->schema([
                 Infolists\Components\Section::make('Offer Information')
                     ->schema([
-                        Infolists\Components\ImageEntry::make('primary_image_url'),
+                        Infolists\Components\ImageEntry::make('primary_image_url')
+                            ->label('Primary Image'),
                         Infolists\Components\TextEntry::make('name'),
                         Infolists\Components\TextEntry::make('sme.name'),
                         Infolists\Components\TextEntry::make('category.name'),
@@ -564,7 +622,7 @@ class OfferResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
 
         return $user->getAccessibleOffers();
     }
@@ -581,7 +639,7 @@ class OfferResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
 
         return static::getEloquentQuery()->count();
     }

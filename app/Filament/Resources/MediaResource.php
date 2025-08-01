@@ -26,10 +26,11 @@ class MediaResource extends Resource
     protected static ?string $navigationGroup = 'Develop';
     protected static ?int $navigationSort = 4;
     protected static ?string $navigationLabel = 'Media';
+    protected static ?string $pluralModelLabel = 'Media';
 
     public static function getEloquentQuery(): Builder
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
 
         if (false) {
             return parent::getEloquentQuery()->whereRaw('1 = 0');
@@ -143,15 +144,20 @@ class MediaResource extends Resource
                             ->searchable()
                             ->preload()
                             ->options(function () {
-                                $user = User::find(Auth::id());
+                                $user = Auth::user();
                                 return $user->getAccessibleVillages()->pluck('name', 'id');
-                            }),
+                            })
+                            ->default(function () {
+                                $user = Auth::user();
+                                return !$user->isSuperAdmin() && $user->village_id ? $user->village_id : null;
+                            })
+                            ->disabled(fn() => !Auth::user()->isSuperAdmin()), // Only super admin can change village
                         Forms\Components\Select::make('community_id')
                             ->relationship('community', 'name')
                             ->searchable()
                             ->preload()
                             ->options(function () {
-                                $user = User::find(Auth::id());
+                                $user = Auth::user();
                                 return $user->getAccessibleCommunities()->pluck('name', 'id');
                             }),
                         Forms\Components\Select::make('sme_id')
@@ -159,7 +165,7 @@ class MediaResource extends Resource
                             ->searchable()
                             ->preload()
                             ->options(function () {
-                                $user = User::find(Auth::id());
+                                $user = Auth::user();
                                 return $user->getAccessibleSmes()->pluck('name', 'id');
                             }),
                         Forms\Components\Select::make('place_id')
@@ -167,7 +173,7 @@ class MediaResource extends Resource
                             ->searchable()
                             ->preload()
                             ->options(function () {
-                                $user = User::find(Auth::id());
+                                $user = Auth::user();
                                 if ($user->isSuperAdmin()) {
                                     return Place::pluck('name', 'id');
                                 }
@@ -373,7 +379,7 @@ class MediaResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return static::getEloquentQuery()->count();
     }
 }

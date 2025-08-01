@@ -21,7 +21,7 @@ class CreateMedia extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
 
         // Auto-assign scope based on current user's role if not set
         if (!$user->isSuperAdmin()) {

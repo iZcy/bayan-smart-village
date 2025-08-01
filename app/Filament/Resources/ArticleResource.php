@@ -24,11 +24,12 @@ class ArticleResource extends Resource
     protected static ?string $navigationGroup = 'Konten';
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationLabel = 'Artikel';
+    protected static ?string $pluralModelLabel = 'Artikel';
 
     // ADD THIS METHOD - Filter articles by user scope
     public static function getEloquentQuery(): Builder
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
 
         if ($user->isSuperAdmin()) {
             return parent::getEloquentQuery();
@@ -109,9 +110,14 @@ class ArticleResource extends Resource
                                 $set('sme_id', null);
                             })
                             ->options(function () {
-                                $user = User::find(Auth::id());
+                                $user = Auth::user();
                                 return $user->getAccessibleVillages()->pluck('name', 'id');
-                            }),
+                            })
+                            ->default(function () {
+                                $user = Auth::user();
+                                return !$user->isSuperAdmin() && $user->village_id ? $user->village_id : null;
+                            })
+                            ->disabled(fn() => !Auth::user()->isSuperAdmin()), // Only super admin can change village
 
                         Forms\Components\Select::make('community_id')
                             ->relationship('community', 'name')
@@ -275,7 +281,7 @@ class ArticleResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return static::getEloquentQuery()->count();
     }
 }

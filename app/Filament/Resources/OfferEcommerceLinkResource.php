@@ -22,6 +22,7 @@ class OfferEcommerceLinkResource extends Resource
     protected static ?string $navigationGroup = 'Develop';
     protected static ?int $navigationSort = 100;
     protected static ?string $navigationLabel = 'Tautan E-commerce';
+    protected static ?string $pluralModelLabel = 'Tautan E-commerce';
 
     public static function form(Form $form): Form
     {
@@ -197,7 +198,7 @@ class OfferEcommerceLinkResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return static::getEloquentQuery()->count();
     }
 }

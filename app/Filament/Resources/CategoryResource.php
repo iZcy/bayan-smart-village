@@ -23,10 +23,11 @@ class CategoryResource extends Resource
     protected static ?string $navigationGroup = 'Bisnis';
     protected static ?int $navigationSort = 3;
     protected static ?string $navigationLabel = 'Kategori';
+    protected static ?string $pluralModelLabel = 'Kategori';
 
     public static function getEloquentQuery(): Builder
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
 
         if ($user->isSuperAdmin()) {
             return parent::getEloquentQuery();
@@ -38,7 +39,7 @@ class CategoryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return !$user->isSmeAdmin();
     }
 
@@ -52,7 +53,16 @@ class CategoryResource extends Resource
                             ->relationship('village', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->options(function () {
+                                $user = Auth::user();
+                                return $user->getAccessibleVillages()->pluck('name', 'id');
+                            })
+                            ->default(function () {
+                                $user = Auth::user();
+                                return !$user->isSuperAdmin() && $user->village_id ? $user->village_id : null;
+                            })
+                            ->disabled(fn() => !Auth::user()->isSuperAdmin()), // Only super admin can change village
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255),
@@ -155,7 +165,7 @@ class CategoryResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return static::getEloquentQuery()->count();
     }
 }

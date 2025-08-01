@@ -39,6 +39,16 @@ class OfferImage extends Model
     }
 
     /**
+     * Get the image URL with proper path conversion
+     */
+    public function getImageUrlAttribute($value): ?string
+    {
+        // Get the raw attribute value from the database
+        $rawValue = $this->attributes['image_url'] ?? null;
+        return $this->convertImagePathToUrl($rawValue);
+    }
+
+    /**
      * Get the file name from URL
      */
     public function getFileNameAttribute(): string

@@ -23,10 +23,11 @@ class ImageResource extends Resource
     protected static ?string $navigationGroup = 'Konten';
     protected static ?int $navigationSort = 3;
     protected static ?string $navigationLabel = 'Gambar';
+    protected static ?string $pluralModelLabel = 'Gambar';
 
     public static function getEloquentQuery(): Builder
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
 
         if ($user->isSuperAdmin()) {
             return parent::getEloquentQuery();
@@ -88,7 +89,7 @@ class ImageResource extends Resource
                             ->disk('public')
                             ->directory('gallery')
                             ->visibility('public')
-                            ->maxSize(10240) // 10MB
+                            ->maxSize(20480) // 20MB
                             ->imagePreviewHeight(200)
                             ->downloadable()
                             ->openable()
@@ -120,9 +121,14 @@ class ImageResource extends Resource
                                 $set('place_id', null);
                             })
                             ->options(function () {
-                                $user = User::find(Auth::id());
+                                $user = Auth::user();
                                 return $user->getAccessibleVillages()->pluck('name', 'id');
-                            }),
+                            })
+                            ->default(function () {
+                                $user = Auth::user();
+                                return !$user->isSuperAdmin() && $user->village_id ? $user->village_id : null;
+                            })
+                            ->disabled(fn() => !Auth::user()->isSuperAdmin()), // Only super admin can change village
 
                         Forms\Components\Select::make('community_id')
                             ->relationship('community', 'name')
@@ -263,7 +269,7 @@ class ImageResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return static::getEloquentQuery()->count();
     }
 }

@@ -49,10 +49,14 @@ class CommunityResource extends Resource
                             ->searchable()
                             ->preload()
                             ->options(function () {
-                                $user = User::find(Auth::id());
+                                $user = Auth::user();
                                 return $user->getAccessibleVillages()->pluck('name', 'id');
                             })
-                            ->disabled(fn() => !User::find(Auth::id())->isSuperAdmin()), // Only super admin can change village
+                            ->default(function () {
+                                $user = Auth::user();
+                                return !$user->isSuperAdmin() && $user->village_id ? $user->village_id : null;
+                            })
+                            ->disabled(fn() => !Auth::user()->isSuperAdmin()), // Only super admin can change village
                         Forms\Components\TextInput::make('name')
                             ->label('Nama Komunitas')
                             ->required()
@@ -111,7 +115,7 @@ class CommunityResource extends Resource
                 Tables\Columns\TextColumn::make('village.name')
                     ->searchable()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: User::find(Auth::id())->isVillageAdmin()),
+                    ->toggleable(isToggledHiddenByDefault: Auth::user()->isVillageAdmin()),
                 Tables\Columns\TextColumn::make('smes_count')
                     ->counts('smes')
                     ->label('SMEs'),
@@ -132,10 +136,10 @@ class CommunityResource extends Resource
                 Tables\Filters\SelectFilter::make('village')
                     ->relationship('village', 'name')
                     ->options(function () {
-                        $user = User::find(Auth::id());
+                        $user = Auth::user();
                         return $user->getAccessibleVillages()->pluck('name', 'id');
                     })
-                    ->visible(fn() => !User::find(Auth::id())->isVillageAdmin()), // Hide for village admins since they only see their village
+                    ->visible(fn() => !Auth::user()->isVillageAdmin()), // Hide for village admins since they only see their village
                 Tables\Filters\TernaryFilter::make('is_active'),
             ])
             ->actions([
@@ -189,7 +193,7 @@ class CommunityResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return $user->getAccessibleCommunities();
     }
 
@@ -205,7 +209,7 @@ class CommunityResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return static::getEloquentQuery()->count();
     }
 }

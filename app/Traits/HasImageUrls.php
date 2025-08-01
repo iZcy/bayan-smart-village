@@ -31,9 +31,23 @@ trait HasImageUrls
             $filePath = ltrim($filePath, '/');
         }
 
-        // The path should be used as-is since it's already relative to the public storage disk
-        // Examples: "products/filename.jpg", "articles/filename.jpg", etc.
-        return Storage::disk('public')->url($filePath);
+        // Generate the URL using the current request domain if available, 
+        // otherwise fall back to the configured APP_URL
+        $storageUrl = Storage::disk('public')->url($filePath);
+        
+        // If we're in a request context and the current domain differs from the storage URL domain,
+        // replace the domain to match the current request
+        if (app()->bound('request') && request()->getHost()) {
+            $currentHost = request()->getSchemeAndHttpHost();
+            $configuredUrl = config('app.url');
+            
+            // Only replace if the domains are different
+            if ($currentHost !== $configuredUrl) {
+                $storageUrl = str_replace($configuredUrl, $currentHost, $storageUrl);
+            }
+        }
+        
+        return $storageUrl;
     }
 
     /**

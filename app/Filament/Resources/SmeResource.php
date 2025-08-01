@@ -26,6 +26,7 @@ class SmeResource extends Resource
     protected static ?string $navigationGroup = 'Bisnis';
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationLabel = 'UMKM';
+    protected static ?string $pluralModelLabel = 'UMKM';
 
     public static function form(Form $form): Form
     {
@@ -39,7 +40,7 @@ class SmeResource extends Resource
                             ->searchable()
                             ->preload()
                             ->options(function () {
-                                $user = User::find(Auth::id());
+                                $user = Auth::user();
                                 return $user->getAccessibleCommunities()->pluck('name', 'id');
                             }),
                         Forms\Components\Select::make('place_id')
@@ -47,7 +48,7 @@ class SmeResource extends Resource
                             ->searchable()
                             ->preload()
                             ->options(function () {
-                                $user = User::find(Auth::id());
+                                $user = Auth::user();
                                 if ($user->isSuperAdmin()) {
                                     return \App\Models\Place::pluck('name', 'id');
                                 }
@@ -85,7 +86,7 @@ class SmeResource extends Resource
                             ->disk('public')
                             ->directory('sme/logos')
                             ->visibility('public')
-                            ->maxSize(5120) // 5MB
+                            ->maxSize(20480) // 20MB
                             ->imageResizeMode('cover')
                             ->imageCropAspectRatio('1:1')
                             ->imageResizeTargetWidth(300)
@@ -222,7 +223,7 @@ class SmeResource extends Resource
                             ]),
                         Forms\Components\Toggle::make('is_verified')
                             ->default(false)
-                            ->visible(fn() => !User::find(Auth::id())->isSmeAdmin()), // SME admins can't verify themselves
+                            ->visible(fn() => !Auth::user()->isSmeAdmin()), // SME admins can't verify themselves
                         Forms\Components\Toggle::make('is_active')
                             ->default(true),
                     ])->columns(2),
@@ -271,7 +272,7 @@ class SmeResource extends Resource
                 Tables\Filters\SelectFilter::make('community')
                     ->relationship('community', 'name')
                     ->options(function () {
-                        $user = User::find(Auth::id());
+                        $user = Auth::user();
                         return $user->getAccessibleCommunities()->pluck('name', 'id');
                     }),
                 Tables\Filters\SelectFilter::make('type')
@@ -300,55 +301,38 @@ class SmeResource extends Resource
             ->schema([
                 Infolists\Components\Section::make('SME Information')
                     ->schema([
-                        Infolists\Components\ImageEntry::make('logo_url'),
                         Infolists\Components\TextEntry::make('name'),
-                        Infolists\Components\TextEntry::make('community.name'),
-                        Infolists\Components\TextEntry::make('place.name'),
+                        Infolists\Components\TextEntry::make('slug'),
                         Infolists\Components\TextEntry::make('type')
-                            ->badge(),
-                        Infolists\Components\TextEntry::make('description'),
-                    ])->columns(2),
-
-                Infolists\Components\Section::make('Contact & Business')
-                    ->schema([
-                        Infolists\Components\TextEntry::make('owner_name'),
-                        Infolists\Components\TextEntry::make('contact_phone'),
-                        Infolists\Components\TextEntry::make('contact_email'),
-                        Infolists\Components\TextEntry::make('business_hours')
-                            ->label('Business Hours')
-                            ->formatStateUsing(function ($state) {
-                                if (!$state) return 'Not set';
-
-                                $orderedDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                                $formatted = [];
-
-                                foreach ($orderedDays as $day) {
-                                    if (isset($state[$day])) {
-                                        $dayData = $state[$day];
-                                        if (isset($dayData['closed']) && $dayData['closed']) {
-                                            $formatted[] = "{$day}: Closed";
-                                        } else {
-                                            $open = $dayData['open'] ?? '09:00';
-                                            $close = $dayData['close'] ?? '17:00';
-                                            $formatted[] = "{$day}: {$open} - {$close}";
-                                        }
-                                    }
-                                }
-
-                                return implode("\n", $formatted);
-                            })
-                            ->columnSpanFull(),
+                            ->badge()
+                            ->color(fn(string $state): string => match ($state) {
+                                'service' => 'info',
+                                'product' => 'success',
+                            }),
+                        Infolists\Components\TextEntry::make('description')
+                            ->placeholder('No description available'),
+                        Infolists\Components\TextEntry::make('owner_name')
+                            ->placeholder('Not specified'),
+                        Infolists\Components\TextEntry::make('contact_phone')
+                            ->placeholder('Not specified'),
+                        Infolists\Components\TextEntry::make('contact_email')
+                            ->placeholder('Not specified'),
                         Infolists\Components\IconEntry::make('is_verified')
+                            ->label('Verified')
                             ->boolean(),
                         Infolists\Components\IconEntry::make('is_active')
+                            ->label('Active')
                             ->boolean(),
+                        Infolists\Components\TextEntry::make('created_at')
+                            ->label('Created')
+                            ->dateTime(),
                     ])->columns(2),
             ]);
     }
 
     public static function getEloquentQuery(): Builder
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return $user->getAccessibleSmes();
     }
 
@@ -364,7 +348,7 @@ class SmeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $user = User::find(Auth::id());
+        $user = Auth::user();
         return static::getEloquentQuery()->count();
     }
 }

@@ -12,8 +12,12 @@ class CreateSme extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Initialize business hours with default values for all days if not set
-        if (!isset($data['business_hours']) || empty($data['business_hours'])) {
+        // Ensure business_hours is properly structured for JSON storage
+        if (isset($data['business_hours']) && is_array($data['business_hours'])) {
+            // The form data comes in as nested arrays from the form fields
+            // Keep it as is - Laravel will handle JSON conversion
+        } else {
+            // Initialize business hours with default values for all days if not set
             $data['business_hours'] = [
                 'Sunday' => ['open' => '09:00', 'close' => '17:00', 'closed' => false],
                 'Monday' => ['open' => '09:00', 'close' => '17:00', 'closed' => false],
