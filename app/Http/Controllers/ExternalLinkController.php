@@ -82,8 +82,9 @@ class ExternalLinkController extends Controller
 
     /**
      * Redirect to external link and track clicks
+     * This method handles both village-specific and global links
      */
-    public function redirect(Request $request, string $village, string $slug)
+    public function redirect(Request $request, string $slug)
     {
         Log::info('ExternalLink redirect called', [
             'slug' => $slug,
@@ -94,33 +95,47 @@ class ExternalLinkController extends Controller
 
         $village = $request->attributes->get('village');
 
-        if (!$village) {
-            Log::warning('No village found in request attributes');
-            abort(404, 'Village not found');
-        }
-
-        // Find the external link within the village scope
-        $link = ExternalLink::where('slug', $slug)
+        $query = ExternalLink::where('slug', $slug)
             ->where('is_active', true)
-            ->where(function ($query) use ($village) {
-                $query->where('village_id', $village->id)
-                    ->orWhereHas('community', function ($q) use ($village) {
-                        $q->where('village_id', $village->id);
-                    })
-                    ->orWhereHas('sme.community', function ($q) use ($village) {
-                        $q->where('village_id', $village->id);
-                    });
-            })
             ->where(function ($query) {
                 $query->whereNull('expires_at')
                     ->orWhere('expires_at', '>', now());
-            })
-            ->first();
+            });
+
+        if ($village) {
+            // For village subdomains, look for links scoped to that village
+            $query->where(function ($q) use ($village) {
+                $q->where('village_id', $village->id)
+                    ->orWhereHas('community', function ($subQ) use ($village) {
+                        $subQ->where('village_id', $village->id);
+                    })
+                    ->orWhereHas('sme.community', function ($subQ) use ($village) {
+                        $subQ->where('village_id', $village->id);
+                    });
+            });
+            
+            Log::info('Looking for village-scoped link', [
+                'slug' => $slug,
+                'village_id' => $village->id
+            ]);
+        } else {
+            // For main domain, look for global links (no village_id)
+            $query->whereNull('village_id')
+                ->whereNull('community_id')
+                ->whereNull('sme_id');
+                
+            Log::info('Looking for global link', [
+                'slug' => $slug
+            ]);
+        }
+
+        $link = $query->first();
 
         if (!$link) {
             Log::warning('External link not found', [
                 'slug' => $slug,
-                'village_id' => $village->id
+                'village_id' => $village ? $village->id : null,
+                'is_global' => !$village
             ]);
             abort(404, 'Link not found');
         }
@@ -131,7 +146,8 @@ class ExternalLinkController extends Controller
         Log::info('Redirecting to external link', [
             'link_id' => $link->id,
             'url' => $link->url,
-            'click_count' => $link->click_count + 1
+            'click_count' => $link->click_count + 1,
+            'is_global' => !$village
         ]);
 
         return redirect()->away($link->url);

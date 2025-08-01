@@ -8,6 +8,8 @@ use App\Http\Middleware\ResolveVillageSubdomain;
 use App\Http\Middleware\CorsMiddleware;
 use App\Http\Middleware\ApiRateLimit;
 use App\Http\Middleware\ValidateVillageAccess;
+use App\Http\Middleware\CheckDomainAccess;
+use App\Http\Middleware\HandleAdminNotFound;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'cors' => CorsMiddleware::class,
             'api.rate.limit' => ApiRateLimit::class,
             'village.access' => ValidateVillageAccess::class,
+            'domain.access' => CheckDomainAccess::class,
+            'admin.404' => HandleAdminNotFound::class,
         ]);
 
         // Add Inertia middleware to web group
@@ -35,7 +39,43 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('api', ApiRateLimit::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Handle village not found exceptions
+        // Handle village not found exceptions (HTTP 404 exceptions)
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e) {
+            if (request()->expectsJson()) {
+                // Check if this is an admin-related request
+                if (str_contains(request()->getPathInfo(), '/admin')) {
+                    return response()->json([
+                        'error' => 'Admin page not found',
+                        'message' => 'The requested admin page could not be found.'
+                    ], 404);
+                }
+                
+                return response()->json([
+                    'error' => 'Village not found',
+                    'message' => 'The requested village subdomain could not be found.'
+                ], 404);
+            }
+
+            // Check if this is an admin-related 404
+            if (str_contains(request()->getPathInfo(), '/admin') || 
+                str_contains(request()->url(), '/admin')) {
+                return response()->view('errors.admin-404', [], 404);
+            }
+
+            // Check if this is a village subdomain issue
+            $host = request()->getHost();
+            $baseDomain = config('app.domain', 'kecamatanbayan.id');
+            
+            if (str_ends_with($host, '.' . $baseDomain) || 
+                ($host !== $baseDomain && !str_contains($host, 'www.'))) {
+                return response()->view('errors.404', ['message' => 'Village not found'], 404);
+            }
+
+            // General 404 for main domain
+            return response()->view('errors.404', [], 404);
+        });
+
+        // Handle model not found exceptions
         $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             if (request()->expectsJson()) {
                 return response()->json([

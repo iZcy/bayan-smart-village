@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\Log;
 // Get the base domain from config
 $baseDomain = config('app.domain', 'kecamatanbayan.id');
 
-// Routes for the main/apex domain
-Route::domain($baseDomain)->group(function () {
+// Define main domain routes function
+$mainDomainRoutes = function () use ($baseDomain) {
     // Stunting Calculator Routes
     Route::prefix('stunting-calculator')->name('stunting.')->group(function () {
         Route::get('/', [StuntingCalculatorController::class, 'index'])->name('index');
@@ -63,7 +63,16 @@ Route::domain($baseDomain)->group(function () {
     Route::fallback(function () {
         return redirect(filament()->getLoginUrl());
     });
-});
+};
+
+// Apply routes to main domain
+Route::domain($baseDomain)->group($mainDomainRoutes);
+
+// Apply same routes to reserved subdomains
+$reservedSubdomains = ['www', 'mail', 'ftp', 'admin', 'api', 'cdn', 'static'];
+foreach ($reservedSubdomains as $subdomain) {
+    Route::domain($subdomain . '.' . $baseDomain)->group($mainDomainRoutes);
+}
 
 // Development localhost routes (same as main domain for testing)
 if (app()->environment('local')) {
@@ -355,6 +364,13 @@ Route::middleware(['auth'])->prefix('admin/uploads')->name('admin.uploads.')->gr
     Route::post('/images', [App\Http\Controllers\ImageUploadController::class, 'uploadMultiple'])->name('images');
     Route::delete('/image', [App\Http\Controllers\ImageUploadController::class, 'delete'])->name('image.delete');
     Route::post('/thumbnail', [App\Http\Controllers\ImageUploadController::class, 'generateThumbnail'])->name('thumbnail');
+});
+
+// Handle direct admin access attempts that don't match Filament routes
+Route::prefix('admin')->group(function () {
+    Route::fallback(function () {
+        return response()->view('errors.admin-404', [], 404);
+    });
 });
 
 // Public image serving routes (for optimization)

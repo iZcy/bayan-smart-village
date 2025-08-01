@@ -7,6 +7,7 @@ use Filament\Forms;
 use Filament\Tables;
 use Filament\Infolists;
 use App\Models\OfferTag;
+use App\Models\Village;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
@@ -31,6 +32,11 @@ class OfferTagResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Tag Information')
                     ->schema([
+                        Forms\Components\Select::make('village_id')
+                            ->relationship('village', 'name')
+                            ->required()
+                            ->searchable()
+                            ->preload(),
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(100)
@@ -39,7 +45,9 @@ class OfferTagResource extends Resource
                         Forms\Components\TextInput::make('slug')
                             ->required()
                             ->maxLength(100)
-                            ->unique(ignoreRecord: true),
+                            ->unique(table: 'offer_tags', column: 'slug', modifyRuleUsing: function ($rule, $get) {
+                                return $rule->where('village_id', $get('village_id'));
+                            }, ignoreRecord: true),
                         Forms\Components\TextInput::make('usage_count')
                             ->numeric()
                             ->default(0)
@@ -55,6 +63,10 @@ class OfferTagResource extends Resource
             ->defaultPaginationPageOption(20)
             ->paginationPageOptions([10, 20, 50])
             ->columns([
+                Tables\Columns\TextColumn::make('village.name')
+                    ->label('Village')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
@@ -73,6 +85,11 @@ class OfferTagResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('village_id')
+                    ->relationship('village', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->label('Village'),
                 Tables\Filters\Filter::make('popular')
                     ->query(fn($query) => $query->where('usage_count', '>', 0))
                     ->label('Popular Tags'),
@@ -96,6 +113,8 @@ class OfferTagResource extends Resource
             ->schema([
                 Infolists\Components\Section::make('Tag Information')
                     ->schema([
+                        Infolists\Components\TextEntry::make('village.name')
+                            ->label('Village'),
                         Infolists\Components\TextEntry::make('name'),
                         Infolists\Components\TextEntry::make('slug'),
                         Infolists\Components\TextEntry::make('usage_count'),

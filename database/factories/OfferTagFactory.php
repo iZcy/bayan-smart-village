@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\OfferTag;
+use App\Models\Village;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -174,6 +175,7 @@ class OfferTagFactory extends Factory
         $slug = $this->generateUniqueSlug($name);
 
         return [
+            'village_id' => Village::factory(),
             'name' => $name,
             'slug' => $slug,
             'usage_count' => $this->faker->numberBetween(0, 100),

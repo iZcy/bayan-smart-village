@@ -296,4 +296,65 @@ class User extends Authenticatable implements FilamentUser
         // Allow all roles to access admin panel (they'll be filtered by resource-level permissions)
         return $this->isSuperAdmin() || $this->isVillageAdmin() || $this->isCommunityAdmin() || $this->isSmeAdmin();
     }
+
+    /**
+     * Check if user can access the main domain (only super admin)
+     */
+    public function canAccessMainDomain(): bool
+    {
+        return $this->isSuperAdmin();
+    }
+
+    /**
+     * Check if user can access a specific village domain
+     */
+    public function canAccessVillageDomain(Village $village): bool
+    {
+        // Super admin cannot access village domains
+        if ($this->isSuperAdmin()) {
+            return false;
+        }
+
+        // Village admin can only access their village's domain
+        if ($this->isVillageAdmin()) {
+            return $this->village_id === $village->id;
+        }
+
+        // Community admin can access their village's domain
+        if ($this->isCommunityAdmin() && $this->community) {
+            return $this->community->village_id === $village->id;
+        }
+
+        // SME admin can access their village's domain
+        if ($this->isSmeAdmin() && $this->sme && $this->sme->community) {
+            return $this->sme->community->village_id === $village->id;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the villages this user can access as domains
+     */
+    public function getAccessibleDomainVillages()
+    {
+        if ($this->isSuperAdmin()) {
+            // Super admin cannot access any village domains
+            return collect();
+        }
+
+        if ($this->isVillageAdmin()) {
+            return collect([$this->village]);
+        }
+
+        if ($this->isCommunityAdmin() && $this->community) {
+            return collect([$this->community->village]);
+        }
+
+        if ($this->isSmeAdmin() && $this->sme && $this->sme->community) {
+            return collect([$this->sme->community->village]);
+        }
+
+        return collect();
+    }
 }

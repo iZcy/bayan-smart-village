@@ -391,7 +391,16 @@ class OfferResource extends Resource
                         ->description('Add tags and configure settings')
                         ->schema([
                             Forms\Components\Select::make('tags')
-                                ->relationship('tags', 'name')
+                                ->relationship('tags', 'name', modifyQueryUsing: function ($query, $get) {
+                                    $smeId = $get('sme_id');
+                                    if ($smeId) {
+                                        $sme = \App\Models\Sme::with('community.village')->find($smeId);
+                                        if ($sme && $sme->community && $sme->community->village) {
+                                            $query->where('village_id', $sme->community->village->id);
+                                        }
+                                    }
+                                    return $query;
+                                })
                                 ->multiple()
                                 ->searchable()
                                 ->preload()
@@ -403,6 +412,16 @@ class OfferResource extends Resource
                                     Forms\Components\TextInput::make('slug')
                                         ->required(),
                                 ])
+                                ->createOptionUsing(function (array $data, $get) {
+                                    $smeId = $get('sme_id');
+                                    if ($smeId) {
+                                        $sme = \App\Models\Sme::with('community.village')->find($smeId);
+                                        if ($sme && $sme->community && $sme->community->village) {
+                                            $data['village_id'] = $sme->community->village->id;
+                                        }
+                                    }
+                                    return \App\Models\OfferTag::create($data);
+                                })
                                 ->columnSpanFull(),
                             Forms\Components\Toggle::make('is_featured')
                                 ->label('Featured Product')

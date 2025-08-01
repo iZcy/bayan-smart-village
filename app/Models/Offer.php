@@ -97,16 +97,6 @@ class Offer extends Model
     }
 
     /**
-     * Get the primary image URL with proper path conversion
-     */
-    public function getPrimaryImageUrlAttribute($value): ?string
-    {
-        // Get the raw attribute value from the database
-        $rawValue = $this->attributes['primary_image_url'] ?? null;
-        return $this->convertImagePathToUrl($rawValue);
-    }
-
-    /**
      * Mutators to ensure array fields are properly handled
      */
     public function setSeasonalAvailabilityAttribute($value)

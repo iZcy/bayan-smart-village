@@ -211,10 +211,16 @@ class OfferController extends Controller
      */
     public function tags(Request $request)
     {
-        $tags = OfferTag::withCount(['offers' => function ($query) {
+        $query = OfferTag::withCount(['offers' => function ($query) {
             $query->where('is_active', true);
-        }])
-            ->having('offers_count', '>', 0)
+        }]);
+
+        // If there's a village in the request (from middleware), scope tags to that village
+        if ($request->has('village') && $request->village) {
+            $query->where('village_id', $request->village->id);
+        }
+
+        $tags = $query->having('offers_count', '>', 0)
             ->orderBy('usage_count', 'desc')
             ->get();
 

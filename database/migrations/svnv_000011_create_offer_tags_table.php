@@ -11,12 +11,19 @@ return new class extends Migration
     {
         Schema::create('offer_tags', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('name', 100)->unique();
-            $table->string('slug', 100)->unique();
+            $table->uuid('village_id');
+            $table->string('name', 100);
+            $table->string('slug', 100);
             $table->integer('usage_count')->default(0);
             $table->timestamps();
 
+            $table->foreign('village_id')->references('id')->on('villages')->onDelete('cascade');
+            $table->index('village_id');
             $table->index('usage_count');
+            
+            // Unique constraints scoped to village
+            $table->unique(['village_id', 'name']);
+            $table->unique(['village_id', 'slug']);
         });
     }
 

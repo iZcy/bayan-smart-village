@@ -12,12 +12,9 @@ const StuntingCalculator = ({ whoData }) => {
     const [result, setResult] = useState(null);
     const [isCalculating, setIsCalculating] = useState(false);
     const [errors, setErrors] = useState({});
-    const audioRef = useRef(null);
     const { scrollY } = useScroll();
 
-    // Parallax effects
-    const heroY = useTransform(scrollY, [0, 500], [0, -150]);
-    const overlayOpacity = useTransform(scrollY, [0, 300], [0.3, 0.7]);
+    // Removed parallax effects as we now use transparent background
 
     // Replace the setRefs function with separate refs
     const heroSectionRef = useRef(null);
@@ -38,18 +35,7 @@ const StuntingCalculator = ({ whoData }) => {
         triggerOnce: true,
     });
 
-    useEffect(() => {
-        if (audioRef.current) {
-            audioRef.current.volume = 0.3;
-            audioRef.current.play().catch(console.log);
-        }
-
-        return () => {
-            if (audioRef.current) {
-                audioRef.current.pause();
-            }
-        };
-    }, []);
+    // No background audio for stunting calculator page
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -202,49 +188,27 @@ const StuntingCalculator = ({ whoData }) => {
         <>
             <Head title="Kalkulator Stunting - Standar Pertumbuhan WHO" />
 
-            {/* Background Audio */}
-            <audio ref={audioRef} loop>
-                <source src="/audio/village-ambient.mp3" type="audio/mpeg" />
-            </audio>
+            {/* Background Media with children image */}
+            <div className="fixed inset-0 z-0">
+                <img 
+                    src="https://images.unsplash.com/photo-1502781252888-9143ba7f074e?q=80&w=871&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                    alt="Happy children representing healthy growth"
+                    className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/20"></div>
+            </div>
+            
+            {/* No background audio for stunting calculator */}
 
-            {/* Hero Section */}
+            {/* Hero Section - Transparent Background */}
             <section
                 ref={heroSectionRef}
                 className="relative h-screen overflow-hidden"
             >
                 <div ref={heroRef}>
-                    {/* Background with parallax */}
-                    <motion.div
-                        style={{ y: heroY }}
-                        className="absolute inset-0 bg-gradient-to-b from-blue-600 via-purple-500 to-pink-600"
-                    >
-                        <div className="absolute inset-0 opacity-20">
-                            <svg
-                                viewBox="0 0 1200 600"
-                                className="w-full h-full"
-                            >
-                                <path
-                                    d="M0,600 L0,250 Q200,200 400,230 T800,180 Q1000,160 1200,200 L1200,600 Z"
-                                    fill="#1e40af"
-                                />
-                                <path
-                                    d="M0,600 L0,320 Q300,270 600,290 T1200,270 L1200,600 Z"
-                                    fill="#7c3aed"
-                                />
-                                <path
-                                    d="M0,600 L0,400 Q500,350 1000,370 T1200,350 L1200,600 Z"
-                                    fill="#ec4899"
-                                />
-                            </svg>
-                        </div>
-                    </motion.div>
+                    {/* Transparent overlay for better text readability */}
+                    <div className="absolute inset-0 bg-black/20"></div>
                 </div>
-
-                {/* Animated overlay */}
-                <motion.div
-                    style={{ opacity: overlayOpacity }}
-                    className="absolute inset-0 bg-black"
-                />
 
                 {/* Floating elements */}
                 {[...Array(6)].map((_, i) => (
@@ -330,8 +294,10 @@ const StuntingCalculator = ({ whoData }) => {
             {/* Calculator Section */}
             <section
                 ref={calculatorSectionRef}
-                className="py-20 bg-gradient-to-b from-pink-600 to-purple-800 relative overflow-hidden"
+                className="py-20 relative overflow-hidden"
             >
+                {/* Glass backdrop */}
+                <div className="absolute inset-0 backdrop-blur-sm bg-black/10" />
                 <div ref={calculatorRef}>
                     {/* Background decorations */}
                     <div className="absolute inset-0 opacity-10">
@@ -363,7 +329,7 @@ const StuntingCalculator = ({ whoData }) => {
                         >
                             <form
                                 onSubmit={handleSubmit}
-                                className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20"
+                                className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-2xl"
                             >
                                 {errors.general && (
                                     <motion.div
@@ -548,8 +514,10 @@ const StuntingCalculator = ({ whoData }) => {
             {result && (
                 <section
                     ref={resultsSectionRef}
-                    className="py-20 bg-gradient-to-b from-purple-800 to-gray-900"
+                    className="py-20 relative overflow-hidden"
                 >
+                    {/* Glass backdrop */}
+                    <div className="absolute inset-0 backdrop-blur-sm bg-black/15" />
                     <div ref={resultsRef} className="container mx-auto px-6">
                         <motion.div
                             initial={{ opacity: 0, y: 50 }}
@@ -571,7 +539,7 @@ const StuntingCalculator = ({ whoData }) => {
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ duration: 0.6, delay: 0.2 }}
-                                className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 mb-8"
+                                className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 mb-8 shadow-2xl"
                             >
                                 <div className="text-center mb-6">
                                     <div
@@ -634,7 +602,7 @@ const StuntingCalculator = ({ whoData }) => {
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.6, delay: 0.4 }}
-                                className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
+                                className="bg-white/15 rounded-xl p-6 border border-white/30 shadow-xl relative"
                             >
                                 <h4 className="text-lg font-semibold text-white mb-4">
                                     Referensi Standar Pertumbuhan WHO (Umur:{" "}
@@ -689,15 +657,17 @@ const StuntingCalculator = ({ whoData }) => {
             )}
 
             {/* Information Section */}
-            <section className="py-20 bg-gradient-to-b from-gray-900 to-black">
-                <div className="container mx-auto px-6">
+            <section className="py-20 relative overflow-hidden">
+                {/* Glass backdrop */}
+                <div className="absolute inset-0 backdrop-blur-sm bg-black/20" />
+                <div className="container mx-auto px-6 relative z-10">
                     <motion.div
                         initial={{ opacity: 0, y: 50 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
-                        className="max-w-4xl mx-auto"
+                        className="max-w-4xl mx-auto relative"
                     >
-                        <h2 className="text-4xl font-bold text-white text-center mb-12">
+                        <h2 className="text-4xl font-bold text-white text-center mb-12 relative z-10">
                             Tentang Kalkulator Ini
                         </h2>
 
@@ -706,7 +676,7 @@ const StuntingCalculator = ({ whoData }) => {
                                 initial={{ opacity: 0, x: -50 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 transition={{ duration: 0.8, delay: 0.2 }}
-                                className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
+                                className="bg-white/15 rounded-xl p-6 border border-white/30 shadow-xl relative"
                             >
                                 <h3 className="text-xl font-bold text-white mb-4">
                                     📊 Standar WHO
@@ -723,7 +693,7 @@ const StuntingCalculator = ({ whoData }) => {
                                 initial={{ opacity: 0, x: 50 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 transition={{ duration: 0.8, delay: 0.4 }}
-                                className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
+                                className="bg-white/15 rounded-xl p-6 border border-white/30 shadow-xl relative"
                             >
                                 <h3 className="text-xl font-bold text-white mb-4">
                                     📏 Skor Z Tinggi-menurut-Umur
@@ -740,7 +710,7 @@ const StuntingCalculator = ({ whoData }) => {
                                 initial={{ opacity: 0, x: -50 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 transition={{ duration: 0.8, delay: 0.6 }}
-                                className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
+                                className="bg-white/15 rounded-xl p-6 border border-white/30 shadow-xl relative"
                             >
                                 <h3 className="text-xl font-bold text-white mb-4">
                                     ⚠️ Catatan Penting
@@ -757,7 +727,7 @@ const StuntingCalculator = ({ whoData }) => {
                                 initial={{ opacity: 0, x: 50 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 transition={{ duration: 0.8, delay: 0.8 }}
-                                className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
+                                className="bg-white/15 rounded-xl p-6 border border-white/30 shadow-xl relative"
                             >
                                 <h3 className="text-xl font-bold text-white mb-4">
                                     🎂 Perhitungan Umur

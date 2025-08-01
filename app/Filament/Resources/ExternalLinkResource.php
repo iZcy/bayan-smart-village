@@ -31,6 +31,7 @@ class ExternalLinkResource extends Resource
         $user = Auth::user();
 
         if ($user->isSuperAdmin()) {
+            // Super admins can see all links including global ones
             return parent::getEloquentQuery();
         }
 
@@ -98,7 +99,7 @@ class ExternalLinkResource extends Resource
                         ->relationship('village', 'name')
                         ->searchable()
                         ->preload()
-                        ->required()
+                        ->required(fn() => !Auth::user()->isSuperAdmin()) // Only required for non-super admins
                         ->live()
                         ->afterStateUpdated(function (callable $set) {
                             // Reset all dependent fields when village changes
@@ -113,7 +114,8 @@ class ExternalLinkResource extends Resource
                             $user = Auth::user();
                             return !$user->isSuperAdmin() && $user->village_id ? $user->village_id : null;
                         })
-                        ->disabled(fn() => !Auth::user()->isSuperAdmin()), // Only super admin can change village
+                        ->disabled(fn() => !Auth::user()->isSuperAdmin()) // Only super admin can change village
+                        ->placeholder('Select a village (leave empty for global link)'),
 
                     Forms\Components\Select::make('community_id')
                         ->relationship('community', 'name')
@@ -216,6 +218,10 @@ class ExternalLinkResource extends Resource
                     ->searchable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('village.name')
+                    ->label('Village')
+                    ->getStateUsing(fn($record) => $record->village?->name ?? 'Global')
+                    ->badge()
+                    ->color(fn($state) => $state === 'Global' ? 'success' : 'primary')
                     ->searchable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('community.name')
@@ -278,7 +284,11 @@ class ExternalLinkResource extends Resource
 
                 Infolists\Components\Section::make('Associations')
                     ->schema([
-                        Infolists\Components\TextEntry::make('village.name'),
+                        Infolists\Components\TextEntry::make('village.name')
+                            ->label('Village')
+                            ->getStateUsing(fn($record) => $record->village?->name ?? 'Global Link')
+                            ->badge()
+                            ->color(fn($state) => $state === 'Global Link' ? 'success' : 'primary'),
                         Infolists\Components\TextEntry::make('community.name'),
                         Infolists\Components\TextEntry::make('sme.name'),
                     ])->columns(3),

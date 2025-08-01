@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\OfferTag;
+use App\Models\Village;
 use Illuminate\Database\Seeder;
 
 class OfferTagSeeder extends Seeder
@@ -83,17 +84,30 @@ class OfferTagSeeder extends Seeder
             'Favorit' => 22,
         ];
 
-        foreach ($commonTags as $tagName => $usageCount) {
-            OfferTag::factory()->create([
-                'name' => $tagName,
-                'usage_count' => $usageCount,
-            ]);
+        // Get all villages
+        $villages = Village::all();
+        
+        if ($villages->isEmpty()) {
+            $this->command->error('No villages found. Please run VillageSeeder first.');
+            return;
         }
 
-        // Create additional random tags
-        OfferTag::factory()
-            ->count(10)
-            ->create();
+        // Create tags for each village
+        foreach ($villages as $village) {
+            foreach ($commonTags as $tagName => $usageCount) {
+                OfferTag::factory()->create([
+                    'village_id' => $village->id,
+                    'name' => $tagName,
+                    'usage_count' => $usageCount,
+                ]);
+            }
+
+            // Create additional random tags for each village
+            OfferTag::factory()
+                ->count(10)
+                ->for($village)
+                ->create();
+        }
 
         $this->command->info('Offer tags seeded successfully!');
         $this->command->info('Total tags created: ' . OfferTag::count());

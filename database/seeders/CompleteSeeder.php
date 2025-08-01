@@ -59,7 +59,7 @@ class CompleteSeeder extends Seeder
 
         // 6. Seed Offer Tags
         $this->command->info('Seeding offer tags...');
-        $tags = $this->seedOfferTags();
+        $tags = $this->seedOfferTags($villages);
 
         // 7. Seed Offers for each SME
         $this->command->info('Seeding offers...');
@@ -275,7 +275,7 @@ class CompleteSeeder extends Seeder
         return $smes;
     }
 
-    private function seedOfferTags()
+    private function seedOfferTags($villages)
     {
         // Create common tags with updateOrCreate to prevent duplicates
         $commonTags = [
@@ -303,16 +303,18 @@ class CompleteSeeder extends Seeder
 
         $tags = collect();
 
-        // Use updateOrCreate to prevent duplicates
-        foreach ($commonTags as $tagName => $usageCount) {
-            $tag = OfferTag::updateOrCreate(
-                ['name' => $tagName],
-                [
-                    'slug' => \Illuminate\Support\Str::slug($tagName),
-                    'usage_count' => $usageCount
-                ]
-            );
-            $tags->push($tag);
+        // Create tags for each village
+        foreach ($villages as $village) {
+            foreach ($commonTags as $tagName => $usageCount) {
+                $tag = OfferTag::updateOrCreate(
+                    ['village_id' => $village->id, 'name' => $tagName],
+                    [
+                        'slug' => \Illuminate\Support\Str::slug($tagName),
+                        'usage_count' => $usageCount
+                    ]
+                );
+                $tags->push($tag);
+            }
         }
 
         // Create additional unique tags
@@ -329,15 +331,18 @@ class CompleteSeeder extends Seeder
             'Ringan'
         ];
 
-        foreach ($additionalTagNames as $tagName) {
-            $tag = OfferTag::updateOrCreate(
-                ['name' => $tagName],
-                [
-                    'slug' => \Illuminate\Support\Str::slug($tagName),
-                    'usage_count' => rand(5, 15)
-                ]
-            );
-            $tags->push($tag);
+        // Create additional unique tags for each village
+        foreach ($villages as $village) {
+            foreach ($additionalTagNames as $tagName) {
+                $tag = OfferTag::updateOrCreate(
+                    ['village_id' => $village->id, 'name' => $tagName],
+                    [
+                        'slug' => \Illuminate\Support\Str::slug($tagName),
+                        'usage_count' => rand(5, 15)
+                    ]
+                );
+                $tags->push($tag);
+            }
         }
 
         return $tags;
@@ -363,9 +368,12 @@ class CompleteSeeder extends Seeder
                     ->inCategory($smeCategories->random())
                     ->create();
 
-                // Attach random tags (1-4 tags per offer)
-                if ($tags->isNotEmpty()) {
-                    $randomTags = $tags->random(rand(1, min(4, $tags->count())));
+                // Attach random tags from the same village (1-4 tags per offer)
+                $smeVillageId = $sme->community->village_id;
+                $villageTags = $tags->where('village_id', $smeVillageId);
+                
+                if ($villageTags->isNotEmpty()) {
+                    $randomTags = $villageTags->random(rand(1, min(4, $villageTags->count())));
                     $offer->tags()->attach($randomTags->pluck('id'));
 
                     // Update tag usage counts
